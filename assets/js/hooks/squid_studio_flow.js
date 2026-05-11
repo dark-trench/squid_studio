@@ -2,6 +2,8 @@ export const SquidStudioFlow = {
   mounted() {
     this.drag = null
 
+    window.requestAnimationFrame(() => this.centerGraph())
+
     this.el.addEventListener("pointerdown", (event) => {
       const node = event.target.closest("[data-node-id]")
 
@@ -43,6 +45,20 @@ export const SquidStudioFlow = {
       }
 
       this.drag = null
+    })
+  },
+
+  centerGraph() {
+    const rect = this.el.getBoundingClientRect()
+
+    if (rect.width <= 0 || rect.height <= 0) {
+      window.setTimeout(() => this.centerGraph(), 50)
+      return
+    }
+
+    this.pushEvent("center_graph", {
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
     })
   },
 }

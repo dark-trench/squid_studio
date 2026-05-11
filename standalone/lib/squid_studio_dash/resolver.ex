@@ -13,23 +13,22 @@ defmodule SquidStudioDash.Resolver do
   def resolve_workflows(_user) do
     [
       %{
-        id: "customer_onboarding",
-        name: "Customer Onboarding",
+        id: "daily_digest",
+        name: "Daily RSS To Discord",
         nodes: [
-          node("start", "New account", :input, 0, 140),
-          node("validate", "Validate profile", :default, 260, 80),
-          node("risk", "Risk review", :default, 520, 80),
-          node("approval", "Manual approval", :default, 520, 220),
-          node("provision", "Provision workspace", :default, 780, 140),
-          node("notify", "Send welcome", :output, 1040, 140)
+          node("daily_digest", "trigger :daily_digest", :trigger, 0, 80),
+          node("fetch_feed", "step :fetch_feed", :step, 240, 80),
+          node("build_digest", "step :build_digest", :step, 480, 80),
+          node("post_to_discord", "step :post_to_discord", :retry, 720, 80),
+          node("complete", ":complete", :terminal, 960, 80),
+          node("record_failed_delivery", "failure route", :failure, 960, 220)
         ],
         edges: [
-          edge("start", "validate"),
-          edge("validate", "risk"),
-          edge("validate", "approval"),
-          edge("risk", "provision"),
-          edge("approval", "provision"),
-          edge("provision", "notify")
+          edge("daily_digest", "fetch_feed"),
+          edge("fetch_feed", "build_digest"),
+          edge("build_digest", "post_to_discord"),
+          edge("post_to_discord", "complete"),
+          edge("post_to_discord", "record_failed_delivery")
         ]
       }
     ]

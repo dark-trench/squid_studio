@@ -27,6 +27,7 @@ defmodule SquidStudio.Web do
       use Phoenix.Component
 
       import Phoenix.HTML
+      import SquidStudio.Web.Components
       import SquidStudio.Web.Helpers
 
       alias Phoenix.LiveView.JS

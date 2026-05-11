@@ -3,6 +3,10 @@ defmodule SquidStudio.Web.EditorLive do
 
   use SquidStudio.Web, :live_view
 
+  @node_width 160
+  @node_height 76
+  @canvas_padding 40
+
   @impl true
   def mount(_params, _session, socket) do
     workflow = socket.assigns.workflows |> List.wrap() |> List.first() |> normalize_workflow()
@@ -14,6 +18,7 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:workflow, workflow)
       |> assign(:nodes, graph.nodes)
       |> assign(:edges, graph.edges)
+      |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
 
     {:ok, socket}
@@ -28,6 +33,23 @@ defmodule SquidStudio.Web.EditorLive do
       end)
 
     {:noreply, assign(socket, nodes: nodes, edges: build_edges(socket.assigns.edges, nodes))}
+  end
+
+  def handle_event("center_graph", %{"width" => width, "height" => height}, socket) do
+    if socket.assigns.graph_centered? do
+      {:noreply, socket}
+    else
+      nodes =
+        center_nodes(socket.assigns.nodes, parse_coordinate(width), parse_coordinate(height))
+
+      socket =
+        socket
+        |> assign(:nodes, nodes)
+        |> assign(:edges, build_edges(socket.assigns.edges, nodes))
+        |> assign(:graph_centered?, true)
+
+      {:noreply, socket}
+    end
   end
 
   def handle_event("select_node", %{"id" => id}, socket) do
@@ -65,6 +87,7 @@ defmodule SquidStudio.Web.EditorLive do
       id: id,
       label: data |> value(:label, id) |> to_string(),
       type: node |> value(:type, "step") |> to_string(),
+      icon: node |> value(:type, "step") |> to_string() |> node_icon(),
       x: position |> value(:x, 0) |> parse_coordinate(),
       y: position |> value(:y, 0) |> parse_coordinate()
     }
@@ -80,6 +103,26 @@ defmodule SquidStudio.Web.EditorLive do
       target: target
     }
   end
+
+  defp center_nodes([], _width, _height), do: []
+
+  defp center_nodes(nodes, width, height) when width > 0 and height > 0 do
+    {min_x, max_x} = nodes |> Enum.map(& &1.x) |> Enum.min_max()
+    {min_y, max_y} = nodes |> Enum.map(& &1.y) |> Enum.min_max()
+
+    graph_width = max_x - min_x + @node_width
+    graph_height = max_y - min_y + @node_height
+    target_x = max(div(width - graph_width, 2), @canvas_padding)
+    target_y = max(div(height - graph_height, 2), @canvas_padding)
+    offset_x = target_x - min_x
+    offset_y = target_y - min_y
+
+    Enum.map(nodes, fn node ->
+      %{node | x: node.x + offset_x, y: node.y + offset_y}
+    end)
+  end
+
+  defp center_nodes(nodes, _width, _height), do: nodes
 
   defp build_edges(edges, nodes) do
     node_lookup = Map.new(nodes, &{&1.id, &1})
@@ -100,17 +143,17 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   defp edge_path(source, target) do
-    start_x = source.x + 160
-    start_y = source.y + 32
+    start_x = source.x + @node_width
+    start_y = source.y + div(@node_height, 2)
     end_x = target.x
-    end_y = target.y + 32
+    end_y = target.y + div(@node_height, 2)
     curve = max(div(abs(end_x - start_x), 2), 80)
 
     "M #{start_x} #{start_y} C #{start_x + curve} #{start_y}, #{end_x - curve} #{end_y}, #{end_x} #{end_y}"
   end
 
-  defp label_x(source, target), do: div(source.x + target.x + 160, 2)
-  defp label_y(source, target), do: div(source.y + target.y + 64, 2)
+  defp label_x(source, target), do: div(source.x + target.x + @node_width, 2)
+  defp label_y(source, target), do: div(source.y + target.y + @node_height, 2)
 
   defp parse_coordinate(value) when is_integer(value), do: max(value, 0)
   defp parse_coordinate(value) when is_float(value), do: value |> round() |> max(0)
@@ -123,6 +166,17 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   defp parse_coordinate(_value), do: 0
+
+  defp node_icon("trigger"), do: "hero-clock"
+  defp node_icon("retry"), do: "hero-arrow-path"
+  defp node_icon("failure"), do: "hero-exclamation-triangle"
+  defp node_icon("terminal"), do: "hero-check-circle"
+  defp node_icon("approval"), do: "hero-hand-raised"
+  defp node_icon("wait"), do: "hero-pause-circle"
+  defp node_icon("built_in"), do: "hero-cube"
+  defp node_icon("input"), do: "hero-arrow-down-tray"
+  defp node_icon("output"), do: "hero-paper-airplane"
+  defp node_icon(_type), do: "hero-bolt"
 
   defp value(map, key, default \\ nil)
   defp value(map, key, default), do: Map.get(map, key) || Map.get(map, to_string(key)) || default

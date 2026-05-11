@@ -11,6 +11,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert html_response(conn, 200) =~ ~s(phx-hook="SquidStudioFlow")
     assert html_response(conn, 200) =~ ~s(data-node-id="fetch_feed")
     assert html_response(conn, 200) =~ ~s(class="studio-edge")
+    assert html_response(conn, 200) =~ "hero-squares-2x2"
+    assert html_response(conn, 200) =~ "trigger :daily_digest"
+    assert html_response(conn, 200) =~ "hero-clock"
   end
 
   test "serves hashed studio assets", %{conn: conn} do
@@ -40,5 +43,17 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(id="studio-node-fetch_feed")
     assert html =~ "left: 120px; top: 140px;"
     assert html =~ ~s(class="studio-edge")
+  end
+
+  test "centers the graph when the canvas reports its dimensions", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/studio")
+
+    html =
+      view
+      |> render_hook("center_graph", %{"width" => 1200, "height" => 600})
+
+    assert html =~ ~s(id="studio-node-fetch_feed")
+    assert html =~ "left: 280px; top: 192px;"
+    assert html =~ "M 200 230 C 280 230, 200 230, 280 230"
   end
 end

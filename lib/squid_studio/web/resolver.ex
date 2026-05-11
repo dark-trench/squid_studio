@@ -29,24 +29,35 @@ defmodule SquidStudio.Web.Resolver do
     [
       %{
         id: "daily_digest",
-        name: "Daily Digest",
+        name: "Daily RSS To Discord",
         nodes: [
-          %{
-            id: "fetch_feed",
-            type: "input",
-            position: %{x: 0, y: 80},
-            data: %{label: "fetch_feed"}
-          },
-          %{id: "build_digest", position: %{x: 240, y: 80}, data: %{label: "build_digest"}},
-          %{id: "approval", position: %{x: 480, y: 80}, data: %{label: "approval"}},
-          %{id: "publish", type: "output", position: %{x: 720, y: 80}, data: %{label: "publish"}}
+          node("daily_digest", "trigger :daily_digest", :trigger, 0, 80),
+          node("fetch_feed", "step :fetch_feed", :step, 240, 80),
+          node("build_digest", "step :build_digest", :step, 480, 80),
+          node("post_to_discord", "step :post_to_discord", :retry, 720, 80),
+          node("complete", ":complete", :terminal, 960, 80),
+          node("record_failed_delivery", "failure route", :failure, 960, 220)
         ],
         edges: [
+          %{id: "daily_digest-fetch_feed", source: "daily_digest", target: "fetch_feed"},
           %{id: "fetch_feed-build_digest", source: "fetch_feed", target: "build_digest"},
-          %{id: "build_digest-approval", source: "build_digest", target: "approval"},
-          %{id: "approval-publish", source: "approval", target: "publish"}
+          %{
+            id: "build_digest-post_to_discord",
+            source: "build_digest",
+            target: "post_to_discord"
+          },
+          %{id: "post_to_discord-complete", source: "post_to_discord", target: "complete"},
+          %{
+            id: "post_to_discord-record_failed_delivery",
+            source: "post_to_discord",
+            target: "record_failed_delivery"
+          }
         ]
       }
     ]
+  end
+
+  defp node(id, label, type, x, y) do
+    %{id: id, type: type, position: %{x: x, y: y}, data: %{label: label}}
   end
 end

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <meta name="live-transport" content={assigns[:live_transport] || "websocket"} />
+    <meta name="live-path" content={assigns[:live_path] || "/live"} />
+    <.live_title prefix="Squid Studio · ">
+      {assigns[:page_title] || "Editor"}
+    </.live_title>
+    <link rel="stylesheet" href={asset_path(@conn, :css)} />
+    <script defer src={asset_path(@conn, :js)}>
+    </script>
+  </head>
+  <body>
+    {@inner_content}
+  </body>
+</html>

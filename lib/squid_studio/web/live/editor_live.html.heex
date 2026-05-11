@@ -1,0 +1,154 @@
+<Layouts.app flash={@flash}>
+  <section class="studio-editor">
+    <aside class="studio-sidebar">
+      <div class="studio-brand">
+        <div class="studio-mark">SQ</div>
+        <div>
+          <p class="studio-kicker">Workspace</p>
+          <h1>Squid Studio</h1>
+        </div>
+      </div>
+
+      <nav class="studio-nav" aria-label="Editor sections">
+        <button type="button" class="studio-nav-item is-active">Canvas</button>
+        <button type="button" class="studio-nav-item">Runs</button>
+        <button type="button" class="studio-nav-item">Settings</button>
+      </nav>
+
+      <div class="studio-sidebar-section">
+        <p class="studio-kicker">Workflow</p>
+        <h2>{@workflow.name}</h2>
+        <div class="studio-metrics">
+          <div class="studio-metric">
+            <span>Steps</span>
+            <strong>{length(@nodes)}</strong>
+          </div>
+          <div class="studio-metric">
+            <span>Transitions</span>
+            <strong>{length(@edges)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="studio-sidebar-section">
+        <p class="studio-kicker">Components</p>
+        <div class="studio-component-list">
+          <button type="button" class="studio-component">
+            <span class="studio-component-dot input"></span>
+            <span>Input</span>
+          </button>
+          <button type="button" class="studio-component">
+            <span class="studio-component-dot step"></span>
+            <span>Step</span>
+          </button>
+          <button type="button" class="studio-component">
+            <span class="studio-component-dot decision"></span>
+            <span>Decision</span>
+          </button>
+          <button type="button" class="studio-component">
+            <span class="studio-component-dot output"></span>
+            <span>Output</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="studio-canvas-column">
+      <div class="studio-toolbar">
+        <div>
+          <p class="studio-kicker">Editor</p>
+          <h2>{@workflow.name}</h2>
+        </div>
+        <div class="studio-segmented">
+          <button type="button" class="is-active">Build</button>
+          <button type="button">Review</button>
+        </div>
+        <div class="studio-toolbar-actions">
+          <span class="studio-badge">Draft</span>
+          <button type="button" class="studio-button secondary">Validate</button>
+          <button type="button" class="studio-button primary">Save</button>
+        </div>
+      </div>
+
+      <div id="squid-studio-flow" phx-hook="SquidStudioFlow">
+        <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker
+              id="studio-arrow"
+              viewBox="0 0 10 10"
+              refX="8"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 10 5 L 0 10 z" class="studio-arrow" />
+            </marker>
+          </defs>
+          <%= for edge <- @edges do %>
+            <path class="studio-edge" d={edge.path} marker-end="url(#studio-arrow)" />
+          <% end %>
+        </svg>
+
+        <%= for node <- @nodes do %>
+          <button
+            id={"studio-node-#{node.id}"}
+            type="button"
+            class={[
+              "studio-node",
+              node.id == @selected_node_id && "is-selected"
+            ]}
+            style={"left: #{node.x}px; top: #{node.y}px;"}
+            data-node-id={node.id}
+            phx-click="select_node"
+            phx-value-id={node.id}
+          >
+            <span class="studio-node-port left"></span>
+            <span class="studio-node-content">
+              <span class="studio-node-title">{node.label}</span>
+              <span class="studio-node-type">{node.type}</span>
+            </span>
+            <span class="studio-node-port right"></span>
+          </button>
+        <% end %>
+      </div>
+    </section>
+
+    <aside class="studio-properties">
+      <div class="studio-properties-header">
+        <p class="studio-kicker">Selection</p>
+        <span class="studio-status-dot"></span>
+      </div>
+
+      <%= if selected = Enum.find(@nodes, &(&1.id == @selected_node_id)) do %>
+        <div class="studio-inspector-title">{selected.label}</div>
+        <div class="studio-inspector-row">
+          <span>Type</span>
+          <strong>{selected.type}</strong>
+        </div>
+        <div class="studio-inspector-row">
+          <span>X</span>
+          <strong>{selected.x}</strong>
+        </div>
+        <div class="studio-inspector-row">
+          <span>Y</span>
+          <strong>{selected.y}</strong>
+        </div>
+
+        <div class="studio-properties-section">
+          <p class="studio-kicker">Connections</p>
+          <div class="studio-connection-list">
+            <%= for edge <- @edges, edge.source == selected.id or edge.target == selected.id do %>
+              <div class="studio-connection">
+                <span>{edge.source}</span>
+                <strong>{edge.target}</strong>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <p class="studio-inspector-empty">No selection</p>
+      <% end %>
+    </aside>
+  </section>
+</Layouts.app>

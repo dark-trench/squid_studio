@@ -4,6 +4,7 @@ defmodule SquidStudio.Web.Layouts do
   use SquidStudio.Web, :html
 
   alias SquidStudio.Web.Assets
+  alias SquidStudio.Web.Helpers
 
   embed_templates "layouts/*"
 
@@ -46,7 +47,7 @@ defmodule SquidStudio.Web.Layouts do
     {_live, _routing, meta} = conn.private.phoenix_live_view
     prefix = get_in(meta, [:extra, :session, Access.elem(2), Access.at(0)])
 
-    path = SquidStudio.Web.Helpers.prefixed_path(prefix, "#{asset}-#{hash}")
+    path = Helpers.prefixed_path(prefix, "#{asset}-#{hash}")
 
     Phoenix.VerifiedRoutes.unverified_path(conn, conn.private.phoenix_router, path)
   end

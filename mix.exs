@@ -5,12 +5,20 @@ defmodule SquidStudio.MixProject do
     [
       app: :squid_studio,
       version: "0.1.0",
+      name: "Squid Studio",
+      description: description(),
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      compilers: [:phoenix_live_view] ++ Mix.compilers()
+      compilers: [:phoenix_live_view] ++ Mix.compilers(),
+      package: package(),
+      docs: docs(),
+      source_url: source_url(),
+      homepage_url: source_url(),
+      test_coverage: [tool: ExCoveralls],
+      dialyzer: dialyzer()
     ]
   end
 
@@ -26,7 +34,14 @@ defmodule SquidStudio.MixProject do
 
   def cli do
     [
-      preferred_envs: [precommit: :test]
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test,
+        "coveralls.json": :test,
+        coverage: :test,
+        precommit: :test
+      ]
     ]
   end
 
@@ -46,6 +61,11 @@ defmodule SquidStudio.MixProject do
       {:lazy_html, ">= 0.1.0", only: :test},
       {:esbuild, "~> 0.10", only: [:dev, :test], runtime: false},
       {:tailwind, "~> 0.3", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.18", only: :test},
+      {:ex_doc, "~> 0.38", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.2.0",
@@ -76,10 +96,51 @@ defmodule SquidStudio.MixProject do
       ],
       precommit: [
         "compile --warnings-as-errors",
+        "xref graph --format cycles --label compile-connected --fail-above 0",
         "deps.unlock --check-unused",
         "format --check-formatted",
-        "test"
+        "credo --strict",
+        "deps.audit --ignore-file config/deps_audit.ignore",
+        "assets.build",
+        "coveralls"
+      ],
+      coverage: [
+        "coveralls",
+        "coveralls.json"
       ]
+    ]
+  end
+
+  defp description do
+    "Embeddable Phoenix workflow editor for Squidie."
+  end
+
+  defp source_url do
+    "https://github.com/dark-trench/squid_studio"
+  end
+
+  defp package do
+    [
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => source_url()},
+      files: ~w(assets config lib priv .formatter.exs CHANGELOG.md LICENSE mix.exs README.md)
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md", "CHANGELOG.md", "LICENSE"],
+      source_ref: "main",
+      source_url: source_url()
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_add_apps: [:mix, :ex_unit],
+      plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+      flags: [:error_handling, :missing_return, :underspecs]
     ]
   end
 end

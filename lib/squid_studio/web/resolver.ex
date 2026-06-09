@@ -3,7 +3,7 @@ defmodule SquidStudio.Web.Resolver do
   Behavior for host applications that embed Squid Studio.
 
   The default resolver exposes a small sample workflow so the editor can render
-  before a host app wires in real Squid Mesh workflow discovery.
+  before a host app wires in real Squidie workflow discovery.
   """
 
   @callback resolve_user(Plug.Conn.t()) :: term()

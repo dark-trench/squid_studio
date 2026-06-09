@@ -1,6 +1,36 @@
 # Squid Studio
 
-Visual editor for Squid Mesh workflows.
+Visual editor for Squidie workflows.
+
+## Squidie Integration
+
+Squid Studio uses Squidie as the workflow runtime and editor-spec boundary.
+Studio owns the embedded Phoenix UI; host applications still own runtime
+configuration, storage, queues, workers, authorization, and redaction.
+
+Add both packages to a host application when the Studio UI should author,
+validate, preview, or inspect Squidie workflows:
+
+```elixir
+defp deps do
+  [
+    {:squidie, "~> 0.1.3"},
+    {:squid_studio, "~> 0.1.0"}
+  ]
+end
+```
+
+Hosts should configure Squidie directly in the host application:
+
+```elixir
+config :squidie,
+  repo: MyApp.Repo,
+  queue: "default"
+```
+
+Squid Studio does not start workers or choose storage. Host applications expose
+only the workflows, runs, action registry, and visibility scope that a user is
+allowed to access.
 
 ## Embed In A Phoenix App
 

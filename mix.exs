@@ -5,7 +5,7 @@ defmodule SquidStudio.MixProject do
     [
       app: :squid_studio,
       version: "0.1.0",
-      elixir: "~> 1.17",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -42,6 +42,7 @@ defmodule SquidStudio.MixProject do
       {:phoenix, "~> 1.8.1"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_view, "~> 1.1.0"},
+      {:squidie, "~> 0.1.3", optional: true},
       {:lazy_html, ">= 0.1.0", only: :test},
       {:esbuild, "~> 0.10", only: [:dev, :test], runtime: false},
       {:tailwind, "~> 0.3", only: [:dev, :test], runtime: false},

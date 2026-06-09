@@ -1,6 +1,8 @@
 defmodule SquidStudio.SquidieIntegrationTest do
   use ExUnit.Case, async: true
 
+  alias Squidie.Workflow.EditorSpec
+
   test "can preview Squidie editor specs for Studio graph integration" do
     editor_spec = %{
       "workflow" => "demo_workflow",
@@ -20,7 +22,7 @@ defmodule SquidStudio.SquidieIntegrationTest do
       "entry_step" => "load_invoice"
     }
 
-    assert {:ok, graph} = Squidie.Workflow.EditorSpec.preview_graph(editor_spec)
+    assert {:ok, graph} = EditorSpec.preview_graph(editor_spec)
 
     assert %{
              "source" => "workflow_spec",

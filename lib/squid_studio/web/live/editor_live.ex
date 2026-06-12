@@ -20,6 +20,7 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:edges, graph.edges)
       |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
+      |> assign(:theme, :system)
 
     {:ok, socket}
   end
@@ -54,6 +55,10 @@ defmodule SquidStudio.Web.EditorLive do
 
   def handle_event("select_node", %{"id" => id}, socket) do
     {:noreply, assign(socket, :selected_node_id, id)}
+  end
+
+  def handle_event("set_theme", %{"theme" => theme}, socket) do
+    {:noreply, assign(socket, :theme, normalize_theme(theme))}
   end
 
   defp build_graph(nodes, edges) do
@@ -177,6 +182,11 @@ defmodule SquidStudio.Web.EditorLive do
   defp node_icon("input"), do: "hero-arrow-down-tray"
   defp node_icon("output"), do: "hero-paper-airplane"
   defp node_icon(_type), do: "hero-bolt"
+
+  defp normalize_theme("system"), do: :system
+  defp normalize_theme("light"), do: :light
+  defp normalize_theme("dark"), do: :dark
+  defp normalize_theme(_theme), do: :system
 
   defp value(map, key, default \\ nil)
   defp value(map, key, default), do: Map.get(map, key) || Map.get(map, to_string(key)) || default

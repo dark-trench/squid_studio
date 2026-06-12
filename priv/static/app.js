@@ -8685,7 +8685,7 @@ removing illegal node: "${(childNode.outerHTML || childNode.nodeValue).trim()}"
     params: { _csrf_token: csrfToken },
     hooks: { SquidStudioFlow }
   });
-  import_topbar.default.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
+  import_topbar.default.config({ barColors: { 0: "#75f9e0" }, shadowColor: "rgba(0, 11, 21, .35)" });
   window.addEventListener("phx:page-loading-start", (_info) => import_topbar.default.show(300));
   window.addEventListener("phx:page-loading-stop", (_info) => import_topbar.default.hide());
   liveSocket.connect();

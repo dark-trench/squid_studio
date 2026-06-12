@@ -27,6 +27,15 @@ defmodule SquidStudio.Web.RouterTest do
     assert get_resp_header(js, "content-type") == ["application/javascript; charset=utf-8"]
   end
 
+  test "serves the Squidie logo palette in studio css", %{conn: conn} do
+    css = get(conn, "/studio/css-#{Assets.current_hash(:css)}")
+
+    assert css.resp_body =~ "--studio-accent: #5edac9;"
+    assert css.resp_body =~ "--studio-accent-strong: #75f9e0;"
+    assert css.resp_body =~ "--studio-ink: #e9fffb;"
+    refute css.resp_body =~ "--studio-accent: #6d28d9;"
+  end
+
   test "rejects stale asset hashes", %{conn: conn} do
     conn = get(conn, "/studio/js-deadbeef")
 

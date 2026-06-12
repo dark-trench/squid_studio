@@ -28,15 +28,67 @@ import {SquidStudioFlow} from "./hooks/squid_studio_flow"
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveTransport = document.querySelector("meta[name='live-transport']")?.getAttribute("content") || "websocket"
 const livePath = document.querySelector("meta[name='live-path']")?.getAttribute("content") || "/live"
+const themeStorageKey = "squid-studio-theme"
+const themes = new Set(["system", "light", "dark"])
+
+const storedTheme = () => {
+  try {
+    const theme = window.localStorage.getItem(themeStorageKey)
+    return themes.has(theme) ? theme : null
+  } catch (_error) {
+    return null
+  }
+}
+
+const storeTheme = theme => {
+  if (!themes.has(theme)) return
+
+  try {
+    window.localStorage.setItem(themeStorageKey, theme)
+  } catch (_error) {
+    return
+  }
+}
+
+const applyTheme = theme => {
+  if (!themes.has(theme)) return
+
+  document.querySelectorAll(".studio-editor").forEach(editor => {
+    editor.classList.remove("studio-theme-system", "studio-theme-light", "studio-theme-dark")
+    editor.classList.add(`studio-theme-${theme}`)
+  })
+}
+
+const initialTheme = storedTheme()
+if (initialTheme) applyTheme(initialTheme)
+
+const SquidStudioTheme = {
+  mounted() {
+    const theme = storedTheme()
+    if (theme) this.pushEvent("set_theme", {theme})
+  },
+}
+
 const liveSocket = new LiveSocket(livePath, Socket, {
   transport: liveTransport === "longpoll" ? LongPoll : WebSocket,
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {SquidStudioFlow},
+  hooks: {SquidStudioFlow, SquidStudioTheme},
+})
+
+document.addEventListener("click", event => {
+  if (!(event.target instanceof Element)) return
+
+  const button = event.target.closest("[data-studio-theme]")
+  if (!button) return
+
+  const theme = button.dataset.studioTheme
+  storeTheme(theme)
+  applyTheme(theme)
 })
 
 // Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+topbar.config({barColors: {0: "#75f9e0"}, shadowColor: "rgba(0, 11, 21, .35)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 

@@ -1,5 +1,9 @@
 <Layouts.app flash={@flash}>
-  <section class="studio-editor">
+  <section
+    id="squid-studio-editor"
+    phx-hook="SquidStudioTheme"
+    class={["studio-editor", "studio-theme-#{@theme}"]}
+  >
     <aside class="studio-sidebar">
       <div class="studio-brand">
         <div class="studio-mark">SQ</div>
@@ -102,6 +106,7 @@
           </button>
         </div>
         <div class="studio-toolbar-actions">
+          <.theme_switcher theme={@theme} />
           <span class="studio-badge"><.icon name="hero-pencil-square" />Draft</span>
           <button type="button" class="studio-button secondary">
             <.icon name="hero-shield-check" />

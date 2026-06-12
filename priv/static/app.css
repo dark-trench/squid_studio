@@ -831,8 +831,8 @@ html:has(.studio-app), body:has(.studio-app) {
   min-height: 0;
   overflow: hidden;
   background-color: var(--studio-canvas);
-  background-image: linear-gradient(rgba(117, 249, 224, 0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(117, 249, 224, 0.12) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient( circle, rgba(117, 249, 224, 0.22) 1px, transparent 1.5px );
+  background-size: 22px 22px;
   cursor: default;
 }
 .studio-edge-layer {

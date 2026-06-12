@@ -33,7 +33,16 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "--studio-accent: #5edac9;"
     assert css.resp_body =~ "--studio-accent-strong: #75f9e0;"
     assert css.resp_body =~ "--studio-ink: #e9fffb;"
+
+    assert css.resp_body =~ "radial-gradient("
+    assert css.resp_body =~ "rgba(117, 249, 224, 0.22) 1px"
+    assert css.resp_body =~ "transparent 1.5px"
+    assert css.resp_body =~ "background-size: 22px 22px;"
+
     refute css.resp_body =~ "--studio-accent: #6d28d9;"
+
+    refute css.resp_body =~
+             "linear-gradient(90deg, rgba(117, 249, 224, 0.12) 1px, transparent 1px)"
   end
 
   test "rejects stale asset hashes", %{conn: conn} do

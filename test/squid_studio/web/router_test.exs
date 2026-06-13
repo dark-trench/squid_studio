@@ -6,24 +6,42 @@ defmodule SquidStudio.Web.RouterTest do
   test "mounts the embedded studio route", %{conn: conn} do
     conn = get(conn, "/studio")
 
-    assert html_response(conn, 200) =~ "Squid Studio"
-    assert html_response(conn, 200) =~ ~s(id="squid-studio-editor")
-    assert html_response(conn, 200) =~ ~s(phx-hook="SquidStudioTheme")
-    assert html_response(conn, 200) =~ "studio-theme-system"
-    assert html_response(conn, 200) =~ ~s(id="squid-studio-flow")
-    assert html_response(conn, 200) =~ ~s(phx-hook="SquidStudioFlow")
-    assert html_response(conn, 200) =~ ~s(data-studio-theme="system")
-    assert html_response(conn, 200) =~ ~s(data-studio-theme="light")
-    assert html_response(conn, 200) =~ ~s(data-studio-theme="dark")
-    assert html_response(conn, 200) =~ ~s(data-node-id="fetch_feed")
-    assert html_response(conn, 200) =~ ~s(class="studio-edge")
-    assert html_response(conn, 200) =~ "Workflow drafts"
-    assert html_response(conn, 200) =~ "trigger :daily_digest"
-    assert html_response(conn, 200) =~ "hero-clock"
-    assert html_response(conn, 200) =~ "Draft spec"
-    assert html_response(conn, 200) =~ "Host persistence"
-    assert html_response(conn, 200) =~ "Publish version"
-    refute html_response(conn, 200) =~ "Live</span>"
+    html = html_response(conn, 200)
+
+    assert html =~ "Squid Studio"
+    assert html =~ ~s(id="squid-studio-editor")
+    assert html =~ ~s(phx-hook="SquidStudioTheme")
+    assert html =~ "studio-theme-system"
+    assert html =~ ~s(id="squid-studio-flow")
+    assert html =~ ~s(phx-hook="SquidStudioFlow")
+    assert html =~ ~s(data-studio-theme="system")
+    assert html =~ ~s(data-studio-theme="light")
+    assert html =~ ~s(data-studio-theme="dark")
+    assert html =~ ~s(data-node-id="fetch_feed")
+    assert html =~ ~s(class="studio-edge")
+    assert html =~ "Workflow drafts"
+    assert html =~ "trigger :daily_digest"
+    assert html =~ "hero-clock"
+    assert html =~ "Draft spec"
+    assert html =~ "Host persistence"
+    assert html =~ "Publish version"
+    refute html =~ "Live</span>"
+  end
+
+  test "uses a full-width editor topbar above the workspace panels", %{conn: conn} do
+    html =
+      conn
+      |> get("/studio")
+      |> html_response(200)
+
+    assert html =~ ~s(<header class="studio-topbar">)
+    assert html =~ ~s(<div class="studio-workspace">)
+    assert html =~ ~s(<aside class="studio-sidebar">)
+    assert html =~ ~s(<section class="studio-canvas-column">)
+    assert html =~ ~s(<aside class="studio-properties">)
+    refute html =~ ~s(class="studio-toolbar")
+    refute html =~ "Review</span>"
+    refute html =~ "Validate</span>"
   end
 
   test "serves hashed studio assets", %{conn: conn} do
@@ -82,7 +100,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-edge")
   end
 
-  test "sets the studio theme from the toolbar control", %{conn: conn} do
+  test "sets the studio theme from the topbar control", %{conn: conn} do
     {:ok, view, html} = live(conn, "/studio")
 
     assert html =~ "studio-theme-system"

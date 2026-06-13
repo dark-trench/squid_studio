@@ -15,6 +15,8 @@ defmodule SquidStudio.Web.Authentication do
       |> assign(:live_path, session["live_path"])
       |> assign(:live_transport, session["live_transport"])
       |> assign(:workflows, session["workflows"])
+      |> assign(:drafts, session["drafts"])
+      |> assign(:draft_error, session["draft_error"])
       |> assign(:csp_nonces, session["csp_nonces"])
 
     {:cont, socket}

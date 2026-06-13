@@ -3,6 +3,7 @@ defmodule SquidStudio.Web.Router do
   Router macro for mounting Squid Studio inside a host Phoenix application.
   """
 
+  alias SquidStudio.Drafts
   alias SquidStudio.Web.Resolver
 
   @default_opts [
@@ -70,6 +71,7 @@ defmodule SquidStudio.Web.Router do
   def __session__(conn, prefix, resolver, live_path, live_transport, csp_key) do
     user = Resolver.call_with_fallback(resolver, :resolve_user, [conn])
     csp_keys = expand_csp_nonce_keys(csp_key)
+    {drafts, draft_error} = resolve_drafts(resolver, user)
 
     %{
       "prefix" => prefix,
@@ -77,6 +79,8 @@ defmodule SquidStudio.Web.Router do
       "user" => user,
       "access" => Resolver.call_with_fallback(resolver, :resolve_access, [user]),
       "workflows" => Resolver.call_with_fallback(resolver, :resolve_workflows, [user]),
+      "drafts" => drafts,
+      "draft_error" => draft_error,
       "live_path" => live_path,
       "live_transport" => live_transport,
       "csp_nonces" => %{
@@ -85,6 +89,16 @@ defmodule SquidStudio.Web.Router do
         script: conn.assigns[csp_keys[:script]]
       }
     }
+  end
+
+  defp resolve_drafts(resolver, user) do
+    resolver
+    |> Resolver.call_with_fallback(:resolve_drafts, [user])
+    |> Drafts.normalize_many()
+    |> case do
+      {:ok, drafts} -> {drafts, nil}
+      {:error, reason} -> {[], reason}
+    end
   end
 
   defp expand_alias({:__aliases__, _, _} = alias_ast, env) do

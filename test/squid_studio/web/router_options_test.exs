@@ -4,6 +4,26 @@ defmodule SquidStudio.Web.RouterOptionsTest do
   alias SquidStudio.Web.Resolver
   alias SquidStudio.Web.Router
 
+  defmodule DraftResolver do
+    @behaviour SquidStudio.Web.Resolver
+
+    def resolve_user(_conn), do: :operator
+    def resolve_access(:operator), do: :all
+    def resolve_workflows(:operator), do: []
+
+    def resolve_drafts(:operator) do
+      [
+        %{
+          id: "custom_draft",
+          workflow: "custom_workflow",
+          name: "Custom workflow",
+          definition_version: "draft",
+          spec: %{"workflow" => "custom_workflow", "steps" => []}
+        }
+      ]
+    end
+  end
+
   test "rejects unsupported live transport values" do
     assert_raise ArgumentError, ~r/invalid :transport/, fn ->
       Router.__options__("/studio", transport: "ftp")
@@ -83,5 +103,34 @@ defmodule SquidStudio.Web.RouterOptionsTest do
            } = session
 
     assert [%{id: "daily_digest"}] = session["workflows"]
+    assert [%{"id" => "daily_digest", "definition_version" => "draft"}] = session["drafts"]
+  end
+
+  test "builds live session data with host-owned draft resolver output" do
+    conn = Phoenix.ConnTest.build_conn()
+
+    session =
+      Router.__session__(
+        conn,
+        "/studio",
+        DraftResolver,
+        "/live",
+        "websocket",
+        nil
+      )
+
+    assert %{
+             "user" => :operator,
+             "access" => :all,
+             "workflows" => [],
+             "drafts" => [
+               %{
+                 "id" => "custom_draft",
+                 "workflow" => "custom_workflow",
+                 "definition_version" => "draft",
+                 "spec" => %{"workflow" => "custom_workflow"}
+               }
+             ]
+           } = session
   end
 end

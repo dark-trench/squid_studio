@@ -17,9 +17,13 @@ defmodule SquidStudio.Web.RouterTest do
     assert html_response(conn, 200) =~ ~s(data-studio-theme="dark")
     assert html_response(conn, 200) =~ ~s(data-node-id="fetch_feed")
     assert html_response(conn, 200) =~ ~s(class="studio-edge")
-    assert html_response(conn, 200) =~ "hero-squares-2x2"
+    assert html_response(conn, 200) =~ "Workflow drafts"
     assert html_response(conn, 200) =~ "trigger :daily_digest"
     assert html_response(conn, 200) =~ "hero-clock"
+    assert html_response(conn, 200) =~ "Draft spec"
+    assert html_response(conn, 200) =~ "Host persistence"
+    assert html_response(conn, 200) =~ "Publish version"
+    refute html_response(conn, 200) =~ "Live</span>"
   end
 
   test "serves hashed studio assets", %{conn: conn} do
@@ -98,6 +102,60 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "studio-theme-dark"
     refute html =~ "studio-theme-light"
+  end
+
+  test "surfaces host draft persistence failures without losing editor state", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/studio")
+
+    html =
+      view
+      |> element(~s(button[phx-click="save_draft"]))
+      |> render_click()
+
+    assert html =~ "Unsaved"
+    assert html =~ "Draft was kept in the editor"
+    assert html =~ "persistence_not_configured"
+    assert html =~ ~s(id="studio-node-fetch_feed")
+
+    html =
+      view
+      |> element(~s(button[phx-click="publish_draft"]))
+      |> render_click()
+
+    assert html =~ "Publish handoff failed"
+    assert html =~ "publish_not_configured"
+    assert html =~ ~s(id="studio-node-fetch_feed")
+  end
+
+  test "uses host callbacks for draft selection, save, and publish", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio")
+
+    assert html =~ "Invoice Review"
+    assert html =~ "Carrier Onboarding"
+
+    html =
+      view
+      |> element(~s(button[phx-value-id="carrier_onboarding"]))
+      |> render_click()
+
+    assert html =~ "carrier_onboarding"
+    assert html =~ "Host persistence owns save, delete, and publish callbacks."
+
+    html =
+      view
+      |> element(~s(button[phx-click="save_draft"]))
+      |> render_click()
+
+    assert html =~ "Saved"
+    assert html =~ "Host persistence accepted the draft spec."
+
+    html =
+      view
+      |> element(~s(button[phx-click="publish_draft"]))
+      |> render_click()
+
+    assert html =~ "Published"
+    assert html =~ "Host published a runnable Squidie workflow version."
   end
 
   test "centers the graph when the canvas reports its dimensions", %{conn: conn} do

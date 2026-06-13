@@ -6,12 +6,28 @@ defmodule SquidStudio.Web.Resolver do
   before a host app wires in real Squidie workflow discovery.
   """
 
+  alias SquidStudio.Drafts
+
   @callback resolve_user(Plug.Conn.t()) :: term()
   @callback resolve_access(term()) :: :all | :read_only
   @callback resolve_workflows(term()) :: [map()]
+  @callback resolve_drafts(term()) :: [map()] | {:ok, [map()]} | {:error, term()}
+  @callback load_draft(term(), String.t()) :: {:ok, map()} | {:error, term()}
+  @callback save_draft(term(), map()) :: {:ok, map()} | {:error, term()}
+  @callback delete_draft(term(), String.t()) :: :ok | {:ok, term()} | {:error, term()}
+  @callback publish_draft(term(), String.t()) :: {:ok, map()} | {:error, term()}
+
+  @optional_callbacks resolve_user: 1,
+                      resolve_access: 1,
+                      resolve_workflows: 1,
+                      resolve_drafts: 1,
+                      load_draft: 2,
+                      save_draft: 2,
+                      delete_draft: 2,
+                      publish_draft: 2
 
   def call_with_fallback(resolver, callback, args) do
-    if function_exported?(resolver, callback, length(args)) do
+    if Code.ensure_loaded?(resolver) and function_exported?(resolver, callback, length(args)) do
       apply(resolver, callback, args)
     else
       apply(__MODULE__, callback, args)
@@ -56,6 +72,29 @@ defmodule SquidStudio.Web.Resolver do
       }
     ]
   end
+
+  @doc false
+  def resolve_drafts(user), do: user |> resolve_workflows() |> Drafts.from_workflows()
+
+  @doc false
+  def load_draft(user, draft_id) do
+    user
+    |> resolve_drafts()
+    |> Enum.find(&(&1["id"] == draft_id))
+    |> case do
+      nil -> {:error, :not_found}
+      draft -> {:ok, draft}
+    end
+  end
+
+  @doc false
+  def save_draft(_user, _draft), do: {:error, :persistence_not_configured}
+
+  @doc false
+  def delete_draft(_user, _draft_id), do: {:error, :persistence_not_configured}
+
+  @doc false
+  def publish_draft(_user, _draft_id), do: {:error, :publish_not_configured}
 
   defp node(id, label, type, x, y) do
     %{id: id, type: type, position: %{x: x, y: y}, data: %{label: label}}

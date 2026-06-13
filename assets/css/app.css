@@ -19,7 +19,7 @@
 :root {
   --studio-sidebar-width: 260px;
   --studio-properties-width: 300px;
-  --studio-topbar-height: 72px;
+  --studio-topbar-height: 56px;
 }
 
 .studio-editor,
@@ -181,20 +181,19 @@ body:has(.studio-app) {
 .studio-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 48px;
+  gap: 10px;
+  min-height: 38px;
   min-width: 0;
 }
 
 .studio-brand h1,
-.studio-sidebar h2,
-.studio-topbar h2 {
+.studio-sidebar h2 {
   margin: 0;
   color: var(--studio-ink);
 }
 
 .studio-brand h1 {
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.1;
   font-weight: 700;
 }
@@ -202,8 +201,8 @@ body:has(.studio-app) {
 .studio-mark {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border: 1px solid var(--studio-accent-border);
   border-radius: 8px;
   background: linear-gradient(135deg, var(--studio-accent-strong), var(--studio-accent));
@@ -464,10 +463,10 @@ body:has(.studio-app) {
   display: grid;
   grid-template-columns: minmax(210px, 0.8fr) minmax(260px, 1.2fr) auto minmax(360px, auto);
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
   min-height: var(--studio-topbar-height);
-  padding: 10px 16px;
+  padding: 6px 14px;
   border-bottom: 1px solid var(--studio-border);
   background: var(--studio-topbar-bg);
   backdrop-filter: blur(8px);
@@ -499,12 +498,6 @@ body:has(.studio-app) {
   color: var(--studio-accent);
 }
 
-.studio-topbar h2 {
-  margin-top: 2px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
 .studio-topbar-meta {
   min-width: 0;
 }
@@ -515,11 +508,12 @@ body:has(.studio-app) {
 }
 
 .studio-topbar .studio-metric {
-  padding: 8px 10px;
+  padding: 5px 9px;
 }
 
 .studio-topbar .studio-metric strong {
-  font-size: 18px;
+  margin-top: 1px;
+  font-size: 15px;
 }
 
 .studio-topbar-actions {
@@ -534,7 +528,7 @@ body:has(.studio-app) {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  height: 34px;
+  height: 30px;
   border: 1px solid var(--studio-border);
   border-radius: 8px;
   padding: 3px;
@@ -544,8 +538,8 @@ body:has(.studio-app) {
 .studio-icon-button {
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -558,8 +552,8 @@ body:has(.studio-app) {
 }
 
 .studio-icon-button svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 .studio-icon-button:hover,
@@ -573,7 +567,7 @@ body:has(.studio-app) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
+  height: 28px;
   border: 1px solid var(--studio-badge-border);
   border-radius: 999px;
   padding: 0 10px;
@@ -588,8 +582,8 @@ body:has(.studio-app) {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 34px;
-  padding: 0 12px;
+  height: 30px;
+  padding: 0 10px;
 }
 
 .studio-button.primary {

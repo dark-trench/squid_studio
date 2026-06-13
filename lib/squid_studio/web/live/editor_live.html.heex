@@ -8,26 +8,10 @@
       <div class="studio-brand">
         <div class="studio-mark">SQ</div>
         <div>
-          <p class="studio-kicker">Workspace</p>
+          <p class="studio-kicker">Squidie host</p>
           <h1>Squid Studio</h1>
         </div>
-        <span class="studio-brand-chip">Live</span>
       </div>
-
-      <nav class="studio-nav" aria-label="Editor sections">
-        <button type="button" class="studio-nav-item is-active">
-          <.icon name="hero-squares-2x2" />
-          <span>Canvas</span>
-        </button>
-        <button type="button" class="studio-nav-item">
-          <.icon name="hero-play-circle" />
-          <span>Runs</span>
-        </button>
-        <button type="button" class="studio-nav-item">
-          <.icon name="hero-cog-6-tooth" />
-          <span>Settings</span>
-        </button>
-      </nav>
 
       <div class="studio-sidebar-section">
         <p class="studio-kicker">Workflow</p>
@@ -46,39 +30,64 @@
 
       <div class="studio-sidebar-section">
         <div class="studio-section-title">
-          <p class="studio-kicker">Components</p>
+          <p class="studio-kicker">Workflow drafts</p>
+          <span>{length(@drafts)}</span>
+        </div>
+        <div class="studio-draft-list">
+          <button
+            :for={draft <- @drafts}
+            type="button"
+            class={[
+              "studio-draft-item",
+              Map.get(draft, "id") == @selected_draft_id && "is-active"
+            ]}
+            phx-click="select_draft"
+            phx-value-id={Map.get(draft, "id")}
+          >
+            <span class="studio-component-icon built-in">
+              <.icon name="hero-document-text" />
+            </span>
+            <span>
+              <strong>{Map.get(draft, "name")}</strong>
+              <small>{Map.get(draft, "workflow")} · {Map.get(draft, "definition_version")}</small>
+            </span>
+          </button>
+          <p :if={@drafts == []} class="studio-muted">No host drafts exposed.</p>
+        </div>
+      </div>
+
+      <div class="studio-sidebar-section">
+        <div class="studio-section-title">
+          <p class="studio-kicker">Node catalog</p>
           <span>{length(@nodes)}</span>
         </div>
         <div class="studio-component-list">
-          <button type="button" class="studio-component">
+          <div class="studio-component">
             <span class="studio-component-icon trigger"><.icon name="hero-clock" /></span>
             <span>Trigger</span>
-          </button>
-          <button type="button" class="studio-component">
+          </div>
+          <div class="studio-component">
             <span class="studio-component-icon step"><.icon name="hero-bolt" /></span>
-            <span>Custom step</span>
-          </button>
-          <button type="button" class="studio-component">
-            <span class="studio-component-icon built-in"><.icon name="hero-cube" /></span>
-            <span>Built-in step</span>
-          </button>
-          <button type="button" class="studio-component">
+            <span>Action step</span>
+          </div>
+          <div class="studio-component">
             <span class="studio-component-icon approval"><.icon name="hero-hand-raised" /></span>
-            <span>Approval gate</span>
-          </button>
-          <button type="button" class="studio-component">
+            <span>Manual decision</span>
+          </div>
+          <div class="studio-component">
             <span class="studio-component-icon failure">
               <.icon name="hero-exclamation-triangle" />
             </span>
             <span>Failure route</span>
-          </button>
+          </div>
         </div>
       </div>
 
       <div class="studio-sidebar-footer">
         <div>
-          <p class="studio-kicker">State</p>
-          <strong>Draft workspace</strong>
+          <p class="studio-kicker">Host persistence</p>
+          <strong>{@draft_status}</strong>
+          <small>{@persistence_message}</small>
         </div>
         <.icon name="hero-circle-stack" />
       </div>
@@ -107,14 +116,18 @@
         </div>
         <div class="studio-toolbar-actions">
           <.theme_switcher theme={@theme} />
-          <span class="studio-badge"><.icon name="hero-pencil-square" />Draft</span>
+          <span class="studio-badge"><.icon name="hero-pencil-square" />{@draft_status}</span>
           <button type="button" class="studio-button secondary">
             <.icon name="hero-shield-check" />
             <span>Validate</span>
           </button>
-          <button type="button" class="studio-button primary">
+          <button type="button" class="studio-button secondary" phx-click="publish_draft">
+            <.icon name="hero-rocket-launch" />
+            <span>Publish version</span>
+          </button>
+          <button type="button" class="studio-button primary" phx-click="save_draft">
             <.icon name="hero-cloud-arrow-up" />
-            <span>Save</span>
+            <span>Save draft</span>
           </button>
         </div>
       </div>

@@ -3,6 +3,8 @@ defmodule SquidStudio.Web.EditorLive do
 
   use SquidStudio.Web, :live_view
 
+  alias SquidStudio.Web.Resolver
+
   @node_width 160
   @node_height 76
   @canvas_padding 40
@@ -11,11 +13,20 @@ defmodule SquidStudio.Web.EditorLive do
   def mount(_params, _session, socket) do
     workflow = socket.assigns.workflows |> List.wrap() |> List.first() |> normalize_workflow()
     graph = build_graph(workflow.nodes, workflow.edges)
+    drafts = List.wrap(socket.assigns[:drafts])
+    selected_draft = List.first(drafts)
 
     socket =
       socket
       |> assign(:page_title, "Editor")
       |> assign(:workflow, workflow)
+      |> assign(:drafts, drafts)
+      |> assign(:selected_draft_id, draft_id(selected_draft))
+      |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
+      |> assign(
+        :persistence_message,
+        persistence_message(socket.assigns[:draft_error], selected_draft)
+      )
       |> assign(:nodes, graph.nodes)
       |> assign(:edges, graph.edges)
       |> assign(:graph_centered?, false)
@@ -59,6 +70,73 @@ defmodule SquidStudio.Web.EditorLive do
 
   def handle_event("set_theme", %{"theme" => theme}, socket) do
     {:noreply, assign(socket, :theme, normalize_theme(theme))}
+  end
+
+  def handle_event("select_draft", %{"id" => id}, socket) do
+    draft = Enum.find(socket.assigns.drafts, &(Map.get(&1, "id") == id))
+
+    {:noreply,
+     socket
+     |> assign(:selected_draft_id, id)
+     |> assign(:draft_status, draft_status(nil, draft))
+     |> assign(:persistence_message, persistence_message(nil, draft))}
+  end
+
+  def handle_event("save_draft", _params, socket) do
+    draft = selected_draft(socket)
+
+    case draft &&
+           Resolver.call_with_fallback(socket.assigns.resolver, :save_draft, [
+             socket.assigns.user,
+             draft
+           ]) do
+      {:ok, saved_draft} ->
+        {:noreply,
+         socket
+         |> refresh_saved_draft(saved_draft)
+         |> assign(:draft_status, "Saved")
+         |> assign(:persistence_message, "Host persistence accepted the draft spec.")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:draft_status, "Unsaved")
+         |> assign(:persistence_message, error_message("Draft was kept in the editor", reason))}
+
+      nil ->
+        {:noreply,
+         socket
+         |> assign(:draft_status, "No draft")
+         |> assign(:persistence_message, "No draft spec is selected.")}
+    end
+  end
+
+  def handle_event("publish_draft", _params, socket) do
+    draft = selected_draft(socket)
+
+    case draft &&
+           Resolver.call_with_fallback(socket.assigns.resolver, :publish_draft, [
+             socket.assigns.user,
+             Map.get(draft, "id")
+           ]) do
+      {:ok, _version} ->
+        {:noreply,
+         socket
+         |> assign(:draft_status, "Published")
+         |> assign(:persistence_message, "Host published a runnable Squidie workflow version.")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:draft_status, "Draft spec")
+         |> assign(:persistence_message, error_message("Publish handoff failed", reason))}
+
+      nil ->
+        {:noreply,
+         socket
+         |> assign(:draft_status, "No draft")
+         |> assign(:persistence_message, "No draft spec is selected.")}
+    end
   end
 
   defp build_graph(nodes, edges) do
@@ -187,6 +265,47 @@ defmodule SquidStudio.Web.EditorLive do
   defp normalize_theme("light"), do: :light
   defp normalize_theme("dark"), do: :dark
   defp normalize_theme(_theme), do: :system
+
+  defp selected_draft(socket) do
+    Enum.find(socket.assigns.drafts, &(Map.get(&1, "id") == socket.assigns.selected_draft_id))
+  end
+
+  defp refresh_saved_draft(socket, draft) when is_map(draft) do
+    id = Map.get(draft, "id") || socket.assigns.selected_draft_id
+    drafts = Enum.map(socket.assigns.drafts, &if(Map.get(&1, "id") == id, do: draft, else: &1))
+
+    socket
+    |> assign(:drafts, drafts)
+    |> assign(:selected_draft_id, id)
+  end
+
+  defp refresh_saved_draft(socket, _draft), do: socket
+
+  defp draft_id(nil), do: nil
+  defp draft_id(draft), do: Map.get(draft, "id")
+
+  defp draft_status(error, _draft) when not is_nil(error), do: "Persistence error"
+  defp draft_status(_error, nil), do: "No draft"
+
+  defp draft_status(_error, draft),
+    do: Map.get(draft, "definition_version", "draft") |> status_label()
+
+  defp status_label("draft"), do: "Draft spec"
+  defp status_label(status), do: String.capitalize(to_string(status))
+
+  defp persistence_message(error, _draft) when not is_nil(error) do
+    error_message("Host draft resolver returned invalid data", error)
+  end
+
+  defp persistence_message(_error, nil) do
+    "Host resolver has not exposed draft specs yet."
+  end
+
+  defp persistence_message(_error, _draft) do
+    "Host persistence owns save, delete, and publish callbacks."
+  end
+
+  defp error_message(prefix, reason), do: "#{prefix}: #{inspect(reason)}"
 
   defp value(map, key, default \\ nil)
   defp value(map, key, default), do: Map.get(map, key) || Map.get(map, to_string(key)) || default

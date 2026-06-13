@@ -278,23 +278,15 @@ body:has(.studio-app) {
   line-height: 1;
 }
 
-.studio-nav,
-.studio-component-list {
+.studio-component-list,
+.studio-draft-list {
   display: grid;
   gap: 6px;
   margin-top: 12px;
 }
 
-.studio-nav {
-  margin-top: 0;
-  padding: 4px;
-  border: 1px solid var(--studio-border);
-  border-radius: 10px;
-  background: var(--studio-nav-bg);
-}
-
-.studio-nav-item,
 .studio-component,
+.studio-draft-item,
 .studio-button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -309,8 +301,8 @@ body:has(.studio-app) {
     box-shadow 0.12s ease;
 }
 
-.studio-nav-item,
-.studio-component {
+.studio-component,
+.studio-draft-item {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -319,40 +311,64 @@ body:has(.studio-app) {
   padding: 8px 10px;
 }
 
-.studio-nav-item {
-  justify-content: flex-start;
-  color: var(--studio-muted);
-}
-
-.studio-nav-item.is-active,
-.studio-nav-item:hover,
 .studio-component:hover,
+.studio-draft-item:hover,
+.studio-draft-item.is-active,
 .studio-button:hover {
   border-color: var(--studio-accent);
   background: var(--studio-accent-soft);
 }
 
-.studio-nav-item.is-active {
-  color: var(--studio-accent-strong);
-  font-weight: 750;
-  box-shadow: var(--studio-focus-shadow);
-}
-
-.studio-nav-item .hero-squares-2x2,
-.studio-nav-item .hero-play-circle,
-.studio-nav-item .hero-cog-6-tooth,
 .studio-sidebar-footer .hero-circle-stack,
 .studio-breadcrumb .hero-square-3-stack-3d,
 .studio-segmented .hero-wrench-screwdriver,
 .studio-segmented .hero-eye,
 .studio-button .hero-shield-check,
 .studio-button .hero-cloud-arrow-up,
+.studio-button .hero-rocket-launch,
 .studio-badge .hero-pencil-square {
   flex: none;
 }
 
 .studio-component {
   border-color: var(--studio-border);
+}
+
+.studio-draft-item {
+  width: 100%;
+  border-color: var(--studio-border);
+  background: var(--studio-surface);
+  cursor: pointer;
+}
+
+.studio-draft-item > span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.studio-draft-item strong,
+.studio-draft-item small,
+.studio-sidebar-footer small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-draft-item strong {
+  color: var(--studio-ink);
+  font-size: 13px;
+}
+
+.studio-draft-item small,
+.studio-sidebar-footer small {
+  color: var(--studio-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.studio-draft-item.is-active {
+  box-shadow: var(--studio-focus-shadow);
 }
 
 .studio-section-title,

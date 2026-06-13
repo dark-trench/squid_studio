@@ -16,5 +16,6 @@ defmodule SquidStudio.Test.Router do
     pipe_through(:browser)
 
     squid_studio("/studio")
+    squid_studio("/host-studio", as: :host_studio, resolver: SquidStudio.Test.HostResolver)
   end
 end

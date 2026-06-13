@@ -7,6 +7,10 @@ defmodule SquidStudioDash.Application do
   def start(_type, _args) do
     children = [
       {Phoenix.PubSub, name: SquidStudioDash.PubSub},
+      %{
+        id: SquidStudioDash.Resolver.Drafts,
+        start: {Agent, :start_link, [fn -> %{} end, [name: SquidStudioDash.Resolver.Drafts]]}
+      },
       SquidStudioDash.Endpoint
     ]
 

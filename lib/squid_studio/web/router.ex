@@ -35,7 +35,9 @@ defmodule SquidStudio.Web.Router do
           get "/css-:md5", SquidStudio.Web.Assets, :css, as: :squid_studio_asset
           get "/js-:md5", SquidStudio.Web.Assets, :js, as: :squid_studio_asset
 
-          live "/", SquidStudio.Web.EditorLive, :index, route_opts
+          live "/", SquidStudio.Web.WorkflowsLive, :index, route_opts
+          live "/workflows", SquidStudio.Web.WorkflowsLive, :index, route_opts
+          live "/workflows/:workflow_id", SquidStudio.Web.EditorLive, :show, route_opts
         end
       end
     end

@@ -3,8 +3,105 @@ defmodule SquidStudio.Web.RouterTest do
 
   alias SquidStudio.Web.Assets
 
-  test "mounts the embedded studio route", %{conn: conn} do
+  test "mounts the embedded workflows page", %{conn: conn} do
     conn = get(conn, "/studio")
+
+    html = html_response(conn, 200)
+
+    assert html =~ "Squid Studio"
+    assert html =~ ~s(id="squid-studio-workflows")
+    assert html =~ "Workflow Control Plane"
+    assert html =~ "Daily RSS To Discord"
+    assert html =~ "Runtime-authored specs"
+    assert html =~ "Dynamic work"
+    assert html =~ "Approvals"
+    assert html =~ "Replay"
+    assert html =~ "Run inspection"
+    assert html =~ "Host execution"
+    assert html =~ "Approval gate"
+    assert html =~ ~s(href="/studio/workflows/daily_digest")
+    refute html =~ "Live</span>"
+  end
+
+  test "filters workflows by operational status", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/studio")
+
+    assert html =~ "Daily RSS To Discord"
+    assert html =~ "Approval Saga With Compensation"
+    assert html =~ "Dynamic Subscription Fanout"
+
+    html =
+      view
+      |> element(~s(.studio-status-filters button[phx-value-status="approval"]))
+      |> render_click()
+
+    assert html =~ "Approval Saga With Compensation"
+    assert html =~ "Waiting for approval"
+    refute html =~ "Daily RSS To Discord"
+    refute html =~ "Dynamic Subscription Fanout"
+
+    html =
+      view
+      |> element(~s(.studio-status-filters button[phx-value-status="all"]))
+      |> render_click()
+
+    assert html =~ "Daily RSS To Discord"
+    assert html =~ "Dynamic Subscription Fanout"
+  end
+
+  test "searches workflow inventory and clears empty status views", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/studio")
+
+    html =
+      view
+      |> element(~s(.studio-status-filters button[phx-value-status="draft"]))
+      |> render_click()
+
+    assert html =~ "Runtime Authored Spec"
+    refute html =~ "Daily RSS To Discord"
+
+    html =
+      view
+      |> form("#workflow-search-form", workflow_filter: %{q: "bedrock"})
+      |> render_change()
+
+    assert html =~ "No workflows match this view."
+    refute html =~ "Bedrock Lease Drain"
+
+    html =
+      view
+      |> element(~s(.studio-status-filters button[phx-value-status="all"]))
+      |> render_click()
+
+    assert html =~ "Bedrock Lease Drain"
+    assert html =~ "Bedrock lease runner"
+  end
+
+  test "switches workflow templates and theme on the management page", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/studio")
+
+    assert html =~ "studio-theme-system"
+    assert html =~ "Purchase or release flows"
+
+    html =
+      view
+      |> element(~s(button[phx-value-id="bedrock_lease"]))
+      |> render_click()
+
+    assert html =~ "Backend-owned delivery"
+    assert html =~ "Host execution"
+
+    html =
+      view
+      |> element(~s(button[data-studio-theme="dark"]))
+      |> render_click()
+
+    assert html =~ "studio-theme-dark"
+    refute html =~ "studio-theme-system"
+  end
+
+  test "mounts the embedded studio editor route", %{conn: conn} do
+    conn = get(conn, "/studio/workflows/daily_digest")
 
     html = html_response(conn, 200)
 
@@ -31,7 +128,7 @@ defmodule SquidStudio.Web.RouterTest do
   test "uses a full-width editor topbar above the workspace panels", %{conn: conn} do
     html =
       conn
-      |> get("/studio")
+      |> get("/studio/workflows/daily_digest")
       |> html_response(200)
 
     assert html =~ ~s(<header class="studio-topbar">)
@@ -90,7 +187,7 @@ defmodule SquidStudio.Web.RouterTest do
   end
 
   test "updates node position from the drag hook", %{conn: conn} do
-    {:ok, view, _html} = live(conn, "/studio")
+    {:ok, view, _html} = live(conn, "/studio/workflows/daily_digest")
 
     html =
       view
@@ -102,7 +199,7 @@ defmodule SquidStudio.Web.RouterTest do
   end
 
   test "sets the studio theme from the topbar control", %{conn: conn} do
-    {:ok, view, html} = live(conn, "/studio")
+    {:ok, view, html} = live(conn, "/studio/workflows/daily_digest")
 
     assert html =~ "studio-theme-system"
 
@@ -124,7 +221,7 @@ defmodule SquidStudio.Web.RouterTest do
   end
 
   test "surfaces host draft persistence failures without losing editor state", %{conn: conn} do
-    {:ok, view, _html} = live(conn, "/studio")
+    {:ok, view, _html} = live(conn, "/studio/workflows/daily_digest")
 
     html =
       view
@@ -147,7 +244,7 @@ defmodule SquidStudio.Web.RouterTest do
   end
 
   test "uses host callbacks for draft selection, save, and publish", %{conn: conn} do
-    {:ok, view, html} = live(conn, "/host-studio")
+    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
 
     assert html =~ "Invoice Review"
     assert html =~ "Carrier Onboarding"
@@ -178,7 +275,7 @@ defmodule SquidStudio.Web.RouterTest do
   end
 
   test "centers the graph when the canvas reports its dimensions", %{conn: conn} do
-    {:ok, view, _html} = live(conn, "/studio")
+    {:ok, view, _html} = live(conn, "/studio/workflows/daily_digest")
 
     html =
       view

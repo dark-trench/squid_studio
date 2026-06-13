@@ -4,7 +4,18 @@ defmodule SquidStudio.Web.ResolverTest do
   alias SquidStudio.Web.Resolver
 
   test "default draft callbacks expose sample drafts without choosing host storage" do
-    assert [%{"id" => "daily_digest"}] = Resolver.resolve_drafts(nil)
+    drafts = Resolver.resolve_drafts(nil)
+    draft_ids = Enum.map(drafts, & &1["id"])
+
+    assert draft_ids == [
+             "daily_digest",
+             "approval_saga",
+             "dynamic_fanout",
+             "bedrock_dispatch",
+             "runtime_authored_spec"
+           ]
+
+    assert Enum.all?(drafts, &(&1["definition_version"] == "draft"))
     assert {:ok, %{"id" => "daily_digest"}} = Resolver.load_draft(nil, "daily_digest")
     assert {:error, :not_found} = Resolver.load_draft(nil, "missing")
     assert {:error, :persistence_not_configured} = Resolver.save_draft(nil, %{})

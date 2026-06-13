@@ -1,0 +1,182 @@
+<Layouts.app flash={@flash}>
+  <section
+    id="squid-studio-workflows"
+    phx-hook="SquidStudioTheme"
+    class={["studio-editor", "studio-workflows-page", "studio-theme-#{@theme}"]}
+  >
+    <header class="studio-workflows-header">
+      <div class="studio-brand">
+        <div class="studio-mark">SQ</div>
+        <div>
+          <p class="studio-kicker">Squidie host</p>
+          <h1>Squid Studio</h1>
+        </div>
+      </div>
+
+      <div class="studio-workflows-title">
+        <p class="studio-kicker">Workflow Control Plane</p>
+        <h2>Workflows</h2>
+      </div>
+
+      <div class="studio-workflows-header-actions">
+        <.theme_switcher theme={@theme} />
+        <.link navigate={studio_path("workflows/daily_digest")} class="studio-button primary">
+          <.icon name="hero-plus" />
+          <span>New draft</span>
+        </.link>
+      </div>
+    </header>
+
+    <main class="studio-workflows-main">
+      <section class="studio-workflows-summary" aria-label="Squidie capabilities">
+        <button
+          :for={tile <- @feature_tiles}
+          type="button"
+          class="studio-feature-tile"
+          phx-click="set_status_filter"
+          phx-value-status={tile.filter}
+        >
+          <span>{tile.title}</span>
+          <strong>{tile.value}</strong>
+          <small>{tile.text}</small>
+        </button>
+      </section>
+
+      <section class="studio-workflows-grid">
+        <div class="studio-workflows-panel primary">
+          <div class="studio-workflows-panel-header">
+            <div>
+              <p class="studio-kicker">Workflow inventory</p>
+              <h3>Host workflows</h3>
+            </div>
+            <span class="studio-count-pill">
+              {length(@visible_workflows)} of {length(@workflows)}
+            </span>
+          </div>
+
+          <div class="studio-workflows-controls">
+            <.form for={@filter_form} id="workflow-search-form" phx-change="filter_workflows">
+              <label class="studio-search-field">
+                <.icon name="hero-magnifying-glass" />
+                <input
+                  type="search"
+                  name={@filter_form[:q].name}
+                  value={@filter_form[:q].value}
+                  placeholder="Search workflows, runs, approvals..."
+                />
+              </label>
+            </.form>
+
+            <div class="studio-status-filters" aria-label="Workflow status filters">
+              <button
+                :for={filter <- @status_filters}
+                type="button"
+                class={status_filter_class(@status_filter, filter)}
+                phx-click="set_status_filter"
+                phx-value-status={filter}
+              >
+                {String.capitalize(filter)}
+              </button>
+            </div>
+          </div>
+
+          <div class="studio-workflow-card-list">
+            <.link
+              :for={workflow <- @visible_workflows}
+              navigate={studio_path(["workflows", workflow.id])}
+              class="studio-workflow-card"
+            >
+              <div class="studio-workflow-card-header">
+                <div>
+                  <p class="studio-kicker">{workflow.executor}</p>
+                  <h4>{workflow.name}</h4>
+                </div>
+                <span class={["studio-workflow-status", status_class(workflow.status)]}>
+                  {workflow.status_label}
+                </span>
+              </div>
+
+              <p>{workflow.description}</p>
+
+              <div class="studio-workflow-card-metrics">
+                <span><strong>{workflow.nodes}</strong> nodes</span>
+                <span><strong>{workflow.edges}</strong> edges</span>
+                <span><strong>{workflow.runs}</strong> runs</span>
+                <span><strong>{workflow.approvals}</strong> approvals</span>
+                <span><strong>{workflow.dynamic_overlays}</strong> overlays</span>
+              </div>
+
+              <div class="studio-workflow-card-footer">
+                <span><.icon name="hero-clock" />{workflow.updated}</span>
+                <strong>{workflow.primary_action}</strong>
+              </div>
+            </.link>
+
+            <div :if={@visible_workflows == []} class="studio-empty-state">
+              <.icon name="hero-magnifying-glass" />
+              <strong>No workflows match this view.</strong>
+              <button type="button" phx-click="set_status_filter" phx-value-status="all">
+                Clear filter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="studio-workflows-panel">
+          <div class="studio-workflows-panel-header">
+            <div>
+              <p class="studio-kicker">Templates</p>
+              <h3>Squidie starters</h3>
+            </div>
+          </div>
+
+          <div class="studio-template-list">
+            <button
+              :for={template <- @templates}
+              type="button"
+              class={[
+                "studio-template-item",
+                template.id == @selected_template_id && "is-active"
+              ]}
+              phx-click="select_template"
+              phx-value-id={template.id}
+            >
+              <strong>{template.title}</strong>
+              <span>{template.meta}</span>
+            </button>
+          </div>
+
+          <% selected_template = selected_template(@templates, @selected_template_id) %>
+          <div class="studio-template-preview">
+            <p class="studio-kicker">Selected template</p>
+            <h4>{selected_template.title}</h4>
+            <p>{selected_template.description}</p>
+            <.link
+              navigate={studio_path("workflows/runtime_authored_spec")}
+              class="studio-button secondary"
+            >
+              <.icon name="hero-document-plus" />
+              <span>Open as draft</span>
+            </.link>
+          </div>
+
+          <div class="studio-run-panel">
+            <p class="studio-kicker">Run inspection</p>
+            <div class="studio-run-row">
+              <span>Waiting for retry</span>
+              <strong>2</strong>
+            </div>
+            <div class="studio-run-row">
+              <span>Replay candidates</span>
+              <strong>4</strong>
+            </div>
+            <div class="studio-run-row">
+              <span>Actor visibility policies</span>
+              <strong>enabled</strong>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </section>
+</Layouts.app>

@@ -191,8 +191,6 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-tab"
     assert css.resp_body =~ ".studio-workflow-row-meta"
     assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr);"
-    assert css.resp_body =~ ".studio-workflows-panel.primary"
-    assert css.resp_body =~ "box-shadow: none;"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

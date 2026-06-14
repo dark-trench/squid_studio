@@ -888,12 +888,6 @@ body:has(.studio-app) {
   box-shadow: var(--studio-shadow);
 }
 
-.studio-workflows-panel.primary {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
 .studio-workflows-panel-header {
   display: flex;
   align-items: center;
@@ -923,7 +917,7 @@ body:has(.studio-app) {
   align-items: center;
   justify-content: flex-start;
   gap: 12px;
-  padding: 0 0 12px;
+  padding: 0 14px 12px;
   border-bottom: 1px solid var(--studio-border);
 }
 
@@ -992,7 +986,7 @@ body:has(.studio-app) {
 .studio-workflow-card-list {
   display: grid;
   gap: 2px;
-  padding: 8px 0 12px;
+  padding: 8px 14px 12px;
 }
 
 .studio-workflow-card {

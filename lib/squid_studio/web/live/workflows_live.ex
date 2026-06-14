@@ -232,10 +232,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
     Enum.find(templates, &(&1.id == selected_id)) || List.first(templates)
   end
 
-  defp selected_resource_view(resource_views, selected_status) do
-    Enum.find(resource_views, &(&1.status == selected_status)) || List.first(resource_views)
-  end
-
   defp filter_form(query) do
     to_form(%{"q" => query}, as: :workflow_filter)
   end

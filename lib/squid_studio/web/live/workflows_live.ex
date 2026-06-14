@@ -90,8 +90,7 @@ defmodule SquidStudio.Web.WorkflowsLive do
           workflow.name,
           workflow.description,
           workflow.status_label,
-          workflow.executor,
-          workflow.primary_action
+          workflow.executor
         ]
         |> Enum.join(" ")
         |> String.downcase()
@@ -119,7 +118,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
       approvals: approvals_for(id),
       dynamic_overlays: dynamic_overlays_for(id),
       executor: executor_for(id),
-      primary_action: primary_action_for(id),
       updated: updated_for(id)
     }
   end
@@ -162,11 +160,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
 
   defp executor_for("bedrock_dispatch"), do: "Bedrock lease runner"
   defp executor_for(_id), do: "Host worker"
-
-  defp primary_action_for("runtime_authored_spec"), do: "Start spec"
-  defp primary_action_for("approval_saga"), do: "Review gate"
-  defp primary_action_for("dynamic_fanout"), do: "Inspect overlay"
-  defp primary_action_for(_id), do: "Open editor"
 
   defp updated_for("daily_digest"), do: "2 minutes ago"
   defp updated_for("approval_saga"), do: "waiting 18 minutes"

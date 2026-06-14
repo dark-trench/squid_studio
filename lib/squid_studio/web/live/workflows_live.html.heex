@@ -36,6 +36,19 @@
             <span class="studio-count-pill">
               {length(@visible_workflows)} of {length(@workflows)}
             </span>
+            <div class="studio-workflows-panel-actions">
+              <.form for={@filter_form} id="workflow-search-form" phx-change="filter_workflows">
+                <label class="studio-search-field">
+                  <.icon name="hero-magnifying-glass" />
+                  <input
+                    type="search"
+                    name={@filter_form[:q].name}
+                    value={@filter_form[:q].value}
+                    placeholder="Search workflows..."
+                  />
+                </label>
+              </.form>
+            </div>
           </div>
 
           <div id="workflow-resource-toolbar" class="studio-workflows-controls">
@@ -54,25 +67,13 @@
                 <em>{resource_view_count(@workflows, view.status)}</em>
               </button>
             </div>
-
-            <.form for={@filter_form} id="workflow-search-form" phx-change="filter_workflows">
-              <label class="studio-search-field">
-                <.icon name="hero-magnifying-glass" />
-                <input
-                  type="search"
-                  name={@filter_form[:q].name}
-                  value={@filter_form[:q].value}
-                  placeholder="Search workflows, runs, approvals..."
-                />
-              </label>
-            </.form>
           </div>
 
           <div class="studio-workflow-card-list">
             <.link
               :for={workflow <- @visible_workflows}
               navigate={studio_path(["workflows", workflow.id])}
-              class="studio-workflow-card"
+              class="studio-workflow-card is-clickable-row"
             >
               <div class="studio-workflow-card-header">
                 <div>
@@ -87,10 +88,6 @@
                   <span><.icon name="hero-clock" />{workflow.updated}</span>
                   <span>{workflow.runs} runs</span>
                 </div>
-              </div>
-
-              <div class="studio-workflow-card-footer">
-                <strong>{workflow.primary_action}</strong>
               </div>
             </.link>
 

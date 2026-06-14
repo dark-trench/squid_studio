@@ -897,6 +897,13 @@ body:has(.studio-app) {
   border-bottom: 1px solid var(--studio-border);
 }
 
+.studio-workflows-panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: min(320px, 42%);
+}
+
 .studio-workflows-panel h3 {
   margin-top: 2px;
   font-size: 18px;
@@ -920,7 +927,7 @@ body:has(.studio-app) {
 .studio-workflows-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   padding: 0 14px 12px;
   border-bottom: 1px solid var(--studio-border);
@@ -996,7 +1003,7 @@ body:has(.studio-app) {
 
 .studio-workflow-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 14px;
   border: 1px solid transparent;
@@ -1073,18 +1080,6 @@ body:has(.studio-app) {
   border-color: var(--studio-badge-border);
   background: var(--studio-badge-bg);
   color: var(--studio-badge-ink);
-}
-
-.studio-workflow-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  color: var(--studio-muted);
-  font-size: 12px;
-}
-
-.studio-workflow-card-footer strong {
-  color: var(--studio-accent-strong);
 }
 
 .studio-template-list,
@@ -1208,6 +1203,16 @@ body:has(.studio-app) {
     flex-wrap: wrap;
   }
 
+  .studio-workflows-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .studio-workflows-panel-actions {
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
   .studio-workflows-grid {
     grid-template-columns: 1fr;
   }
@@ -1229,10 +1234,6 @@ body:has(.studio-app) {
 
   .studio-workflow-row-meta {
     white-space: normal;
-  }
-
-  .studio-workflow-card-footer {
-    justify-content: flex-start;
   }
 
   .studio-workspace {

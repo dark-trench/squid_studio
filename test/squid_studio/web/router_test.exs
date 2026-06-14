@@ -164,6 +164,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-theme-system"
     assert css.resp_body =~ ".studio-theme-switcher"
     assert css.resp_body =~ "--studio-topbar-height: 56px;"
+    assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr);"
+    assert css.resp_body =~ ".studio-workflows-grid"
+    assert css.resp_body =~ ".studio-workflows-sidepanels"
 
     assert css.resp_body =~ "radial-gradient("
     assert css.resp_body =~ "var(--studio-canvas-dot) 1px"

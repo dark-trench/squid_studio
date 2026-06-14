@@ -122,59 +122,69 @@
           </div>
         </div>
 
-        <aside class="studio-workflows-panel">
-          <div class="studio-workflows-panel-header">
-            <div>
-              <p class="studio-kicker">Templates</p>
-              <h3>Squidie starters</h3>
+        <aside class="studio-workflows-sidepanels">
+          <section class="studio-workflows-panel">
+            <div class="studio-workflows-panel-header">
+              <div>
+                <p class="studio-kicker">Templates</p>
+                <h3>Squidie starters</h3>
+              </div>
             </div>
-          </div>
 
-          <div class="studio-template-list">
-            <button
-              :for={template <- @templates}
-              type="button"
-              class={[
-                "studio-template-item",
-                template.id == @selected_template_id && "is-active"
-              ]}
-              phx-click="select_template"
-              phx-value-id={template.id}
-            >
-              <strong>{template.title}</strong>
-              <span>{template.meta}</span>
-            </button>
-          </div>
+            <div class="studio-template-list">
+              <button
+                :for={template <- @templates}
+                type="button"
+                class={[
+                  "studio-template-item",
+                  template.id == @selected_template_id && "is-active"
+                ]}
+                phx-click="select_template"
+                phx-value-id={template.id}
+              >
+                <strong>{template.title}</strong>
+                <span>{template.meta}</span>
+              </button>
+            </div>
 
-          <% selected_template = selected_template(@templates, @selected_template_id) %>
-          <div class="studio-template-preview">
-            <p class="studio-kicker">Selected template</p>
-            <h4>{selected_template.title}</h4>
-            <p>{selected_template.description}</p>
-            <.link
-              navigate={studio_path("workflows/runtime_authored_spec")}
-              class="studio-button secondary"
-            >
-              <.icon name="hero-document-plus" />
-              <span>Open as draft</span>
-            </.link>
-          </div>
+            <% selected_template = selected_template(@templates, @selected_template_id) %>
+            <div class="studio-template-preview">
+              <p class="studio-kicker">Selected template</p>
+              <h4>{selected_template.title}</h4>
+              <p>{selected_template.description}</p>
+              <.link
+                navigate={studio_path("workflows/runtime_authored_spec")}
+                class="studio-button secondary"
+              >
+                <.icon name="hero-document-plus" />
+                <span>Open as draft</span>
+              </.link>
+            </div>
+          </section>
 
-          <div class="studio-run-panel">
-            <p class="studio-kicker">Run inspection</p>
-            <div class="studio-run-row">
-              <span>Waiting for retry</span>
-              <strong>2</strong>
+          <section class="studio-workflows-panel">
+            <div class="studio-workflows-panel-header">
+              <div>
+                <p class="studio-kicker">Run inspection</p>
+                <h3>Runtime state</h3>
+              </div>
             </div>
-            <div class="studio-run-row">
-              <span>Replay candidates</span>
-              <strong>4</strong>
+
+            <div class="studio-run-panel">
+              <div class="studio-run-row">
+                <span>Waiting for retry</span>
+                <strong>2</strong>
+              </div>
+              <div class="studio-run-row">
+                <span>Replay candidates</span>
+                <strong>4</strong>
+              </div>
+              <div class="studio-run-row">
+                <span>Actor visibility policies</span>
+                <strong>enabled</strong>
+              </div>
             </div>
-            <div class="studio-run-row">
-              <span>Actor visibility policies</span>
-              <strong>enabled</strong>
-            </div>
-          </div>
+          </section>
         </aside>
       </section>
     </main>

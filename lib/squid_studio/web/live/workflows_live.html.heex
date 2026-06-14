@@ -18,10 +18,6 @@
 
         <div class="studio-workflows-header-actions">
           <.theme_switcher theme={@theme} />
-          <.link navigate={studio_path("workflows/daily_digest")} class="studio-button primary">
-            <.icon name="hero-plus" />
-            <span>New draft</span>
-          </.link>
         </div>
       </div>
     </header>
@@ -80,16 +76,27 @@
               </label>
             </.form>
 
-            <div class="studio-status-filters" aria-label="Workflow status filters">
-              <button
-                :for={filter <- @status_filters}
-                type="button"
-                class={status_filter_class(@status_filter, filter)}
-                phx-click="set_status_filter"
-                phx-value-status={filter}
+            <div class="studio-workflows-tool-actions">
+              <div class="studio-status-filters" aria-label="Workflow status filters">
+                <button
+                  :for={filter <- @status_filters}
+                  type="button"
+                  class={status_filter_class(@status_filter, filter)}
+                  phx-click="set_status_filter"
+                  phx-value-status={filter}
+                >
+                  {String.capitalize(filter)}
+                </button>
+              </div>
+
+              <.link
+                id="workflow-new-draft-link"
+                navigate={studio_path("workflows/daily_digest")}
+                class="studio-button primary"
               >
-                {String.capitalize(filter)}
-              </button>
+                <.icon name="hero-plus" />
+                <span>New draft</span>
+              </.link>
             </div>
           </div>
 

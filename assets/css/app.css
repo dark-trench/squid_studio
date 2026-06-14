@@ -1035,6 +1035,14 @@ body:has(.studio-app) {
   border-bottom: 1px solid var(--studio-border);
 }
 
+.studio-workflows-tool-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
 .studio-search-field {
   display: flex;
   align-items: center;
@@ -1324,6 +1332,12 @@ body:has(.studio-app) {
   .studio-workflows-controls {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .studio-workflows-tool-actions {
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .studio-status-filters {

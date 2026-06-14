@@ -14,6 +14,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Daily RSS To Discord"
     assert html =~ ~s(id="workflow-resource-rail")
     assert html =~ ~s(id="workflow-resource-toolbar")
+    assert html =~ ~s(id="workflow-new-draft-link")
     assert html =~ ~s(class="studio-workflows-header-inner")
     assert html =~ ~s(class="studio-wordmark")
     assert html =~ "Approval inbox"
@@ -176,6 +177,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "grid-template-columns: 184px minmax(0, 1fr) 320px;"
     assert css.resp_body =~ ".studio-resource-rail"
     assert css.resp_body =~ ".studio-resource-link"
+    assert css.resp_body =~ ".studio-workflows-tool-actions"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

@@ -12,10 +12,13 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(id="squid-studio-workflows")
     assert html =~ "Workflow Control Plane"
     assert html =~ "Daily RSS To Discord"
-    assert html =~ "Runtime-authored specs"
+    assert html =~ ~s(id="workflow-resource-rail")
+    assert html =~ ~s(id="workflow-resource-toolbar")
+    assert html =~ ~s(class="studio-workflows-header-inner")
+    assert html =~ ~s(class="studio-wordmark")
+    assert html =~ "Approval inbox"
     assert html =~ "Dynamic work"
-    assert html =~ "Approvals"
-    assert html =~ "Replay"
+    assert html =~ "Draft specs"
     assert html =~ "Run inspection"
     assert html =~ "Host execution"
     assert html =~ "Approval gate"
@@ -107,6 +110,7 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "Squid Studio"
     assert html =~ ~s(id="squid-studio-editor")
+    assert html =~ ~s(class="studio-wordmark")
     assert html =~ ~s(phx-hook="SquidStudioTheme")
     assert html =~ "studio-theme-system"
     assert html =~ ~s(id="squid-studio-flow")
@@ -167,8 +171,12 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "--studio-workflows-content-width: 1280px;"
     assert css.resp_body =~ "width: min(100%, var(--studio-workflows-content-width));"
     assert css.resp_body =~ "justify-self: center;"
+    assert css.resp_body =~ ".studio-workflows-header-inner"
     assert css.resp_body =~ ".studio-workflows-grid"
-    assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr) 320px;"
+    assert css.resp_body =~ "grid-template-columns: 184px minmax(0, 1fr) 320px;"
+    assert css.resp_body =~ ".studio-resource-rail"
+    assert css.resp_body =~ ".studio-resource-link"
+    assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 
     assert css.resp_body =~ "radial-gradient("

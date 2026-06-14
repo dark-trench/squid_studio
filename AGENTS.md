@@ -42,6 +42,8 @@ custom classes must fully style the input
 - Implement **subtle micro-interactions** (e.g., button hover effects, and smooth transitions)
 - Ensure **clean typography, spacing, and layout balance** for a refined, premium look
 - Focus on **delightful details** like hover effects, loading states, and smooth page transitions
+- Avoid avatar-like decorative header marks unless they communicate a real product, account, or workspace concept. Prefer clear wordmarks and purposeful navigation in app chrome.
+- UI tests should assert the intended structure, controls, and user-visible behavior. Do not add brittle negative assertions just to prove removed markup or copy is gone.
 
 
 <!-- usage-rules-start -->

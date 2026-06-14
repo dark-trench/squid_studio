@@ -28,7 +28,7 @@ defmodule SquidStudio.Web.WorkflowsLive do
       |> assign(:drafts, drafts)
       |> assign(:templates, templates())
       |> assign(:selected_template_id, "approval_gate")
-      |> assign(:feature_tiles, feature_tiles())
+      |> assign(:resource_views, resource_views())
       |> assign_visible_workflows()
 
     {:ok, socket}
@@ -175,31 +175,32 @@ defmodule SquidStudio.Web.WorkflowsLive do
   defp updated_for("bedrock_dispatch"), do: "lease renewed"
   defp updated_for(_id), do: "draft updated"
 
-  defp feature_tiles do
+  defp resource_views do
     [
       %{
-        title: "Runtime-authored specs",
-        filter: "draft",
-        value: "start_spec/4",
-        text: "Editor JSON validates against host action allowlists before activation."
+        label: "All workflows",
+        status: "all",
+        detail: "Host inventory"
       },
       %{
-        title: "Approvals",
-        filter: "approval",
-        value: "3 pending",
-        text: "Manual gates expose approve, reject, and resume actions."
+        label: "Running",
+        status: "running",
+        detail: "Active drains"
       },
       %{
-        title: "Dynamic work",
-        filter: "dynamic",
-        value: "6 overlays",
-        text: "Preview, record, and schedule graph patches from applied runnables."
+        label: "Approval inbox",
+        status: "approval",
+        detail: "Manual gates"
       },
       %{
-        title: "Replay",
-        filter: "running",
-        value: "guarded",
-        text: "Replay and cancellation stay visible with irreversible-step boundaries."
+        label: "Dynamic work",
+        status: "dynamic",
+        detail: "Runtime overlays"
+      },
+      %{
+        label: "Draft specs",
+        status: "draft",
+        detail: "Editor JSON"
       }
     ]
   end
@@ -244,6 +245,14 @@ defmodule SquidStudio.Web.WorkflowsLive do
 
   defp status_filter_class(active, value) do
     if active == value, do: "is-active", else: nil
+  end
+
+  defp resource_view_count(workflows, "all"), do: length(workflows)
+
+  defp resource_view_count(workflows, status) do
+    workflows
+    |> filter_by_status(status)
+    |> length()
   end
 
   defp status_class(status), do: "is-#{status}"

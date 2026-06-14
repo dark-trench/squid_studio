@@ -458,6 +458,7 @@
   --studio-sidebar-width: 260px;
   --studio-properties-width: 300px;
   --studio-topbar-height: 56px;
+  --studio-workflows-content-width: 1280px;
 }
 .studio-editor, .studio-editor.studio-theme-light {
   --studio-app-bg: #f5f7f7;
@@ -1162,6 +1163,8 @@ html:has(.studio-app), body:has(.studio-app) {
   gap: 10px;
 }
 .studio-workflows-main {
+  display: grid;
+  align-content: start;
   min-width: 0;
   min-height: 0;
   overflow: auto;
@@ -1171,7 +1174,9 @@ html:has(.studio-app), body:has(.studio-app) {
 .studio-workflows-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-self: center;
   gap: 12px;
+  width: min(100%, var(--studio-workflows-content-width));
   margin-bottom: 16px;
 }
 .studio-feature-tile {
@@ -1205,7 +1210,9 @@ html:has(.studio-app), body:has(.studio-app) {
 .studio-workflows-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
+  justify-self: center;
   gap: 16px;
+  width: min(100%, var(--studio-workflows-content-width));
   align-items: start;
 }
 .studio-workflows-panel {

@@ -4,18 +4,22 @@
     phx-hook="SquidStudioTheme"
     class={["studio-editor", "studio-theme-#{@theme}"]}
   >
-    <aside class="studio-sidebar">
-      <div class="studio-brand">
-        <div class="studio-mark">SQ</div>
-        <div>
-          <p class="studio-kicker">Squidie host</p>
-          <h1>Squid Studio</h1>
+    <header class="studio-topbar">
+      <div class="studio-wordmark">
+        <strong>Squid Studio</strong>
+        <span>Squidie host</span>
+      </div>
+
+      <div class="studio-topbar-title">
+        <div class="studio-breadcrumb">
+          <.icon name="hero-square-3-stack-3d" />
+          <span>Workflows</span>
+          <span>/</span>
+          <strong>{@workflow.name}</strong>
         </div>
       </div>
 
-      <div class="studio-sidebar-section">
-        <p class="studio-kicker">Workflow</p>
-        <h2>{@workflow.name}</h2>
+      <div class="studio-topbar-meta">
         <div class="studio-metrics">
           <div class="studio-metric">
             <span>Steps</span>
@@ -28,200 +32,183 @@
         </div>
       </div>
 
-      <div class="studio-sidebar-section">
-        <div class="studio-section-title">
-          <p class="studio-kicker">Workflow drafts</p>
-          <span>{length(@drafts)}</span>
-        </div>
-        <div class="studio-draft-list">
-          <button
-            :for={draft <- @drafts}
-            type="button"
-            class={[
-              "studio-draft-item",
-              Map.get(draft, "id") == @selected_draft_id && "is-active"
-            ]}
-            phx-click="select_draft"
-            phx-value-id={Map.get(draft, "id")}
-          >
-            <span class="studio-component-icon built-in">
-              <.icon name="hero-document-text" />
-            </span>
-            <span>
-              <strong>{Map.get(draft, "name")}</strong>
-              <small>{Map.get(draft, "workflow")} · {Map.get(draft, "definition_version")}</small>
-            </span>
-          </button>
-          <p :if={@drafts == []} class="studio-muted">No host drafts exposed.</p>
-        </div>
+      <div class="studio-topbar-actions">
+        <.theme_switcher theme={@theme} />
+        <span class="studio-badge"><.icon name="hero-pencil-square" />{@draft_status}</span>
+        <button type="button" class="studio-button secondary" phx-click="publish_draft">
+          <.icon name="hero-rocket-launch" />
+          <span>Publish version</span>
+        </button>
+        <button type="button" class="studio-button primary" phx-click="save_draft">
+          <.icon name="hero-cloud-arrow-up" />
+          <span>Save draft</span>
+        </button>
       </div>
+    </header>
 
-      <div class="studio-sidebar-section">
-        <div class="studio-section-title">
-          <p class="studio-kicker">Node catalog</p>
-          <span>{length(@nodes)}</span>
-        </div>
-        <div class="studio-component-list">
-          <div class="studio-component">
-            <span class="studio-component-icon trigger"><.icon name="hero-clock" /></span>
-            <span>Trigger</span>
+    <div class="studio-workspace">
+      <aside class="studio-sidebar">
+        <div class="studio-sidebar-section">
+          <div class="studio-section-title">
+            <p class="studio-kicker">Workflow drafts</p>
+            <span>{length(@drafts)}</span>
           </div>
-          <div class="studio-component">
-            <span class="studio-component-icon step"><.icon name="hero-bolt" /></span>
-            <span>Action step</span>
-          </div>
-          <div class="studio-component">
-            <span class="studio-component-icon approval"><.icon name="hero-hand-raised" /></span>
-            <span>Manual decision</span>
-          </div>
-          <div class="studio-component">
-            <span class="studio-component-icon failure">
-              <.icon name="hero-exclamation-triangle" />
-            </span>
-            <span>Failure route</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="studio-sidebar-footer">
-        <div>
-          <p class="studio-kicker">Host persistence</p>
-          <strong>{@draft_status}</strong>
-          <small>{@persistence_message}</small>
-        </div>
-        <.icon name="hero-circle-stack" />
-      </div>
-    </aside>
-
-    <section class="studio-canvas-column">
-      <div class="studio-toolbar">
-        <div class="studio-toolbar-title">
-          <div class="studio-breadcrumb">
-            <.icon name="hero-square-3-stack-3d" />
-            <span>Workflows</span>
-            <span>/</span>
-            <strong>{@workflow.name}</strong>
-          </div>
-          <h2>{@workflow.name}</h2>
-        </div>
-        <div class="studio-segmented">
-          <button type="button" class="is-active">
-            <.icon name="hero-wrench-screwdriver" />
-            <span>Build</span>
-          </button>
-          <button type="button">
-            <.icon name="hero-eye" />
-            <span>Review</span>
-          </button>
-        </div>
-        <div class="studio-toolbar-actions">
-          <.theme_switcher theme={@theme} />
-          <span class="studio-badge"><.icon name="hero-pencil-square" />{@draft_status}</span>
-          <button type="button" class="studio-button secondary">
-            <.icon name="hero-shield-check" />
-            <span>Validate</span>
-          </button>
-          <button type="button" class="studio-button secondary" phx-click="publish_draft">
-            <.icon name="hero-rocket-launch" />
-            <span>Publish version</span>
-          </button>
-          <button type="button" class="studio-button primary" phx-click="save_draft">
-            <.icon name="hero-cloud-arrow-up" />
-            <span>Save draft</span>
-          </button>
-        </div>
-      </div>
-
-      <div id="squid-studio-flow" phx-hook="SquidStudioFlow">
-        <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <marker
-              id="studio-arrow"
-              viewBox="0 0 10 10"
-              refX="10"
-              refY="5"
-              markerWidth="6"
-              markerHeight="6"
-              orient="auto-start-reverse"
+          <div class="studio-draft-list">
+            <button
+              :for={draft <- @drafts}
+              type="button"
+              class={[
+                "studio-draft-item",
+                Map.get(draft, "id") == @selected_draft_id && "is-active"
+              ]}
+              phx-click="select_draft"
+              phx-value-id={Map.get(draft, "id")}
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" class="studio-arrow" />
-            </marker>
-          </defs>
-          <%= for edge <- @edges do %>
-            <path class="studio-edge" d={edge.path} marker-end="url(#studio-arrow)" />
-          <% end %>
-        </svg>
-
-        <%= for node <- @nodes do %>
-          <button
-            id={"studio-node-#{node.id}"}
-            type="button"
-            class={[
-              "studio-node",
-              node.id == @selected_node_id && "is-selected"
-            ]}
-            style={"left: #{node.x}px; top: #{node.y}px;"}
-            data-node-id={node.id}
-            phx-click="select_node"
-            phx-value-id={node.id}
-          >
-            <span class="studio-node-port left"></span>
-            <span class="studio-node-content">
-              <span class="studio-node-heading">
-                <span class="studio-node-icon"><.icon name={node.icon} /></span>
-                <span class="studio-node-title">{node.label}</span>
+              <span class="studio-component-icon built-in">
+                <.icon name="hero-document-text" />
               </span>
-              <span class="studio-node-type">{node.type}</span>
-            </span>
-            <span class="studio-node-port right"></span>
-          </button>
-        <% end %>
-      </div>
-    </section>
-
-    <aside class="studio-properties">
-      <div class="studio-properties-header">
-        <div>
-          <p class="studio-kicker">Selection</p>
-          <h2>Properties</h2>
-        </div>
-        <span class="studio-panel-chip">
-          <span class="studio-status-dot"></span> Active
-        </span>
-      </div>
-
-      <%= if selected = Enum.find(@nodes, &(&1.id == @selected_node_id)) do %>
-        <div class="studio-inspector-title">
-          <span class="studio-node-icon"><.icon name={selected.icon} /></span>
-          <span>{selected.label}</span>
-        </div>
-        <div class="studio-inspector-row">
-          <span>Type</span>
-          <strong>{selected.type}</strong>
-        </div>
-        <div class="studio-inspector-row">
-          <span>X</span>
-          <strong>{selected.x}</strong>
-        </div>
-        <div class="studio-inspector-row">
-          <span>Y</span>
-          <strong>{selected.y}</strong>
-        </div>
-
-        <div class="studio-properties-section">
-          <p class="studio-kicker">Connections</p>
-          <div class="studio-connection-list">
-            <%= for edge <- @edges, edge.source == selected.id or edge.target == selected.id do %>
-              <div class="studio-connection">
-                <span>{edge.source}</span>
-                <strong>{edge.target}</strong>
-              </div>
-            <% end %>
+              <span>
+                <strong>{Map.get(draft, "name")}</strong>
+                <small>
+                  {Map.get(draft, "workflow")} · {Map.get(draft, "definition_version")}
+                </small>
+              </span>
+            </button>
+            <p :if={@drafts == []} class="studio-muted">No host drafts exposed.</p>
           </div>
         </div>
-      <% else %>
-        <p class="studio-inspector-empty">No selection</p>
-      <% end %>
-    </aside>
+
+        <div class="studio-sidebar-section">
+          <div class="studio-section-title">
+            <p class="studio-kicker">Node catalog</p>
+            <span>{length(@nodes)}</span>
+          </div>
+          <div class="studio-component-list">
+            <div class="studio-component">
+              <span class="studio-component-icon trigger"><.icon name="hero-clock" /></span>
+              <span>Trigger</span>
+            </div>
+            <div class="studio-component">
+              <span class="studio-component-icon step"><.icon name="hero-bolt" /></span>
+              <span>Action step</span>
+            </div>
+            <div class="studio-component">
+              <span class="studio-component-icon approval">
+                <.icon name="hero-hand-raised" />
+              </span>
+              <span>Manual decision</span>
+            </div>
+            <div class="studio-component">
+              <span class="studio-component-icon failure">
+                <.icon name="hero-exclamation-triangle" />
+              </span>
+              <span>Failure route</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="studio-sidebar-footer">
+          <div>
+            <p class="studio-kicker">Host persistence</p>
+            <strong>{@draft_status}</strong>
+            <small>{@persistence_message}</small>
+          </div>
+          <.icon name="hero-circle-stack" />
+        </div>
+      </aside>
+
+      <section class="studio-canvas-column">
+        <div id="squid-studio-flow" phx-hook="SquidStudioFlow">
+          <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker
+                id="studio-arrow"
+                viewBox="0 0 10 10"
+                refX="10"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" class="studio-arrow" />
+              </marker>
+            </defs>
+            <%= for edge <- @edges do %>
+              <path class="studio-edge" d={edge.path} marker-end="url(#studio-arrow)" />
+            <% end %>
+          </svg>
+
+          <%= for node <- @nodes do %>
+            <button
+              id={"studio-node-#{node.id}"}
+              type="button"
+              class={[
+                "studio-node",
+                node.id == @selected_node_id && "is-selected"
+              ]}
+              style={"left: #{node.x}px; top: #{node.y}px;"}
+              data-node-id={node.id}
+              phx-click="select_node"
+              phx-value-id={node.id}
+            >
+              <span class="studio-node-port left"></span>
+              <span class="studio-node-content">
+                <span class="studio-node-heading">
+                  <span class="studio-node-icon"><.icon name={node.icon} /></span>
+                  <span class="studio-node-title">{node.label}</span>
+                </span>
+                <span class="studio-node-type">{node.type}</span>
+              </span>
+              <span class="studio-node-port right"></span>
+            </button>
+          <% end %>
+        </div>
+      </section>
+
+      <aside class="studio-properties">
+        <div class="studio-properties-header">
+          <div>
+            <p class="studio-kicker">Selection</p>
+            <h2>Properties</h2>
+          </div>
+          <span class="studio-panel-chip">
+            <span class="studio-status-dot"></span> Active
+          </span>
+        </div>
+
+        <%= if selected = Enum.find(@nodes, &(&1.id == @selected_node_id)) do %>
+          <div class="studio-inspector-title">
+            <span class="studio-node-icon"><.icon name={selected.icon} /></span>
+            <span>{selected.label}</span>
+          </div>
+          <div class="studio-inspector-row">
+            <span>Type</span>
+            <strong>{selected.type}</strong>
+          </div>
+          <div class="studio-inspector-row">
+            <span>X</span>
+            <strong>{selected.x}</strong>
+          </div>
+          <div class="studio-inspector-row">
+            <span>Y</span>
+            <strong>{selected.y}</strong>
+          </div>
+
+          <div class="studio-properties-section">
+            <p class="studio-kicker">Connections</p>
+            <div class="studio-connection-list">
+              <%= for edge <- @edges, edge.source == selected.id or edge.target == selected.id do %>
+                <div class="studio-connection">
+                  <span>{edge.source}</span>
+                  <strong>{edge.target}</strong>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% else %>
+          <p class="studio-inspector-empty">No selection</p>
+        <% end %>
+      </aside>
+    </div>
   </section>
 </Layouts.app>

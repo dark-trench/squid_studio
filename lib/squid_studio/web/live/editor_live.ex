@@ -10,8 +10,13 @@ defmodule SquidStudio.Web.EditorLive do
   @canvas_padding 40
 
   @impl true
-  def mount(_params, _session, socket) do
-    workflow = socket.assigns.workflows |> List.wrap() |> List.first() |> normalize_workflow()
+  def mount(params, _session, socket) do
+    workflow =
+      socket.assigns.workflows
+      |> List.wrap()
+      |> select_workflow(params["workflow_id"])
+      |> normalize_workflow()
+
     graph = build_graph(workflow.nodes, workflow.edges)
     drafts = List.wrap(socket.assigns[:drafts])
     selected_draft = List.first(drafts)
@@ -154,11 +159,21 @@ defmodule SquidStudio.Web.EditorLive do
 
   defp normalize_workflow(workflow) when is_map(workflow) do
     %{
-      id: Map.get(workflow, :id) || Map.get(workflow, "id") || "workflow",
+      id: workflow_id(workflow),
       name: Map.get(workflow, :name) || Map.get(workflow, "name") || "Workflow",
       nodes: Map.get(workflow, :nodes) || Map.get(workflow, "nodes") || [],
       edges: Map.get(workflow, :edges) || Map.get(workflow, "edges") || []
     }
+  end
+
+  defp select_workflow(workflows, nil), do: List.first(workflows)
+
+  defp select_workflow(workflows, workflow_id) do
+    Enum.find(workflows, &(workflow_id(&1) == workflow_id)) || List.first(workflows)
+  end
+
+  defp workflow_id(workflow) when is_map(workflow) do
+    workflow |> value(:id, "workflow") |> to_string()
   end
 
   defp normalize_node(node) when is_map(node) do

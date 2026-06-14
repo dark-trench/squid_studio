@@ -102,8 +102,21 @@ defmodule SquidStudio.Web.RouterOptionsTest do
              }
            } = session
 
-    assert [%{id: "daily_digest"}] = session["workflows"]
-    assert [%{"id" => "daily_digest", "definition_version" => "draft"}] = session["drafts"]
+    assert [
+             %{id: "daily_digest"},
+             %{id: "approval_saga"},
+             %{id: "dynamic_fanout"},
+             %{id: "bedrock_dispatch"},
+             %{id: "runtime_authored_spec"}
+           ] = session["workflows"]
+
+    assert [
+             %{"id" => "daily_digest", "definition_version" => "draft"},
+             %{"id" => "approval_saga", "definition_version" => "draft"},
+             %{"id" => "dynamic_fanout", "definition_version" => "draft"},
+             %{"id" => "bedrock_dispatch", "definition_version" => "draft"},
+             %{"id" => "runtime_authored_spec", "definition_version" => "draft"}
+           ] = session["drafts"]
   end
 
   test "builds live session data with host-owned draft resolver output" do

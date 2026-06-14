@@ -12,14 +12,6 @@
         </div>
 
         <div class="studio-workflows-header-actions">
-          <.link
-            id="workflow-new-draft-link"
-            navigate={studio_path("workflows/daily_digest")}
-            class="studio-button primary"
-          >
-            <.icon name="hero-plus" />
-            <span>New draft</span>
-          </.link>
           <.theme_switcher theme={@theme} />
         </div>
       </div>
@@ -45,6 +37,14 @@
                   />
                 </label>
               </.form>
+              <.link
+                id="workflow-new-draft-link"
+                navigate={studio_path("workflows/daily_digest")}
+                class="studio-button primary"
+              >
+                <.icon name="hero-plus" />
+                <span>New draft</span>
+              </.link>
             </div>
           </div>
 

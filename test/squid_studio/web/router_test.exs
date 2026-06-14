@@ -16,8 +16,12 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-workflows-header-inner")
     assert html =~ ~s(class="studio-wordmark")
 
-    assert html =~
-             ~r/class="studio-workflows-header-actions"[\s\S]*id="workflow-new-draft-link"[\s\S]*class="studio-theme-switcher"/
+    assert html =~ ~r/class="studio-workflows-header-actions"[\s\S]*class="studio-theme-switcher"/
+
+    refute html =~
+             ~r/class="studio-workflows-header-actions"[\s\S]{0,500}id="workflow-new-draft-link"/
+
+    assert html =~ ~r/id="workflow-search-form"[\s\S]*id="workflow-new-draft-link"/
 
     assert html =~ "Approval inbox"
     assert html =~ "Dynamic work"
@@ -187,6 +191,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-tab"
     assert css.resp_body =~ ".studio-workflow-row-meta"
     assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr);"
+    assert css.resp_body =~ ".studio-workflows-panel.primary"
+    assert css.resp_body =~ "box-shadow: none;"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

@@ -24,7 +24,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Draft specs"
     assert html =~ ~s(class="studio-workflow-tabs")
     assert html =~ ~s(class="studio-workflow-tab)
+    assert html =~ ~s(class="studio-workflow-card is-clickable-row")
     assert html =~ ~s(class="studio-workflow-row-meta")
+    assert html =~ ~s(class="studio-workflows-panel-actions")
     assert html =~ "Run inspection"
     assert html =~ "Host execution"
     assert html =~ "Approval gate"
@@ -183,6 +185,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-tabs"
     assert css.resp_body =~ ".studio-workflow-tab"
     assert css.resp_body =~ ".studio-workflow-row-meta"
+    assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr);"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

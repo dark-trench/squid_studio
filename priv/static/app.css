@@ -1195,18 +1195,6 @@ html:has(.studio-app), body:has(.studio-app) {
   line-height: 1.2;
   font-weight: 750;
 }
-.studio-count-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
-  border: 1px solid var(--studio-border);
-  border-radius: 999px;
-  background: var(--studio-surface-muted);
-  color: var(--studio-muted);
-  font-size: 12px;
-  font-weight: 750;
-}
 .studio-workflows-controls {
   display: flex;
   align-items: center;

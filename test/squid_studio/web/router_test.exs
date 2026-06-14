@@ -27,6 +27,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-workflow-card is-clickable-row")
     assert html =~ ~s(class="studio-workflow-row-meta")
     assert html =~ ~s(class="studio-workflows-panel-actions")
+    refute html =~ ~s(class="studio-count-pill")
     assert html =~ "Run inspection"
     assert html =~ "Host execution"
     assert html =~ "Approval gate"

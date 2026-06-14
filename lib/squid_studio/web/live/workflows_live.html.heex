@@ -33,9 +33,6 @@
               <p class="studio-kicker">Workflow queue</p>
               <h3>Host workflows</h3>
             </div>
-            <span class="studio-count-pill">
-              {length(@visible_workflows)} of {length(@workflows)}
-            </span>
             <div class="studio-workflows-panel-actions">
               <.form for={@filter_form} id="workflow-search-form" phx-change="filter_workflows">
                 <label class="studio-search-field">

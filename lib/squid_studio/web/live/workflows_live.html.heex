@@ -27,41 +27,11 @@
 
     <main class="studio-workflows-main">
       <section class="studio-workflows-grid">
-        <nav
-          id="workflow-resource-rail"
-          class="studio-folder-rail"
-          aria-label="Workflow folders"
-        >
-          <div class="studio-folder-rail-header">
-            <p class="studio-kicker">Workflow folders</p>
-            <strong>Folders</strong>
-          </div>
-
-          <button
-            :for={view <- @resource_views}
-            type="button"
-            class={[
-              "studio-folder-link",
-              status_filter_class(@status_filter, view.status)
-            ]}
-            phx-click="set_status_filter"
-            phx-value-status={view.status}
-          >
-            <.icon name="hero-folder" />
-            <span>
-              <strong>{view.label}</strong>
-              <small>{view.detail}</small>
-            </span>
-            <em>{resource_view_count(@workflows, view.status)}</em>
-          </button>
-        </nav>
-
         <div class="studio-workflows-panel primary">
-          <% selected_folder = selected_resource_view(@resource_views, @status_filter) %>
           <div class="studio-workflows-panel-header">
             <div>
               <p class="studio-kicker">Workflow queue</p>
-              <h3>{selected_folder.label}</h3>
+              <h3>Host workflows</h3>
             </div>
             <span class="studio-count-pill">
               {length(@visible_workflows)} of {length(@workflows)}
@@ -69,6 +39,22 @@
           </div>
 
           <div id="workflow-resource-toolbar" class="studio-workflows-controls">
+            <div class="studio-workflow-tabs" aria-label="Workflow status filters">
+              <button
+                :for={view <- @resource_views}
+                type="button"
+                class={[
+                  "studio-workflow-tab",
+                  status_filter_class(@status_filter, view.status)
+                ]}
+                phx-click="set_status_filter"
+                phx-value-status={view.status}
+              >
+                <span>{view.label}</span>
+                <em>{resource_view_count(@workflows, view.status)}</em>
+              </button>
+            </div>
+
             <.form for={@filter_form} id="workflow-search-form" phx-change="filter_workflows">
               <label class="studio-search-field">
                 <.icon name="hero-magnifying-glass" />
@@ -93,23 +79,17 @@
                   <p class="studio-kicker">{workflow.executor}</p>
                   <h4>{workflow.name}</h4>
                 </div>
-                <span class={["studio-workflow-status", status_class(workflow.status)]}>
-                  {workflow.status_label}
-                </span>
-              </div>
 
-              <p>{workflow.description}</p>
-
-              <div class="studio-workflow-card-metrics">
-                <span><strong>{workflow.nodes}</strong> nodes</span>
-                <span><strong>{workflow.edges}</strong> edges</span>
-                <span><strong>{workflow.runs}</strong> runs</span>
-                <span><strong>{workflow.approvals}</strong> approvals</span>
-                <span><strong>{workflow.dynamic_overlays}</strong> overlays</span>
+                <div class="studio-workflow-row-meta">
+                  <span class={["studio-workflow-status", status_class(workflow.status)]}>
+                    {workflow.status_label}
+                  </span>
+                  <span><.icon name="hero-clock" />{workflow.updated}</span>
+                  <span>{workflow.runs} runs</span>
+                </div>
               </div>
 
               <div class="studio-workflow-card-footer">
-                <span><.icon name="hero-clock" />{workflow.updated}</span>
                 <strong>{workflow.primary_action}</strong>
               </div>
             </.link>

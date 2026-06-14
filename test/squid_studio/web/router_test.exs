@@ -17,6 +17,10 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(id="workflow-new-draft-link")
     assert html =~ ~s(class="studio-workflows-header-inner")
     assert html =~ ~s(class="studio-wordmark")
+
+    assert html =~
+             ~r/class="studio-workflows-header-actions"[\s\S]*id="workflow-new-draft-link"[\s\S]*class="studio-theme-switcher"/
+
     assert html =~ "Approval inbox"
     assert html =~ "Dynamic work"
     assert html =~ "Draft specs"
@@ -177,7 +181,6 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "grid-template-columns: 184px minmax(0, 1fr) 320px;"
     assert css.resp_body =~ ".studio-resource-rail"
     assert css.resp_body =~ ".studio-resource-link"
-    assert css.resp_body =~ ".studio-workflows-tool-actions"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

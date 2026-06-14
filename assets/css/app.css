@@ -819,7 +819,7 @@ body:has(.studio-app) {
 
 .studio-workflows-header-inner {
   display: grid;
-  grid-template-columns: minmax(180px, 0.9fr) minmax(260px, 1.1fr) auto;
+  grid-template-columns: minmax(180px, 1fr) auto;
   align-items: center;
   gap: 16px;
   width: min(100%, var(--studio-workflows-content-width));
@@ -847,22 +847,11 @@ body:has(.studio-app) {
   text-transform: uppercase;
 }
 
-.studio-workflows-title {
-  min-width: 0;
-}
-
-.studio-workflows-title h2,
 .studio-workflows-panel h3,
 .studio-workflow-card h4,
 .studio-template-preview h4 {
   margin: 0;
   color: var(--studio-ink);
-}
-
-.studio-workflows-title h2 {
-  font-size: 16px;
-  line-height: 1.2;
-  font-weight: 750;
 }
 
 .studio-workflows-header-actions {
@@ -884,49 +873,49 @@ body:has(.studio-app) {
 
 .studio-workflows-grid {
   display: grid;
-  grid-template-columns: 184px minmax(0, 1fr) 320px;
+  grid-template-columns: 212px minmax(0, 1fr) 320px;
   justify-self: center;
   gap: 16px;
   width: min(100%, var(--studio-workflows-content-width));
   align-items: start;
 }
 
-.studio-resource-rail {
+.studio-folder-rail {
   display: grid;
   align-content: start;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   border: 1px solid var(--studio-border);
   border-radius: 8px;
-  padding: 10px;
+  padding: 8px;
   background: var(--studio-surface);
   box-shadow: var(--studio-shadow);
 }
 
-.studio-resource-rail-header {
+.studio-folder-rail-header {
   display: grid;
   gap: 2px;
-  padding: 4px 4px 8px;
+  padding: 5px 6px 9px;
   border-bottom: 1px solid var(--studio-border);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
-.studio-resource-rail-header strong {
+.studio-folder-rail-header strong {
   color: var(--studio-ink);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 }
 
-.studio-resource-link {
-  display: flex;
+.studio-folder-link {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   width: 100%;
-  min-height: 48px;
+  min-height: 36px;
   border: 1px solid transparent;
-  border-radius: 7px;
-  padding: 8px;
+  border-radius: 6px;
+  padding: 6px 7px;
   color: var(--studio-ink);
   text-align: left;
   cursor: pointer;
@@ -936,40 +925,50 @@ body:has(.studio-app) {
     box-shadow 0.12s ease;
 }
 
-.studio-resource-link:hover,
-.studio-resource-link.is-active {
+.studio-folder-link:hover,
+.studio-folder-link.is-active {
   border-color: var(--studio-accent-border);
   background: var(--studio-accent-soft);
   box-shadow: var(--studio-focus-shadow);
 }
 
-.studio-resource-link span {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
+.studio-folder-link > .hero-folder {
+  width: 16px;
+  height: 16px;
+  color: var(--studio-muted);
 }
 
-.studio-resource-link strong,
-.studio-resource-link small {
+.studio-folder-link.is-active > .hero-folder {
+  color: var(--studio-accent-strong);
+}
+
+.studio-folder-link span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.studio-folder-link strong,
+.studio-folder-link small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.studio-resource-link strong {
+.studio-folder-link strong {
   color: var(--studio-ink);
   font-size: 12px;
   line-height: 1.2;
   font-weight: 800;
 }
 
-.studio-resource-link small {
+.studio-folder-link small {
   color: var(--studio-muted);
   font-size: 11px;
   line-height: 1.2;
 }
 
-.studio-resource-link em {
+.studio-folder-link em {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -984,7 +983,7 @@ body:has(.studio-app) {
   font-weight: 800;
 }
 
-.studio-resource-link.is-active em {
+.studio-folder-link.is-active em {
   border-color: var(--studio-accent-border);
   color: var(--studio-accent-strong);
 }
@@ -1029,7 +1028,7 @@ body:has(.studio-app) {
 .studio-workflows-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--studio-border);
@@ -1056,34 +1055,6 @@ body:has(.studio-app) {
   background: transparent;
   color: var(--studio-ink);
   font-size: 13px;
-}
-
-.studio-status-filters {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px;
-  border: 1px solid var(--studio-border);
-  border-radius: 8px;
-  background: var(--studio-surface-muted);
-}
-
-.studio-status-filters button {
-  height: 26px;
-  border: 0;
-  border-radius: 6px;
-  padding: 0 9px;
-  color: var(--studio-muted);
-  font-size: 12px;
-  font-weight: 750;
-  cursor: pointer;
-}
-
-.studio-status-filters button:hover,
-.studio-status-filters button.is-active {
-  background: var(--studio-surface);
-  color: var(--studio-accent-strong);
-  box-shadow: var(--studio-focus-shadow);
 }
 
 .studio-workflow-card-list {
@@ -1324,10 +1295,6 @@ body:has(.studio-app) {
   .studio-workflows-controls {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .studio-status-filters {
-    overflow-x: auto;
   }
 
   .studio-workflow-card-metrics {

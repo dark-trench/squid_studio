@@ -10,7 +10,6 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "Squid Studio"
     assert html =~ ~s(id="squid-studio-workflows")
-    assert html =~ "Workflow Control Plane"
     assert html =~ "Daily RSS To Discord"
     assert html =~ ~s(id="workflow-resource-rail")
     assert html =~ ~s(id="workflow-resource-toolbar")
@@ -24,6 +23,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Approval inbox"
     assert html =~ "Dynamic work"
     assert html =~ "Draft specs"
+    assert html =~ "Workflow folders"
+    assert html =~ ~s(class="studio-folder-link)
     assert html =~ "Run inspection"
     assert html =~ "Host execution"
     assert html =~ "Approval gate"
@@ -40,7 +41,7 @@ defmodule SquidStudio.Web.RouterTest do
 
     html =
       view
-      |> element(~s(.studio-status-filters button[phx-value-status="approval"]))
+      |> element(~s(.studio-folder-link[phx-value-status="approval"]))
       |> render_click()
 
     assert html =~ "Approval Saga With Compensation"
@@ -50,7 +51,7 @@ defmodule SquidStudio.Web.RouterTest do
 
     html =
       view
-      |> element(~s(.studio-status-filters button[phx-value-status="all"]))
+      |> element(~s(.studio-folder-link[phx-value-status="all"]))
       |> render_click()
 
     assert html =~ "Daily RSS To Discord"
@@ -62,7 +63,7 @@ defmodule SquidStudio.Web.RouterTest do
 
     html =
       view
-      |> element(~s(.studio-status-filters button[phx-value-status="draft"]))
+      |> element(~s(.studio-folder-link[phx-value-status="draft"]))
       |> render_click()
 
     assert html =~ "Runtime Authored Spec"
@@ -78,7 +79,7 @@ defmodule SquidStudio.Web.RouterTest do
 
     html =
       view
-      |> element(~s(.studio-status-filters button[phx-value-status="all"]))
+      |> element(~s(.studio-folder-link[phx-value-status="all"]))
       |> render_click()
 
     assert html =~ "Bedrock Lease Drain"
@@ -178,9 +179,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "justify-self: center;"
     assert css.resp_body =~ ".studio-workflows-header-inner"
     assert css.resp_body =~ ".studio-workflows-grid"
-    assert css.resp_body =~ "grid-template-columns: 184px minmax(0, 1fr) 320px;"
-    assert css.resp_body =~ ".studio-resource-rail"
-    assert css.resp_body =~ ".studio-resource-link"
+    assert css.resp_body =~ "grid-template-columns: 212px minmax(0, 1fr) 320px;"
+    assert css.resp_body =~ ".studio-folder-rail"
+    assert css.resp_body =~ ".studio-folder-link"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

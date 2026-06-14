@@ -11,11 +11,6 @@
           <span>Squidie host</span>
         </div>
 
-        <div class="studio-workflows-title">
-          <p class="studio-kicker">Workflow Control Plane</p>
-          <h2>Workflows</h2>
-        </div>
-
         <div class="studio-workflows-header-actions">
           <.link
             id="workflow-new-draft-link"
@@ -34,24 +29,25 @@
       <section class="studio-workflows-grid">
         <nav
           id="workflow-resource-rail"
-          class="studio-resource-rail"
-          aria-label="Workflow resources"
+          class="studio-folder-rail"
+          aria-label="Workflow folders"
         >
-          <div class="studio-resource-rail-header">
-            <p class="studio-kicker">Resources</p>
-            <strong>Workflows</strong>
+          <div class="studio-folder-rail-header">
+            <p class="studio-kicker">Workflow folders</p>
+            <strong>Folders</strong>
           </div>
 
           <button
             :for={view <- @resource_views}
             type="button"
             class={[
-              "studio-resource-link",
+              "studio-folder-link",
               status_filter_class(@status_filter, view.status)
             ]}
             phx-click="set_status_filter"
             phx-value-status={view.status}
           >
+            <.icon name="hero-folder" />
             <span>
               <strong>{view.label}</strong>
               <small>{view.detail}</small>
@@ -61,10 +57,11 @@
         </nav>
 
         <div class="studio-workflows-panel primary">
+          <% selected_folder = selected_resource_view(@resource_views, @status_filter) %>
           <div class="studio-workflows-panel-header">
             <div>
               <p class="studio-kicker">Workflow queue</p>
-              <h3>Host workflows</h3>
+              <h3>{selected_folder.label}</h3>
             </div>
             <span class="studio-count-pill">
               {length(@visible_workflows)} of {length(@workflows)}
@@ -83,18 +80,6 @@
                 />
               </label>
             </.form>
-
-            <div class="studio-status-filters" aria-label="Workflow status filters">
-              <button
-                :for={filter <- @status_filters}
-                type="button"
-                class={status_filter_class(@status_filter, filter)}
-                phx-click="set_status_filter"
-                phx-value-status={filter}
-              >
-                {String.capitalize(filter)}
-              </button>
-            </div>
           </div>
 
           <div class="studio-workflow-card-list">

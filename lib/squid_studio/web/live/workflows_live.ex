@@ -22,7 +22,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
       |> assign(:theme, :system)
       |> assign(:query, query)
       |> assign(:status_filter, status_filter)
-      |> assign(:status_filters, @status_filters)
       |> assign(:filter_form, filter_form(query))
       |> assign(:workflows, workflows)
       |> assign(:drafts, drafts)
@@ -231,6 +230,10 @@ defmodule SquidStudio.Web.WorkflowsLive do
 
   defp selected_template(templates, selected_id) do
     Enum.find(templates, &(&1.id == selected_id)) || List.first(templates)
+  end
+
+  defp selected_resource_view(resource_views, selected_status) do
+    Enum.find(resource_views, &(&1.status == selected_status)) || List.first(resource_views)
   end
 
   defp filter_form(query) do

@@ -228,6 +228,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-breadcrumb a"
     assert css.resp_body =~ "a.studio-wordmark:hover strong"
     assert css.resp_body =~ ".studio-wordmark"
+    assert css.resp_body =~ "width: fit-content;"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 
     assert css.resp_body =~ "radial-gradient("

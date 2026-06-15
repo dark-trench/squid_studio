@@ -117,6 +117,16 @@ defmodule SquidStudio.Web.RouterOptionsTest do
              %{"id" => "bedrock_dispatch", "definition_version" => "draft"},
              %{"id" => "runtime_authored_spec", "definition_version" => "draft"}
            ] = session["drafts"]
+
+    assert [
+             %{
+               "provider" => "built_in",
+               "category" => "Triggers",
+               "action_key" => "manual_trigger",
+               "credential_requirements" => []
+             }
+             | _
+           ] = session["connector_catalog"]
   end
 
   test "builds live session data with host-owned draft resolver output" do
@@ -143,7 +153,8 @@ defmodule SquidStudio.Web.RouterOptionsTest do
                  "definition_version" => "draft",
                  "spec" => %{"workflow" => "custom_workflow"}
                }
-             ]
+             ],
+             "connector_catalog" => []
            } = session
   end
 end

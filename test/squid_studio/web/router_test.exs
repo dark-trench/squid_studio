@@ -340,6 +340,41 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Host published a runnable Squidie workflow version."
   end
 
+  test "renders host connector catalog metadata without credential values", %{conn: conn} do
+    {:ok, _view, html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    assert html =~ "Messaging"
+    assert html =~ "Post message"
+    assert html =~ "Send an approved Slack message"
+    assert html =~ "Slack bot token"
+    assert html =~ "Code"
+    assert html =~ "Create issue"
+    assert html =~ "production only"
+    assert html =~ ~s(data-catalog-action-key="post_message")
+    assert html =~ ~s(draggable="true")
+    assert html =~ ~s(data-catalog-action-key="create_issue")
+    assert html =~ ~s(draggable="false")
+    refute html =~ "xoxb-secret"
+  end
+
+  test "catalog node insertion rejects disabled or unauthorized entries", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    html =
+      view
+      |> render_hook("add_catalog_node", %{"action_key" => "create_issue"})
+
+    refute html =~ ~s(id="studio-node-github-create_issue")
+    assert html =~ "Connector unavailable: production only"
+
+    html =
+      view
+      |> render_hook("add_catalog_node", %{"action_key" => "post_message"})
+
+    assert html =~ ~s(id="studio-node-slack-post_message")
+    assert html =~ "Post message"
+  end
+
   test "centers the graph when the canvas reports its dimensions", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/studio/workflows/daily_digest")
 

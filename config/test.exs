@@ -1,5 +1,7 @@
 import Config
 
+config :squid_studio, environment: :test
+
 config :logger, level: :warning
 
 config :phoenix, :plug_init_mode, :runtime

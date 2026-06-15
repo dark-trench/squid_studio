@@ -81,30 +81,48 @@
         <div class="studio-sidebar-section">
           <div class="studio-section-title">
             <p class="studio-kicker">Node catalog</p>
-            <span>{length(@nodes)}</span>
+            <span>{length(@connector_catalog)}</span>
           </div>
           <div class="studio-component-list">
-            <div class="studio-component">
-              <span class="studio-component-icon trigger"><.icon name="hero-clock" /></span>
-              <span>Trigger</span>
+            <div :for={group <- @catalog_groups} class="studio-component-group">
+              <p class="studio-component-group-title">{group.category}</p>
+              <button
+                :for={entry <- group.entries}
+                type="button"
+                class={[
+                  "studio-component",
+                  !catalog_entry_available?(entry) && "is-disabled"
+                ]}
+                data-catalog-provider={Map.get(entry, "provider")}
+                data-catalog-action-key={Map.get(entry, "action_key")}
+                draggable={if(catalog_entry_available?(entry), do: "true", else: "false")}
+                disabled={!catalog_entry_available?(entry)}
+                phx-click="add_catalog_node"
+                phx-value-provider={Map.get(entry, "provider")}
+                phx-value-action_key={Map.get(entry, "action_key")}
+              >
+                <span class={["studio-component-icon", catalog_icon(Map.get(entry, "provider"))]}>
+                  <.icon name="hero-bolt" />
+                </span>
+                <span class="studio-component-body">
+                  <strong>{Map.get(entry, "display_name")}</strong>
+                  <small>{Map.get(entry, "description")}</small>
+                  <small :if={Map.get(entry, "credential_requirements") != []}>
+                    Credentials: {entry
+                    |> Map.get("credential_requirements")
+                    |> Enum.map_join(", ", &Map.get(&1, "label"))}
+                  </small>
+                  <small :if={!catalog_entry_available?(entry)}>
+                    {catalog_disabled_reason(entry)}
+                  </small>
+                </span>
+              </button>
             </div>
-            <div class="studio-component">
-              <span class="studio-component-icon step"><.icon name="hero-bolt" /></span>
-              <span>Action step</span>
-            </div>
-            <div class="studio-component">
-              <span class="studio-component-icon approval">
-                <.icon name="hero-hand-raised" />
-              </span>
-              <span>Manual decision</span>
-            </div>
-            <div class="studio-component">
-              <span class="studio-component-icon failure">
-                <.icon name="hero-exclamation-triangle" />
-              </span>
-              <span>Failure route</span>
-            </div>
+            <p :if={@connector_catalog == []} class="studio-muted">
+              No host connector actions exposed.
+            </p>
           </div>
+          <p class="studio-catalog-message">{@catalog_message}</p>
         </div>
 
         <div class="studio-sidebar-footer">

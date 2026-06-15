@@ -146,7 +146,7 @@
     }
   });
 
-  // ../deps/phoenix_html/priv/static/phoenix_html.js
+  // ../../../dark-trench/squid_studio/deps/phoenix_html/priv/static/phoenix_html.js
   (function() {
     var PolyfillEvent = eventConstructor();
     function eventConstructor() {
@@ -211,7 +211,7 @@
     }, false);
   })();
 
-  // ../deps/phoenix/priv/static/phoenix.mjs
+  // ../../../dark-trench/squid_studio/deps/phoenix/priv/static/phoenix.mjs
   var closure = (value) => {
     if (typeof value === "function") {
       return value;
@@ -1671,7 +1671,7 @@
     }
   };
 
-  // ../deps/phoenix_live_view/priv/static/phoenix_live_view.esm.js
+  // ../../../dark-trench/squid_studio/deps/phoenix_live_view/priv/static/phoenix_live_view.esm.js
   var CONSECUTIVE_RELOADS = "consecutive-reloads";
   var MAX_RELOADS = 10;
   var RELOAD_JITTER_MIN = 5e3;

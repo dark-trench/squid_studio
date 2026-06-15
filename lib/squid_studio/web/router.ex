@@ -3,6 +3,7 @@ defmodule SquidStudio.Web.Router do
   Router macro for mounting Squid Studio inside a host Phoenix application.
   """
 
+  alias SquidStudio.ConnectorCatalog
   alias SquidStudio.Drafts
   alias SquidStudio.Web.Resolver
 
@@ -74,6 +75,7 @@ defmodule SquidStudio.Web.Router do
     user = Resolver.call_with_fallback(resolver, :resolve_user, [conn])
     csp_keys = expand_csp_nonce_keys(csp_key)
     {drafts, draft_error} = resolve_drafts(resolver, user)
+    {connector_catalog, connector_catalog_error} = resolve_connector_catalog(resolver, user)
 
     %{
       "prefix" => prefix,
@@ -83,6 +85,8 @@ defmodule SquidStudio.Web.Router do
       "workflows" => Resolver.call_with_fallback(resolver, :resolve_workflows, [user]),
       "drafts" => drafts,
       "draft_error" => draft_error,
+      "connector_catalog" => connector_catalog,
+      "connector_catalog_error" => connector_catalog_error,
       "live_path" => live_path,
       "live_transport" => live_transport,
       "csp_nonces" => %{
@@ -99,6 +103,25 @@ defmodule SquidStudio.Web.Router do
     |> Drafts.normalize_many()
     |> case do
       {:ok, drafts} -> {drafts, nil}
+      {:error, reason} -> {[], reason}
+    end
+  end
+
+  defp resolve_connector_catalog(resolver, user) do
+    context = %{environment: Application.get_env(:squid_studio, :environment, :default)}
+
+    connector_catalog =
+      if Code.ensure_loaded?(resolver) and
+           function_exported?(resolver, :resolve_connector_catalog, 2) do
+        Resolver.call_with_fallback(resolver, :resolve_connector_catalog, [user, context])
+      else
+        []
+      end
+
+    connector_catalog
+    |> ConnectorCatalog.normalize_many()
+    |> case do
+      {:ok, entries} -> {entries, nil}
       {:error, reason} -> {[], reason}
     end
   end

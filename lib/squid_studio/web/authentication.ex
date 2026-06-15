@@ -17,6 +17,8 @@ defmodule SquidStudio.Web.Authentication do
       |> assign(:workflows, session["workflows"])
       |> assign(:drafts, session["drafts"])
       |> assign(:draft_error, session["draft_error"])
+      |> assign(:connector_catalog, session["connector_catalog"])
+      |> assign(:connector_catalog_error, session["connector_catalog_error"])
       |> assign(:csp_nonces, session["csp_nonces"])
 
     {:cont, socket}

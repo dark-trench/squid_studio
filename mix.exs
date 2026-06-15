@@ -57,7 +57,7 @@ defmodule SquidStudio.MixProject do
       {:phoenix, "~> 1.8.1"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_view, "~> 1.1.0"},
-      {:squidie, "~> 0.1.3", optional: true},
+      {:squidie, "~> 0.3.0", optional: true},
       {:lazy_html, ">= 0.1.0", only: :test},
       {:esbuild, "~> 0.10", only: [:dev, :test], runtime: false},
       {:tailwind, "~> 0.3", only: [:dev, :test], runtime: false},

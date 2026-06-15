@@ -136,7 +136,11 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Squid Studio"
     assert html =~ "Squidie Visual Editor"
     assert html =~ ~s(id="squid-studio-editor")
-    assert html =~ ~s(class="studio-wordmark")
+
+    assert html =~
+             ~s(<a href="/studio" data-phx-link="redirect" data-phx-link-state="push" class="studio-wordmark">)
+
+    assert html =~ ~r|class="studio-breadcrumb"[\s\S]*href="/studio"[\s\S]*>Workflows</a>|
     assert html =~ ~s(phx-hook="SquidStudioTheme")
     assert html =~ "studio-theme-system"
     assert html =~ ~s(id="squid-studio-flow")
@@ -196,6 +200,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-theme-system"
     assert css.resp_body =~ ".studio-theme-switcher"
     assert css.resp_body =~ "--studio-topbar-height: 56px;"
+    assert css.resp_body =~ ".studio-topbar .studio-metric span"
+    assert css.resp_body =~ "grid-template-columns: repeat(2, minmax(78px, auto));"
     assert css.resp_body =~ "--studio-workflows-content-width: 1280px;"
     assert css.resp_body =~ "width: min(100%, var(--studio-workflows-content-width));"
     assert css.resp_body =~ "justify-self: center;"
@@ -211,6 +217,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "padding: 11px 14px;"
     assert css.resp_body =~ "border-radius: 6px;"
     assert css.resp_body =~ ".studio-template-preview .studio-button"
+    assert css.resp_body =~ ".studio-breadcrumb a"
+    assert css.resp_body =~ "a.studio-wordmark:hover strong"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

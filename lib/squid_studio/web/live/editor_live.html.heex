@@ -5,15 +5,15 @@
     class={["studio-editor", "studio-theme-#{@theme}"]}
   >
     <header class="studio-topbar">
-      <div class="studio-wordmark">
+      <.link navigate={studio_path("")} class="studio-wordmark">
         <strong>Squid Studio</strong>
         <span>Squidie Visual Editor</span>
-      </div>
+      </.link>
 
       <div class="studio-topbar-title">
         <div class="studio-breadcrumb">
           <.icon name="hero-square-3-stack-3d" />
-          <span>Workflows</span>
+          <.link navigate={studio_path("")}>Workflows</.link>
           <span>/</span>
           <strong>{@workflow.name}</strong>
         </div>

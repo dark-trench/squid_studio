@@ -342,7 +342,7 @@ defmodule SquidStudio.Web.EditorLive do
     action_key = Map.fetch!(entry, "action_key")
 
     %{
-      id: "#{provider}-#{action_key}",
+      id: "#{provider}-#{action_key}-#{index}",
       label: Map.fetch!(entry, "display_name"),
       type: "action",
       icon: node_icon("action"),

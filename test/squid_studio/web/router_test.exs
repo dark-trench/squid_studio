@@ -354,7 +354,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(draggable="true")
     assert html =~ ~s(data-catalog-action-key="create_issue")
     assert html =~ ~s(draggable="false")
-    refute html =~ "xoxb-secret"
+    refute html =~ "placeholder-value"
   end
 
   test "catalog node insertion rejects disabled or unauthorized entries", %{conn: conn} do
@@ -364,15 +364,32 @@ defmodule SquidStudio.Web.RouterTest do
       view
       |> render_hook("add_catalog_node", %{"action_key" => "create_issue"})
 
-    refute html =~ ~s(id="studio-node-github-create_issue")
+    refute html =~ ~s(id="studio-node-github-create_issue-)
     assert html =~ "Connector unavailable: production only"
 
     html =
       view
       |> render_hook("add_catalog_node", %{"action_key" => "post_message"})
 
-    assert html =~ ~s(id="studio-node-slack-post_message")
+    assert html =~ ~s(id="studio-node-slack-post_message-2")
     assert html =~ "Post message"
+  end
+
+  test "catalog node insertion generates stable unique ids for repeated actions", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    first_html =
+      view
+      |> render_hook("add_catalog_node", %{"action_key" => "post_message"})
+
+    assert first_html =~ ~s(id="studio-node-slack-post_message-2")
+
+    second_html =
+      view
+      |> render_hook("add_catalog_node", %{"action_key" => "post_message"})
+
+    assert second_html =~ ~s(id="studio-node-slack-post_message-2")
+    assert second_html =~ ~s(id="studio-node-slack-post_message-3")
   end
 
   test "centers the graph when the canvas reports its dimensions", %{conn: conn} do

@@ -112,10 +112,10 @@ defmodule SquidStudio.ConnectorCatalog do
 
   defp json_safe(map, path) when is_map(map) do
     Enum.reduce_while(map, {:ok, %{}}, fn {key, value}, {:ok, acc} ->
-      key = to_string(key)
-
-      case json_safe(value, path ++ [key]) do
-        {:ok, safe_value} -> {:cont, {:ok, Map.put(acc, key, safe_value)}}
+      with {:ok, key} <- safe_key(key, path),
+           {:ok, safe_value} <- json_safe(value, path ++ [key]) do
+        {:cont, {:ok, Map.put(acc, key, safe_value)}}
+      else
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
@@ -143,6 +143,12 @@ defmodule SquidStudio.ConnectorCatalog do
   defp json_safe(value, _path) when is_float(value), do: {:ok, value}
   defp json_safe(nil, _path), do: {:ok, nil}
   defp json_safe(value, path), do: {:error, {:invalid_json_value, path, value}}
+
+  defp safe_key(key, path) do
+    {:ok, to_string(key)}
+  rescue
+    Protocol.UndefinedError -> {:error, {:invalid_json_value, path, key}}
+  end
 
   defp required_string(map, key, default) do
     case Map.get(map, key) do

@@ -46,7 +46,7 @@ defmodule SquidStudio.Test.HostResolver do
         input_contract: %{channel: "string", text: "string"},
         output_contract: %{message_id: "string"},
         credential_requirements: [
-          %{key: "slack_bot", label: "Slack bot token", value: "xoxb-secret"}
+          %{key: "slack_bot", label: "Slack bot token"}
         ],
         enabled: true
       },

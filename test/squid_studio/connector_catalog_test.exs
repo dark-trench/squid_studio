@@ -15,7 +15,7 @@ defmodule SquidStudio.ConnectorCatalogTest do
                  input_contract: %{channel: :string, text: :string},
                  output_contract: %{message_id: :string},
                  credential_requirements: [
-                   %{key: :bot_token, label: "Bot token", value: "xoxb-secret"}
+                   %{key: :bot_token, label: "Bot token", value: "placeholder-value"}
                  ],
                  enabled: true
                }
@@ -48,6 +48,21 @@ defmodule SquidStudio.ConnectorCatalogTest do
                action_key: "create_event",
                display_name: "Create event",
                input_contract: %{seen_at: date},
+               output_contract: %{},
+               credential_requirements: []
+             })
+  end
+
+  test "rejects map keys that cannot be converted without crashing" do
+    ref = make_ref()
+
+    assert {:error, {:invalid_json_value, ["input_contract"], ^ref}} =
+             ConnectorCatalog.normalize(%{
+               provider: "calendar",
+               category: "scheduling",
+               action_key: "create_event",
+               display_name: "Create event",
+               input_contract: %{ref => "string"},
                output_contract: %{},
                credential_requirements: []
              })

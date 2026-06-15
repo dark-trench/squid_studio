@@ -853,12 +853,16 @@ html:has(.studio-app), body:has(.studio-app) {
   z-index: 3;
 }
 .studio-topbar-title {
+  display: grid;
+  justify-items: center;
   min-width: 0;
 }
 .studio-breadcrumb {
   display: flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
+  min-width: 0;
   color: var(--studio-muted);
   font-size: 12px;
   font-weight: 650;
@@ -1555,6 +1559,9 @@ a.studio-wordmark:hover strong {
   .studio-topbar {
     grid-template-columns: 1fr;
     height: auto;
+  }
+  .studio-topbar-title {
+    justify-items: start;
   }
   .studio-workflows-header-actions {
     justify-content: flex-end;

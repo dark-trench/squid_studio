@@ -9,7 +9,7 @@ defmodule SquidStudio.Web.RouterTest do
     html = html_response(conn, 200)
 
     assert html =~ "Squid Studio"
-    assert html =~ "Workflows Visual Builder"
+    assert html =~ "Squidie Visual Editor"
     assert html =~ ~s(id="squid-studio-workflows")
     assert html =~ ~r/<h3>\s*Workflows\s*<\/h3>/
     assert html =~ "Daily RSS To Discord"
@@ -31,16 +31,20 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-workflow-tabs")
     assert html =~ ~s(class="studio-workflow-tab)
     assert html =~ ~s(class="studio-workflow-card is-clickable-row")
+    assert html =~ ~s(class="studio-workflow-row-icon")
     assert html =~ ~s(class="studio-workflow-row-meta")
+    assert html =~ ~s(class="studio-workflow-run-details")
     assert html =~ ~s(class="studio-workflows-panel-actions")
     refute html =~ ~s(class="studio-count-pill")
     assert html =~ "Run inspection"
     assert html =~ "Get Started"
+    assert html =~ "Healthy drain"
+    assert html =~ "Last run delivered 12 feed items"
     assert html =~ "Host execution"
     assert html =~ "Approval gate"
     assert html =~ ~s(href="/studio/workflows/daily_digest")
     refute html =~ "Squidie host"
-    refute html =~ "Squidie Visual Editor"
+    refute html =~ "Workflows Visual Builder"
     refute html =~ "Squidie starters"
     refute html =~ "Workflow queue"
     refute html =~ "Host workflows"
@@ -130,7 +134,7 @@ defmodule SquidStudio.Web.RouterTest do
     html = html_response(conn, 200)
 
     assert html =~ "Squid Studio"
-    assert html =~ "Workflows Visual Builder"
+    assert html =~ "Squidie Visual Editor"
     assert html =~ ~s(id="squid-studio-editor")
     assert html =~ ~s(class="studio-wordmark")
     assert html =~ ~s(phx-hook="SquidStudioTheme")
@@ -149,7 +153,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Host persistence"
     assert html =~ "Publish version"
     refute html =~ "Squidie host"
-    refute html =~ "Squidie Visual Editor"
+    refute html =~ "Workflows Visual Builder"
     refute html =~ "Live</span>"
   end
 
@@ -200,8 +204,12 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr) 320px;"
     assert css.resp_body =~ ".studio-workflow-tabs"
     assert css.resp_body =~ ".studio-workflow-tab"
+    assert css.resp_body =~ ".studio-workflow-row-icon"
+    assert css.resp_body =~ ".studio-workflow-run-details"
     assert css.resp_body =~ ".studio-workflow-row-meta"
-    assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr);"
+    assert css.resp_body =~ "grid-template-columns: 34px minmax(0, 1fr) auto;"
+    assert css.resp_body =~ "border-radius: 6px;"
+    assert css.resp_body =~ ".studio-template-preview .studio-button"
     assert css.resp_body =~ ".studio-wordmark"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 

@@ -1264,13 +1264,13 @@ html:has(.studio-app), body:has(.studio-app) {
 }
 .studio-workflow-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   border: 1px solid transparent;
   border-bottom-color: var(--studio-border);
   border-radius: 0;
-  padding: 10px 6px;
+  padding: 11px 6px;
   background: transparent;
   color: var(--studio-ink);
   text-decoration: none;
@@ -1282,11 +1282,32 @@ html:has(.studio-app), body:has(.studio-app) {
   background: var(--studio-accent-soft);
   box-shadow: none;
 }
+.studio-workflow-row-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--studio-border);
+  border-radius: 7px;
+  background: var(--studio-surface-muted);
+  color: var(--studio-accent-strong);
+}
+.studio-workflow-row-icon .hero-bolt, .studio-workflow-row-icon .hero-cube, .studio-workflow-row-icon .hero-document-text, .studio-workflow-row-icon .hero-hand-raised {
+  width: 15px;
+  height: 15px;
+}
+.studio-workflow-card-main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
 .studio-workflow-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.studio-workflow-card-title {
   min-width: 0;
 }
 .studio-workflow-card h4 {
@@ -1294,6 +1315,26 @@ html:has(.studio-app), body:has(.studio-app) {
   font-size: 15px;
   line-height: 1.25;
   font-weight: 750;
+}
+.studio-workflow-run-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--studio-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.studio-workflow-run-details span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.studio-workflow-run-details span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .studio-workflow-row-meta {
   display: inline-flex;
@@ -1313,7 +1354,7 @@ html:has(.studio-app), body:has(.studio-app) {
 .studio-workflow-status {
   flex: none;
   border: 1px solid var(--studio-border);
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 4px 8px;
   color: var(--studio-muted);
   font-size: 11px;
@@ -1370,6 +1411,9 @@ html:has(.studio-app), body:has(.studio-app) {
   color: var(--studio-muted);
   font-size: 13px;
   line-height: 1.45;
+}
+.studio-template-preview .studio-button {
+  margin-top: 10px;
 }
 .studio-run-panel {
   display: grid;
@@ -1443,11 +1487,14 @@ html:has(.studio-app), body:has(.studio-app) {
   .studio-workflow-card {
     grid-template-columns: 1fr;
   }
-  .studio-workflow-card-header, .studio-workflow-row-meta {
+  .studio-workflow-row-icon {
+    display: none;
+  }
+  .studio-workflow-card-header, .studio-workflow-run-details, .studio-workflow-row-meta {
     align-items: flex-start;
     flex-direction: column;
   }
-  .studio-workflow-row-meta {
+  .studio-workflow-run-details, .studio-workflow-row-meta {
     white-space: normal;
   }
   .studio-workspace {

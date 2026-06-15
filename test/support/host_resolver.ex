@@ -35,6 +35,38 @@ defmodule SquidStudio.Test.HostResolver do
   end
 
   @impl true
+  def resolve_connector_catalog(:operator, %{environment: :test}) do
+    [
+      %{
+        provider: "slack",
+        category: "Messaging",
+        action_key: "post_message",
+        display_name: "Post message",
+        description: "Send an approved Slack message",
+        input_contract: %{channel: "string", text: "string"},
+        output_contract: %{message_id: "string"},
+        credential_requirements: [
+          %{key: "slack_bot", label: "Slack bot token", value: "xoxb-secret"}
+        ],
+        enabled: true
+      },
+      %{
+        provider: "github",
+        category: "Code",
+        action_key: "create_issue",
+        display_name: "Create issue",
+        description: "Open a GitHub issue",
+        input_contract: %{title: "string"},
+        output_contract: %{issue_url: "string"},
+        credential_requirements: [%{key: "github_app", label: "GitHub app"}],
+        enabled: false,
+        authorized: false,
+        disabled_reason: "production only"
+      }
+    ]
+  end
+
+  @impl true
   def save_draft(:operator, draft) do
     metadata =
       draft

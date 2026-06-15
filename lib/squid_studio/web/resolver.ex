@@ -6,12 +6,15 @@ defmodule SquidStudio.Web.Resolver do
   before a host app wires in real Squidie workflow discovery.
   """
 
+  alias SquidStudio.ConnectorCatalog
   alias SquidStudio.Drafts
 
   @callback resolve_user(Plug.Conn.t()) :: term()
   @callback resolve_access(term()) :: :all | :read_only
   @callback resolve_workflows(term()) :: [map()]
   @callback resolve_drafts(term()) :: [map()] | {:ok, [map()]} | {:error, term()}
+  @callback resolve_connector_catalog(term(), map()) ::
+              [map()] | {:ok, [map()]} | {:error, term()}
   @callback load_draft(term(), String.t()) :: {:ok, map()} | {:error, term()}
   @callback save_draft(term(), map()) :: {:ok, map()} | {:error, term()}
   @callback delete_draft(term(), String.t()) :: :ok | {:ok, term()} | {:error, term()}
@@ -21,6 +24,7 @@ defmodule SquidStudio.Web.Resolver do
                       resolve_access: 1,
                       resolve_workflows: 1,
                       resolve_drafts: 1,
+                      resolve_connector_catalog: 2,
                       load_draft: 2,
                       save_draft: 2,
                       delete_draft: 2,
@@ -153,6 +157,57 @@ defmodule SquidStudio.Web.Resolver do
 
   @doc false
   def resolve_drafts(user), do: user |> resolve_workflows() |> Drafts.from_workflows()
+
+  @doc false
+  def resolve_connector_catalog(_user, _context) do
+    [
+      %{
+        provider: "built_in",
+        category: "Triggers",
+        action_key: "manual_trigger",
+        display_name: "Manual trigger",
+        description: "Start a workflow from a host-approved payload.",
+        input_contract: %{payload: "map"},
+        output_contract: %{run_id: "string"},
+        credential_requirements: [],
+        enabled: true
+      },
+      %{
+        provider: "built_in",
+        category: "Actions",
+        action_key: "action_step",
+        display_name: "Action step",
+        description: "Run a host-owned Squidie step.",
+        input_contract: %{input: "map"},
+        output_contract: %{result: "map"},
+        credential_requirements: [],
+        enabled: true
+      },
+      %{
+        provider: "built_in",
+        category: "Decisions",
+        action_key: "manual_decision",
+        display_name: "Manual decision",
+        description: "Pause for an operator approval or rejection.",
+        input_contract: %{subject: "string"},
+        output_contract: %{decision: "string"},
+        credential_requirements: [],
+        enabled: true
+      },
+      %{
+        provider: "built_in",
+        category: "Routes",
+        action_key: "failure_route",
+        display_name: "Failure route",
+        description: "Route a failed branch to host-owned recovery.",
+        input_contract: %{error: "map"},
+        output_contract: %{handled: "boolean"},
+        credential_requirements: [],
+        enabled: true
+      }
+    ]
+    |> ConnectorCatalog.normalize_many()
+  end
 
   @doc false
   def load_draft(user, draft_id) do

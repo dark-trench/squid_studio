@@ -3,6 +3,7 @@ defmodule SquidStudio.Web.EditorLive do
 
   use SquidStudio.Web, :live_view
 
+  alias SquidStudio.ConnectorCatalog
   alias SquidStudio.Web.Resolver
 
   @node_width 160
@@ -20,6 +21,7 @@ defmodule SquidStudio.Web.EditorLive do
     graph = build_graph(workflow.nodes, workflow.edges)
     drafts = List.wrap(socket.assigns[:drafts])
     selected_draft = List.first(drafts)
+    connector_catalog = List.wrap(socket.assigns[:connector_catalog])
 
     socket =
       socket
@@ -34,6 +36,9 @@ defmodule SquidStudio.Web.EditorLive do
       )
       |> assign(:nodes, graph.nodes)
       |> assign(:edges, graph.edges)
+      |> assign(:connector_catalog, connector_catalog)
+      |> assign(:catalog_groups, ConnectorCatalog.group_by_category(connector_catalog))
+      |> assign(:catalog_message, catalog_message(socket.assigns[:connector_catalog_error]))
       |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
       |> assign(:theme, :system)
@@ -85,6 +90,39 @@ defmodule SquidStudio.Web.EditorLive do
      |> assign(:selected_draft_id, id)
      |> assign(:draft_status, draft_status(nil, draft))
      |> assign(:persistence_message, persistence_message(nil, draft))}
+  end
+
+  def handle_event("add_catalog_node", %{"action_key" => action_key} = params, socket) do
+    connector =
+      find_catalog_entry(socket.assigns.connector_catalog, params["provider"], action_key)
+
+    cond do
+      is_nil(connector) ->
+        {:noreply, assign(socket, :catalog_message, "Connector unavailable.")}
+
+      not catalog_entry_available?(connector) ->
+        {:noreply,
+         assign(
+           socket,
+           :catalog_message,
+           "Connector unavailable: #{catalog_disabled_reason(connector)}"
+         )}
+
+      true ->
+        node = catalog_entry_to_node(connector, length(socket.assigns.nodes))
+        nodes = socket.assigns.nodes ++ [node]
+
+        {:noreply,
+         socket
+         |> assign(:nodes, nodes)
+         |> assign(:edges, build_edges(socket.assigns.edges, nodes))
+         |> assign(:selected_node_id, node.id)
+         |> assign(:drafts, add_node_to_selected_draft(socket, node, connector))
+         |> assign(
+           :catalog_message,
+           "#{Map.fetch!(connector, "display_name")} added to the draft."
+         )}
+    end
   end
 
   def handle_event("save_draft", _params, socket) do
@@ -275,6 +313,73 @@ defmodule SquidStudio.Web.EditorLive do
   defp node_icon("input"), do: "hero-arrow-down-tray"
   defp node_icon("output"), do: "hero-paper-airplane"
   defp node_icon(_type), do: "hero-bolt"
+
+  defp catalog_icon("built_in"), do: "built-in"
+  defp catalog_icon(_provider), do: "step"
+
+  defp catalog_entry_available?(entry) do
+    Map.get(entry, "enabled", true) and Map.get(entry, "authorized", true)
+  end
+
+  defp catalog_disabled_reason(entry) do
+    Map.get(entry, "disabled_reason") || "host policy does not allow this connector"
+  end
+
+  defp catalog_message(nil), do: "Host-approved connector actions."
+
+  defp catalog_message(error),
+    do: error_message("Host connector catalog returned invalid data", error)
+
+  defp find_catalog_entry(entries, provider, action_key) do
+    Enum.find(entries, fn entry ->
+      Map.get(entry, "action_key") == action_key and
+        (is_nil(provider) or Map.get(entry, "provider") == provider)
+    end)
+  end
+
+  defp catalog_entry_to_node(entry, index) do
+    provider = Map.fetch!(entry, "provider")
+    action_key = Map.fetch!(entry, "action_key")
+
+    %{
+      id: "#{provider}-#{action_key}",
+      label: Map.fetch!(entry, "display_name"),
+      type: "action",
+      icon: node_icon("action"),
+      x: 80 + index * 24,
+      y: 120 + index * 18
+    }
+  end
+
+  defp add_node_to_selected_draft(socket, node, connector) do
+    Enum.map(socket.assigns.drafts, fn draft ->
+      if Map.get(draft, "id") == socket.assigns.selected_draft_id do
+        add_node_to_draft(draft, node, connector)
+      else
+        draft
+      end
+    end)
+  end
+
+  defp add_node_to_draft(draft, node, connector) do
+    spec = Map.get(draft, "spec", %{})
+    nodes = Map.get(spec, "nodes", [])
+
+    connector_node = %{
+      "id" => node.id,
+      "type" => "action",
+      "data" => %{
+        "label" => node.label,
+        "provider" => Map.get(connector, "provider"),
+        "action_key" => Map.get(connector, "action_key"),
+        "input_contract" => Map.get(connector, "input_contract"),
+        "output_contract" => Map.get(connector, "output_contract"),
+        "credential_requirements" => Map.get(connector, "credential_requirements")
+      }
+    }
+
+    Map.put(draft, "spec", Map.put(spec, "nodes", nodes ++ [connector_node]))
+  end
 
   defp normalize_theme("system"), do: :system
   defp normalize_theme("light"), do: :light

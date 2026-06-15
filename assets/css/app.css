@@ -270,6 +270,23 @@ body:has(.studio-app) {
   margin-top: 12px;
 }
 
+.studio-component-group {
+  display: grid;
+  gap: 6px;
+}
+
+.studio-component-group + .studio-component-group {
+  margin-top: 8px;
+}
+
+.studio-component-group-title {
+  margin: 2px 0 0;
+  color: var(--studio-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .studio-component,
 .studio-draft-item,
 .studio-button {
@@ -314,6 +331,45 @@ body:has(.studio-app) {
 
 .studio-component {
   border-color: var(--studio-border);
+  width: 100%;
+  cursor: grab;
+}
+
+.studio-component.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.studio-component.is-disabled:hover {
+  border-color: var(--studio-border);
+  background: var(--studio-surface);
+}
+
+.studio-component-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.studio-component-body strong,
+.studio-component-body small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-component-body small {
+  color: var(--studio-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.studio-catalog-message {
+  margin: 10px 0 0;
+  color: var(--studio-muted);
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .studio-draft-item {

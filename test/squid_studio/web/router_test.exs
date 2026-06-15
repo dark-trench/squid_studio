@@ -218,6 +218,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "@media (max-width: 1040px)"
     assert css.resp_body =~ "grid-template-columns: repeat(3, minmax(0, 1fr));"
     assert css.resp_body =~ "grid-template-rows: auto minmax(0, 1fr);"
+    assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr) auto;"
+    assert css.resp_body =~ "flex-wrap: nowrap;"
     assert css.resp_body =~ ".studio-workflows-panel-actions form"
     assert css.resp_body =~ "flex: 1 1 220px;"
     assert css.resp_body =~ "@media (max-width: 520px)"

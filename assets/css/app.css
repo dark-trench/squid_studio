@@ -1283,17 +1283,21 @@ a.studio-wordmark:hover strong {
     padding: 8px 12px;
   }
 
-  .studio-workflows-header-inner,
+  .studio-workflows-header-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
   .studio-topbar {
     grid-template-columns: 1fr;
     height: auto;
   }
 
-  .studio-workflows-header-inner {
-    gap: 10px;
+  .studio-workflows-header-actions {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
   }
 
-  .studio-workflows-header-actions,
   .studio-topbar-actions {
     justify-content: flex-start;
     flex-wrap: wrap;

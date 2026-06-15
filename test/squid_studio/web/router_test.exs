@@ -9,7 +9,7 @@ defmodule SquidStudio.Web.RouterTest do
     html = html_response(conn, 200)
 
     assert html =~ "Squid Studio"
-    assert html =~ "Squidie Visual Editor"
+    assert html =~ "Workflows Visual Builder"
     assert html =~ ~s(id="squid-studio-workflows")
     assert html =~ ~r/<h3>\s*Workflows\s*<\/h3>/
     assert html =~ "Daily RSS To Discord"
@@ -35,10 +35,13 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-workflows-panel-actions")
     refute html =~ ~s(class="studio-count-pill")
     assert html =~ "Run inspection"
+    assert html =~ "Get Started"
     assert html =~ "Host execution"
     assert html =~ "Approval gate"
     assert html =~ ~s(href="/studio/workflows/daily_digest")
     refute html =~ "Squidie host"
+    refute html =~ "Squidie Visual Editor"
+    refute html =~ "Squidie starters"
     refute html =~ "Workflow queue"
     refute html =~ "Host workflows"
     refute html =~ "Live</span>"
@@ -127,7 +130,7 @@ defmodule SquidStudio.Web.RouterTest do
     html = html_response(conn, 200)
 
     assert html =~ "Squid Studio"
-    assert html =~ "Squidie Visual Editor"
+    assert html =~ "Workflows Visual Builder"
     assert html =~ ~s(id="squid-studio-editor")
     assert html =~ ~s(class="studio-wordmark")
     assert html =~ ~s(phx-hook="SquidStudioTheme")
@@ -146,6 +149,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Host persistence"
     assert html =~ "Publish version"
     refute html =~ "Squidie host"
+    refute html =~ "Squidie Visual Editor"
     refute html =~ "Live</span>"
   end
 

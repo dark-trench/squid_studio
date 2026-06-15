@@ -850,6 +850,9 @@ body:has(.studio-app) {
 
 .studio-wordmark {
   display: grid;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
   min-width: 0;
   gap: 1px;
   text-decoration: none;

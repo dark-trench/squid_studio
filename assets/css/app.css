@@ -932,6 +932,10 @@ a.studio-wordmark:hover strong {
   min-width: min(460px, 52%);
 }
 
+.studio-workflows-panel-actions form {
+  min-width: 0;
+}
+
 .studio-workflows-panel h3 {
   margin-top: 2px;
   font-size: 18px;
@@ -1245,6 +1249,16 @@ a.studio-wordmark:hover strong {
   }
 }
 
+@media (max-width: 1040px) {
+  .studio-workflows-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-template-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1180px) {
   .studio-topbar {
     grid-template-columns: minmax(210px, 1fr) minmax(280px, 1.4fr);
@@ -1261,10 +1275,22 @@ a.studio-wordmark:hover strong {
 }
 
 @media (max-width: 860px) {
+  .studio-workflows-page {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .studio-workflows-header {
+    padding: 8px 12px;
+  }
+
   .studio-workflows-header-inner,
   .studio-topbar {
     grid-template-columns: 1fr;
     height: auto;
+  }
+
+  .studio-workflows-header-inner {
+    gap: 10px;
   }
 
   .studio-workflows-header-actions,
@@ -1273,28 +1299,49 @@ a.studio-wordmark:hover strong {
     flex-wrap: wrap;
   }
 
+  .studio-workflows-main {
+    padding: 12px;
+  }
+
   .studio-workflows-panel-header {
     align-items: stretch;
     flex-direction: column;
+    padding: 12px;
   }
 
   .studio-workflows-panel-actions {
     justify-content: flex-start;
     min-width: 0;
+    width: 100%;
     flex-wrap: wrap;
   }
 
-  .studio-workflows-grid {
-    grid-template-columns: 1fr;
+  .studio-workflows-panel-actions form {
+    flex: 1 1 220px;
+  }
+
+  .studio-search-field {
+    width: 100%;
   }
 
   .studio-workflows-controls {
     align-items: stretch;
     flex-direction: column;
+    padding: 0 12px 10px;
+  }
+
+  .studio-workflow-tabs {
+    gap: 14px;
+    padding-bottom: 2px;
+  }
+
+  .studio-workflow-card-list {
+    padding: 8px 10px 12px;
   }
 
   .studio-workflow-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 10px 12px;
   }
 
   .studio-workflow-row-icon {
@@ -1302,7 +1349,6 @@ a.studio-wordmark:hover strong {
   }
 
   .studio-workflow-card-header,
-  .studio-workflow-run-details,
   .studio-workflow-row-meta {
     align-items: flex-start;
     flex-direction: column;
@@ -1331,5 +1377,50 @@ a.studio-wordmark:hover strong {
 
   .studio-sidebar-section:nth-of-type(n + 3) {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .studio-template-list {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-workflow-card {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .studio-workflow-card h4 {
+    font-size: 14px;
+  }
+
+  .studio-workflow-run-details {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .studio-workflows-header-actions {
+    gap: 8px;
+  }
+
+  .studio-workflows-main {
+    padding: 10px;
+  }
+
+  .studio-workflows-panel-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .studio-workflows-panel-actions .studio-button {
+    width: 100%;
+  }
+
+  .studio-template-list,
+  .studio-template-preview,
+  .studio-run-panel {
+    margin: 12px;
   }
 }

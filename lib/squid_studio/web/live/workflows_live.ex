@@ -90,7 +90,9 @@ defmodule SquidStudio.Web.WorkflowsLive do
           workflow.name,
           workflow.description,
           workflow.status_label,
-          workflow.executor
+          workflow.executor,
+          workflow.run_state,
+          workflow.run_detail
         ]
         |> Enum.join(" ")
         |> String.downcase()
@@ -112,15 +114,23 @@ defmodule SquidStudio.Web.WorkflowsLive do
       status: status,
       status_label: status_label(status),
       description: description_for(id),
+      icon: icon_for(status),
       nodes: length(nodes),
       edges: length(edges),
       runs: runs_for(id),
       approvals: approvals_for(id),
       dynamic_overlays: dynamic_overlays_for(id),
       executor: executor_for(id),
-      updated: updated_for(id)
+      updated: updated_for(id),
+      run_state: run_state_for(id),
+      run_detail: run_detail_for(id)
     }
   end
+
+  defp icon_for("approval"), do: "hero-hand-raised"
+  defp icon_for("dynamic"), do: "hero-cube"
+  defp icon_for("draft"), do: "hero-document-text"
+  defp icon_for("running"), do: "hero-bolt"
 
   defp status_for("approval_saga"), do: "approval"
   defp status_for("dynamic_fanout"), do: "dynamic"
@@ -166,6 +176,18 @@ defmodule SquidStudio.Web.WorkflowsLive do
   defp updated_for("dynamic_fanout"), do: "scheduled today"
   defp updated_for("bedrock_dispatch"), do: "lease renewed"
   defp updated_for(_id), do: "draft updated"
+
+  defp run_state_for("approval_saga"), do: "Approval gate"
+  defp run_state_for("dynamic_fanout"), do: "Overlay queued"
+  defp run_state_for("runtime_authored_spec"), do: "Draft validation"
+  defp run_state_for("bedrock_dispatch"), do: "Lease drain"
+  defp run_state_for(_id), do: "Healthy drain"
+
+  defp run_detail_for("daily_digest"), do: "Last run delivered 12 feed items"
+  defp run_detail_for("approval_saga"), do: "3 approvals waiting on operator signal"
+  defp run_detail_for("dynamic_fanout"), do: "6 dynamic branches ready to inspect"
+  defp run_detail_for("bedrock_dispatch"), do: "Next lease renews on the host worker"
+  defp run_detail_for(_id), do: "Spec saved and waiting for activation"
 
   defp resource_views do
     [

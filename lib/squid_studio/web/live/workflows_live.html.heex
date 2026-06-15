@@ -8,7 +8,7 @@
       <div class="studio-workflows-header-inner">
         <div class="studio-wordmark">
           <strong>Squid Studio</strong>
-          <span>Workflows Visual Builder</span>
+          <span>Squidie Visual Editor</span>
         </div>
 
         <div class="studio-workflows-header-actions">
@@ -71,12 +71,24 @@
               navigate={studio_path(["workflows", workflow.id])}
               class="studio-workflow-card is-clickable-row"
             >
-              <div class="studio-workflow-card-header">
-                <div>
+              <div class="studio-workflow-row-icon">
+                <.icon name={workflow.icon} />
+              </div>
+
+              <div class="studio-workflow-card-main">
+                <div class="studio-workflow-card-title">
                   <p class="studio-kicker">{workflow.executor}</p>
                   <h4>{workflow.name}</h4>
                 </div>
 
+                <div class="studio-workflow-run-details">
+                  <span><.icon name="hero-bolt" />{workflow.run_state}</span>
+                  <span>{workflow.run_detail}</span>
+                  <span>{workflow.nodes} nodes / {workflow.edges} transitions</span>
+                </div>
+              </div>
+
+              <div class="studio-workflow-card-header">
                 <div class="studio-workflow-row-meta">
                   <span class={["studio-workflow-status", status_class(workflow.status)]}>
                     {workflow.status_label}

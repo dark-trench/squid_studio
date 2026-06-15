@@ -2,6 +2,11 @@
 
 Visual editor for Squidie workflows.
 
+> [!WARNING]
+> Squid Studio is under active development and is not usable yet. APIs,
+> installation steps, embedded UI behavior, and workflow-authoring surfaces may
+> change before an initial usable release.
+
 ## Squidie Integration
 
 Squid Studio uses Squidie as the workflow runtime and editor-spec boundary.

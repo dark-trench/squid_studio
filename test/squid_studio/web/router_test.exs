@@ -208,6 +208,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-run-details"
     assert css.resp_body =~ ".studio-workflow-row-meta"
     assert css.resp_body =~ "grid-template-columns: 34px minmax(0, 1fr) auto;"
+    assert css.resp_body =~ "padding: 11px 14px;"
     assert css.resp_body =~ "border-radius: 6px;"
     assert css.resp_body =~ ".studio-template-preview .studio-button"
     assert css.resp_body =~ ".studio-wordmark"

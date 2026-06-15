@@ -1270,7 +1270,7 @@ html:has(.studio-app), body:has(.studio-app) {
   border: 1px solid transparent;
   border-bottom-color: var(--studio-border);
   border-radius: 0;
-  padding: 11px 6px;
+  padding: 11px 14px;
   background: transparent;
   color: var(--studio-ink);
   text-decoration: none;

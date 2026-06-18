@@ -30,7 +30,14 @@ defmodule SquidStudio.Test.HostResolver do
   def resolve_drafts(:operator) do
     [
       draft("invoice_review", "Invoice Review"),
-      draft("carrier_onboarding", "Carrier Onboarding")
+      draft("carrier_onboarding", "Carrier Onboarding",
+        validation_errors: [
+          %{
+            path: ["steps", "0", "name"],
+            message: "Step name collides with a host-managed action key."
+          }
+        ]
+      )
     ]
   end
 
@@ -86,19 +93,22 @@ defmodule SquidStudio.Test.HostResolver do
      }}
   end
 
-  defp draft(id, name) do
-    %{
-      id: id,
-      workflow: id,
-      name: name,
-      definition_version: "draft",
-      spec: %{
+  defp draft(id, name, extra \\ []) do
+    draft =
+      %{
+        id: id,
         workflow: id,
+        name: name,
         definition_version: "draft",
-        steps: [%{name: "review_invoice", opts: []}],
-        transitions: []
+        spec: %{
+          workflow: id,
+          definition_version: "draft",
+          steps: [%{name: "review_invoice", opts: []}],
+          transitions: []
+        }
       }
-    }
+
+    Enum.into(extra, draft)
   end
 
   defp node(id, label, type, x, y) do

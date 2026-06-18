@@ -87,6 +87,10 @@ Then pass it to the mount macro:
 squid_studio "/squid-studio", resolver: MyApp.SquidStudioResolver
 ```
 
+For a fuller host checklist covering resolver callbacks, action catalogs, draft
+persistence, run operations, and redaction boundaries, see
+[docs/host_integration.md](docs/host_integration.md).
+
 ## Standalone Development
 
 ```sh

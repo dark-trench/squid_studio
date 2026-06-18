@@ -37,7 +37,14 @@
         <span :if={@read_only?} class="studio-badge neutral">
           <.icon name="hero-eye" />Read-only
         </span>
+        <span class={["studio-badge", validation_badge_class(@validation_status)]}>
+          <.icon name="hero-shield-check" />{@validation_status}
+        </span>
         <span class="studio-badge"><.icon name="hero-pencil-square" />{@draft_status}</span>
+        <button type="button" class="studio-button secondary" phx-click="validate_draft">
+          <.icon name="hero-shield-check" />
+          <span>Validate draft</span>
+        </button>
         <button
           type="button"
           class="studio-button secondary"
@@ -179,6 +186,34 @@
           </button>
         </div>
 
+        <div
+          id="studio-draft-validation"
+          class={[
+            "studio-draft-validation",
+            @validation_status == "Valid draft" && "is-valid",
+            @validation_status == "Validation issues" && "is-invalid"
+          ]}
+        >
+          <div class="studio-draft-validation-header">
+            <p class="studio-kicker">Draft validation</p>
+            <span class={["studio-badge", validation_badge_class(@validation_status)]}>
+              {@validation_status}
+            </span>
+          </div>
+          <p class="studio-draft-validation-message">{@validation_message}</p>
+
+          <div
+            :if={@spec_validation_errors != []}
+            id="studio-spec-validation"
+            class="studio-spec-validation"
+          >
+            <div :for={issue <- @spec_validation_errors} class="studio-spec-validation-row">
+              <strong>{issue.path}</strong>
+              <span>{issue.message}</span>
+            </div>
+          </div>
+        </div>
+
         <%= if @editor_surface == :visual do %>
           <div
             id="squid-studio-flow"
@@ -200,7 +235,14 @@
                 </marker>
               </defs>
               <%= for edge <- @edges do %>
-                <path class="studio-edge" d={edge.path} marker-end="url(#studio-arrow)" />
+                <path
+                  class={[
+                    "studio-edge",
+                    Map.get(@edge_validation_counts, edge.id, 0) > 0 && "studio-edge-invalid"
+                  ]}
+                  d={edge.path}
+                  marker-end="url(#studio-arrow)"
+                />
               <% end %>
             </svg>
 
@@ -210,7 +252,8 @@
                 type="button"
                 class={[
                   "studio-node",
-                  node.id == @selected_node_id && "is-selected"
+                  node.id == @selected_node_id && "is-selected",
+                  Map.get(@node_validation_counts, node.id, 0) > 0 && "is-invalid"
                 ]}
                 style={"left: #{node.x}px; top: #{node.y}px;"}
                 data-node-id={node.id}
@@ -225,24 +268,18 @@
                   </span>
                   <span class="studio-node-type">{node.type}</span>
                 </span>
+                <span
+                  :if={Map.get(@node_validation_counts, node.id, 0) > 0}
+                  class="studio-node-validation-badge"
+                >
+                  {Map.get(@node_validation_counts, node.id, 0)}
+                </span>
                 <span class="studio-node-port right"></span>
               </button>
             <% end %>
           </div>
         <% else %>
           <div class="studio-spec-panel">
-            <div
-              :if={@spec_validation_errors != []}
-              id="studio-spec-validation"
-              class="studio-spec-validation"
-            >
-              <p class="studio-kicker">Validation issues</p>
-              <div :for={issue <- @spec_validation_errors} class="studio-spec-validation-row">
-                <strong>{issue.path}</strong>
-                <span>{issue.message}</span>
-              </div>
-            </div>
-
             <pre id="studio-spec-view" class="studio-spec-view"><code>{@spec_json}</code></pre>
           </div>
         <% end %>

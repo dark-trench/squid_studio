@@ -33,10 +33,15 @@ defmodule SquidStudio.Test.HostResolver do
       draft("carrier_onboarding", "Carrier Onboarding",
         validation_errors: [
           %{
-            path: ["steps", "0", "name"],
-            message: "Step name collides with a host-managed action key."
+            path: ["steps", "2", "name"],
+            message: "duplicate step name: review_invoice"
+          },
+          %{
+            path: ["transitions", "0", "on"],
+            message: "transition outcome must be ok or error"
           }
-        ]
+        ],
+        spec: invalid_carrier_onboarding_spec()
       )
     ]
   end
@@ -100,15 +105,51 @@ defmodule SquidStudio.Test.HostResolver do
         workflow: id,
         name: name,
         definition_version: "draft",
-        spec: %{
-          workflow: id,
-          definition_version: "draft",
-          steps: [%{name: "review_invoice", opts: []}],
-          transitions: []
-        }
+        spec: base_spec(id)
       }
 
     Enum.into(extra, draft)
+  end
+
+  defp base_spec(id) do
+    %{
+      workflow: id,
+      definition_version: "draft",
+      triggers: [],
+      payload: [],
+      steps: [
+        %{name: "invoice_added", opts: []},
+        %{name: "review_invoice", opts: []}
+      ],
+      transitions: [
+        %{from: "invoice_added", on: "ok", to: "review_invoice"}
+      ],
+      retries: [],
+      entry_steps: ["invoice_added"],
+      initial_step: "invoice_added",
+      entry_step: "invoice_added"
+    }
+  end
+
+  defp invalid_carrier_onboarding_spec do
+    %{
+      workflow: "carrier_onboarding",
+      definition_version: "draft",
+      triggers: [],
+      payload: [],
+      steps: [
+        %{name: "invoice_added", opts: []},
+        %{name: "review_invoice", opts: []},
+        %{name: "review_invoice", opts: []}
+      ],
+      transitions: [
+        %{from: "invoice_added", on: "pending", to: "review_invoice"}
+      ],
+      retries: [],
+      entry_steps: ["invoice_added"],
+      initial_step: "invoice_added",
+      entry_step: "invoice_added"
+    }
   end
 
   defp node(id, label, type, x, y) do

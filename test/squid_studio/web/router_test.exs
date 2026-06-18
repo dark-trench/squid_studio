@@ -151,13 +151,14 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(data-studio-theme="light")
     assert html =~ ~s(data-studio-theme="dark")
     assert html =~ ~s(data-node-id="fetch_feed")
-    assert html =~ ~s(class="studio-edge")
+    assert html =~ "studio-edge"
     assert html =~ "Workflow drafts"
     assert html =~ "trigger :daily_digest"
     assert html =~ "hero-clock"
     assert html =~ "Draft spec"
     assert html =~ "Host persistence"
     assert html =~ "Publish version"
+    assert html =~ "Validate draft"
     refute html =~ "Squidie host"
     refute html =~ "Workflows Visual Builder"
     refute html =~ "Live</span>"
@@ -187,8 +188,10 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "&quot;workflow&quot;: &quot;carrier_onboarding&quot;"
     assert html =~ "Validation issues"
-    assert html =~ "Step name collides with a host-managed action key."
-    assert html =~ "steps.0.name"
+    assert html =~ "duplicate step name: review_invoice"
+    assert html =~ "steps.2.name"
+    assert html =~ "transition outcome must be ok or error"
+    assert html =~ "transitions.0.on"
   end
 
   test "keeps the spec view in sync with draft edits", %{conn: conn} do
@@ -222,9 +225,45 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(<aside class="studio-sidebar">)
     assert html =~ ~s(<section class="studio-canvas-column">)
     assert html =~ ~s(<aside class="studio-properties">)
+    assert html =~ ~s(phx-click="validate_draft")
     refute html =~ ~s(class="studio-toolbar")
     refute html =~ "Review</span>"
-    refute html =~ "Validate</span>"
+  end
+
+  test "validates draft specs from the editor toolbar", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    assert html =~ ~s(phx-click="validate_draft")
+    assert html =~ "Not validated"
+
+    html =
+      view
+      |> element(~s(button[phx-click="validate_draft"]))
+      |> render_click()
+
+    assert html =~ "Valid draft"
+    assert html =~ "Draft passes Squidie editor validation."
+    refute html =~ "Validation issues"
+
+    html =
+      view
+      |> element(~s(button[phx-value-id="carrier_onboarding"]))
+      |> render_click()
+
+    assert html =~ "Validation issues"
+    assert html =~ "duplicate step name: review_invoice"
+    assert html =~ "transition outcome must be ok or error"
+
+    html =
+      view
+      |> element(~s(button[phx-click="validate_draft"]))
+      |> render_click()
+
+    assert html =~ "Validation issues"
+    assert html =~ "2 validation issues found."
+    assert html =~ ~s(id="studio-node-review_invoice")
+    assert html =~ ~s(class="studio-node-validation-badge")
+    assert html =~ ~s(class="studio-edge studio-edge-invalid")
   end
 
   test "serves hashed studio assets", %{conn: conn} do
@@ -311,7 +350,7 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ ~s(id="studio-node-fetch_feed")
     assert html =~ "left: 120px; top: 140px;"
-    assert html =~ ~s(class="studio-edge")
+    assert html =~ "studio-edge"
   end
 
   test "sets the studio theme from the topbar control", %{conn: conn} do

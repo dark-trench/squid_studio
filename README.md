@@ -107,3 +107,7 @@ Run validation with:
 ```sh
 mix precommit
 ```
+
+Release maintainers should also follow
+[docs/release_checklist.md](docs/release_checklist.md) before tagging or
+publishing the first V1 package.

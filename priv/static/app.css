@@ -17,6 +17,8 @@
     --text-sm: 0.875rem;
     --text-sm--line-height: calc(1.25 / 0.875);
     --radius-md: 0.375rem;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
   }
@@ -416,6 +418,17 @@
     width: 1.5rem;
     height: 1.5rem;
   }
+  .hero-shield-check {
+    --hero-shield-check: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M9%2012.75%2011.25%2015%2015%209.75m-3-7.036A11.959%2011.959%200%200%201%203.598%206%2011.99%2011.99%200%200%200%203%209.749c0%205.592%203.824%2010.29%209%2011.623%205.176-1.332%209-6.03%209-11.622%200-1.31-.21-2.571-.598-3.751h-.152c-3.196%200-6.1-1.248-8.25-3.285Z%22%2F%3E%3C%2Fsvg%3E');
+    -webkit-mask: var(--hero-shield-check);
+    mask: var(--hero-shield-check);
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    vertical-align: middle;
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
   .hero-square-3-stack-3d {
     --hero-square-3-stack-3d: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M6.429%209.75%202.25%2012l4.179%202.25m0-4.5%205.571%203%205.571-3m-11.142%200L2.25%207.5%2012%202.25l9.75%205.25-4.179%202.25m0%200L21.75%2012l-4.179%202.25m0%200%204.179%202.25L12%2021.75%202.25%2016.5l4.179-2.25m11.142%200-5.571%203-5.571-3%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-square-3-stack-3d);
@@ -479,6 +492,11 @@
   }
   .filter {
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
+  .transition {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, visibility, content-visibility, overlay, pointer-events;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
 }
 [data-phx-session], [data-phx-teleported-src] {
@@ -1026,6 +1044,22 @@ html:has(.studio-app), body:has(.studio-app) {
   background: var(--studio-surface-muted);
   color: var(--studio-muted);
 }
+.studio-badge.success {
+  border-color: var(--studio-success);
+  @supports (color: color-mix(in lab, red, red)) {
+    border-color: color-mix(in srgb, var(--studio-success) 28%, white);
+  }
+  background: var(--studio-success);
+  @supports (color: color-mix(in lab, red, red)) {
+    background: color-mix(in srgb, var(--studio-success) 14%, white);
+  }
+  color: var(--studio-success);
+}
+.studio-badge.warn {
+  border-color: var(--studio-badge-border);
+  background: var(--studio-badge-bg);
+  color: var(--studio-badge-ink);
+}
 .studio-button {
   display: inline-flex;
   align-items: center;
@@ -1095,6 +1129,36 @@ html:has(.studio-app), body:has(.studio-app) {
   font-size: 12px;
   line-height: 1.45;
 }
+.studio-draft-validation {
+  display: grid;
+  gap: 10px;
+  margin: 14px 16px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--studio-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--studio-panel-bg-start), var(--studio-panel-bg-end));
+  box-shadow: var(--studio-shadow);
+}
+.studio-draft-validation.is-valid {
+  border-color: var(--studio-success);
+  @supports (color: color-mix(in lab, red, red)) {
+    border-color: color-mix(in srgb, var(--studio-success) 35%, var(--studio-border));
+  }
+}
+.studio-draft-validation.is-invalid {
+  border-color: var(--studio-badge-border);
+}
+.studio-draft-validation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.studio-draft-validation-message {
+  margin: 0;
+  font-size: 13px;
+  color: var(--studio-muted);
+}
 .studio-spec-view {
   min-height: 0;
   margin: 0;
@@ -1127,6 +1191,10 @@ html:has(.studio-app), body:has(.studio-app) {
   stroke-width: 2;
   fill: none;
 }
+.studio-edge-invalid {
+  stroke: var(--studio-warn);
+  stroke-width: 4;
+}
 .studio-arrow {
   fill: #5edac9;
 }
@@ -1149,6 +1217,16 @@ html:has(.studio-app), body:has(.studio-app) {
 .studio-node:hover, .studio-node.is-selected {
   border-color: var(--studio-accent);
   box-shadow: 0 12px 34px rgba(94, 218, 201, 0.22);
+}
+.studio-node.is-invalid {
+  border-color: var(--studio-warn);
+  @supports (color: color-mix(in lab, red, red)) {
+    border-color: color-mix(in srgb, var(--studio-warn) 68%, var(--studio-border));
+  }
+  box-shadow: inset 0 0 0 1px var(--studio-warn), var(--studio-node-shadow);
+  @supports (color: color-mix(in lab, red, red)) {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--studio-warn) 55%, transparent), var(--studio-node-shadow);
+  }
 }
 .studio-node:active {
   cursor: grabbing;
@@ -1209,6 +1287,24 @@ html:has(.studio-app), body:has(.studio-app) {
 }
 .studio-node-port.right {
   right: -5px;
+}
+.studio-node-validation-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid var(--studio-badge-border);
+  background: var(--studio-badge-bg);
+  color: var(--studio-badge-ink);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 10px 18px rgba(18, 41, 42, 0.12);
 }
 .studio-properties {
   min-width: 0;

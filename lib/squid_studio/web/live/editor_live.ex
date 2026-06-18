@@ -3,6 +3,7 @@ defmodule SquidStudio.Web.EditorLive do
 
   use SquidStudio.Web, :live_view
 
+  alias Squidie.Workflow.EditorSpec
   alias SquidStudio.ConnectorCatalog
   alias SquidStudio.Web.Resolver
 
@@ -44,7 +45,9 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
       |> assign(:theme, :system)
+      |> assign(:validation_checked?, false)
       |> assign_spec_view()
+      |> initialize_validation_feedback()
 
     {:ok, socket}
   end
@@ -94,6 +97,38 @@ defmodule SquidStudio.Web.EditorLive do
     {:noreply, assign(socket, :editor_surface, normalize_surface(surface))}
   end
 
+  def handle_event("validate_draft", _params, socket) do
+    case selected_draft(socket) do
+      nil ->
+        {:noreply,
+         socket
+         |> assign(:validation_checked?, true)
+         |> assign(:validation_status, "No draft")
+         |> assign(:validation_message, "No draft spec is selected.")}
+
+      draft ->
+        spec = current_spec(draft, socket.assigns.workflow)
+
+        case EditorSpec.validate_map(spec) do
+          :ok ->
+            {:noreply,
+             socket
+             |> refresh_saved_draft(Map.put(draft, "validation_errors", []))
+             |> assign_spec_view()
+             |> assign_validation_result(:ok)}
+
+          {:error, {:invalid_workflow_editor_spec, errors}} ->
+            {:noreply,
+             socket
+             |> refresh_saved_draft(
+               Map.put(draft, "validation_errors", draft_validation_errors(errors))
+             )
+             |> assign_spec_view()
+             |> assign_validation_result({:error, errors})}
+        end
+    end
+  end
+
   def handle_event("select_draft", %{"id" => id}, socket) do
     draft = Enum.find(socket.assigns.drafts, &(Map.get(&1, "id") == id))
 
@@ -102,7 +137,8 @@ defmodule SquidStudio.Web.EditorLive do
      |> assign(:selected_draft_id, id)
      |> assign(:draft_status, draft_status(nil, draft))
      |> assign(:persistence_message, persistence_message(nil, draft))
-     |> assign_spec_view()}
+     |> assign_spec_view()
+     |> initialize_validation_feedback()}
   end
 
   def handle_event("add_catalog_node", _params, %{assigns: %{read_only?: true}} = socket) do
@@ -136,6 +172,7 @@ defmodule SquidStudio.Web.EditorLive do
          |> assign(:selected_node_id, node.id)
          |> assign(:drafts, add_node_to_selected_draft(socket, node, connector))
          |> assign_spec_view()
+         |> initialize_validation_feedback()
          |> assign(
            :catalog_message,
            "#{Map.fetch!(connector, "display_name")} added to the draft."
@@ -413,9 +450,14 @@ defmodule SquidStudio.Web.EditorLive do
     spec = current_spec(draft, socket.assigns.workflow)
     validation_errors = spec_validation_errors(draft)
 
+    {node_validation_counts, edge_validation_counts} =
+      validation_annotations(validation_errors, spec, socket.assigns.edges)
+
     socket
     |> assign(:spec_json, Jason.encode!(spec, pretty: true))
     |> assign(:spec_validation_errors, validation_errors)
+    |> assign(:node_validation_counts, node_validation_counts)
+    |> assign(:edge_validation_counts, edge_validation_counts)
   end
 
   defp current_spec(nil, workflow) do
@@ -440,14 +482,118 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   defp normalize_validation_error(error) do
+    path_segments =
+      error
+      |> value(:path, [])
+      |> List.wrap()
+      |> Enum.map(&to_string/1)
+
     %{
-      path:
-        error
-        |> Map.get("path", [])
-        |> Enum.map_join(".", &to_string/1),
-      message: Map.get(error, "message", "Validation issue")
+      path: Enum.join(path_segments, "."),
+      path_segments: path_segments,
+      message: value(error, :message, "Validation issue")
     }
   end
+
+  defp draft_validation_errors(errors) do
+    Enum.map(errors, fn error ->
+      %{
+        "path" => error |> value(:path, []) |> List.wrap() |> Enum.map(&to_string/1),
+        "message" => value(error, :message, "Validation issue")
+      }
+    end)
+  end
+
+  defp validation_annotations(errors, spec, edges) do
+    steps = Map.get(spec, "steps", [])
+    transitions = Map.get(spec, "transitions", [])
+    edge_lookup = Map.new(edges, &{{&1.source, &1.target}, &1.id})
+
+    Enum.reduce(errors, {%{}, %{}}, fn error, {node_counts, edge_counts} ->
+      case validation_anchor(error, steps, transitions, edge_lookup) do
+        {:node, node_id} ->
+          {Map.update(node_counts, node_id, 1, &(&1 + 1)), edge_counts}
+
+        {:edge, edge_id} ->
+          {node_counts, Map.update(edge_counts, edge_id, 1, &(&1 + 1))}
+
+        :global ->
+          {node_counts, edge_counts}
+      end
+    end)
+  end
+
+  defp validation_anchor(%{path_segments: ["steps", index | _rest]}, steps, _transitions, _edges) do
+    with {index, ""} <- Integer.parse(index),
+         step when is_map(step) <- Enum.at(steps, index),
+         name when is_binary(name) <- value(step, :name) do
+      {:node, name}
+    else
+      _other -> :global
+    end
+  end
+
+  defp validation_anchor(
+         %{path_segments: ["transitions", index | _rest]},
+         _steps,
+         transitions,
+         edge_lookup
+       ) do
+    with {index, ""} <- Integer.parse(index),
+         transition when is_map(transition) <- Enum.at(transitions, index),
+         from when is_binary(from) <- value(transition, :from),
+         to when is_binary(to) <- value(transition, :to),
+         edge_id when is_binary(edge_id) <- Map.get(edge_lookup, {from, to}) do
+      {:edge, edge_id}
+    else
+      _other -> :global
+    end
+  end
+
+  defp validation_anchor(_error, _steps, _transitions, _edge_lookup), do: :global
+
+  defp initialize_validation_feedback(socket) do
+    errors = socket.assigns.spec_validation_errors
+
+    socket
+    |> assign(:validation_checked?, false)
+    |> assign(
+      :validation_status,
+      if(errors == [], do: "Not validated", else: "Validation issues")
+    )
+    |> assign(
+      :validation_message,
+      if(errors == [],
+        do: "Run validation before publishing or starting a workflow.",
+        else: validation_issue_message(errors)
+      )
+    )
+  end
+
+  defp assign_validation_result(socket, :ok) do
+    socket
+    |> assign(:validation_checked?, true)
+    |> assign(:validation_status, "Valid draft")
+    |> assign(:validation_message, "Draft passes Squidie editor validation.")
+  end
+
+  defp assign_validation_result(socket, {:error, errors}) do
+    socket
+    |> assign(:validation_checked?, true)
+    |> assign(:validation_status, "Validation issues")
+    |> assign(:validation_message, validation_issue_message(errors))
+  end
+
+  defp validation_issue_message(errors) when is_list(errors) do
+    count = length(errors)
+    noun = if count == 1, do: "issue", else: "issues"
+    "#{count} validation #{noun} found."
+  end
+
+  defp validation_badge_class("Valid draft"), do: "success"
+  defp validation_badge_class("Not validated"), do: "neutral"
+  defp validation_badge_class("No draft"), do: "neutral"
+  defp validation_badge_class(_status), do: "warn"
 
   defp deny_draft_mutation(socket) do
     socket

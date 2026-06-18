@@ -482,9 +482,45 @@ body:has(.studio-app) {
 }
 
 .studio-canvas-column {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   background: var(--studio-canvas);
+}
+
+.studio-surface-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px 0;
+}
+
+.studio-surface-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--studio-border);
+  border-radius: 999px;
+  background: var(--studio-surface-raised);
+  color: var(--studio-muted);
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.studio-surface-button:hover,
+.studio-surface-button.is-active {
+  border-color: var(--studio-accent-border);
+  background: var(--studio-accent-soft);
+  color: var(--studio-accent-strong);
+  box-shadow: var(--studio-focus-shadow);
 }
 
 .studio-topbar {
@@ -687,6 +723,62 @@ body:has(.studio-app) {
   );
   background-size: 22px 22px;
   cursor: default;
+}
+
+.studio-spec-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+  padding: 12px 14px 16px;
+}
+
+.studio-spec-validation {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(200, 77, 84, 0.22);
+  border-radius: 12px;
+  background: rgba(200, 77, 84, 0.08);
+  padding: 12px 14px;
+}
+
+.studio-spec-validation-row {
+  display: grid;
+  gap: 2px;
+}
+
+.studio-spec-validation-row strong {
+  color: var(--studio-ink);
+  font-size: 12px;
+}
+
+.studio-spec-validation-row span {
+  color: var(--studio-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.studio-spec-view {
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--studio-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--studio-panel-bg-start), var(--studio-panel-bg-end));
+  box-shadow: var(--studio-shadow);
+  color: var(--studio-ink);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.studio-spec-view code {
+  display: block;
+  min-height: 100%;
+  padding: 16px 18px;
+  font-family:
+    "SFMono-Regular", "SF Mono", ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .studio-edge-layer {
@@ -1364,6 +1456,11 @@ a.studio-wordmark:hover strong {
   .studio-topbar-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .studio-surface-switcher {
+    flex-wrap: wrap;
+    padding: 10px 12px 0;
   }
 }
 

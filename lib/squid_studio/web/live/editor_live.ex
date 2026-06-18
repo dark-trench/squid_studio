@@ -27,6 +27,7 @@ defmodule SquidStudio.Web.EditorLive do
       socket
       |> assign(:page_title, "Editor")
       |> assign(:read_only?, socket.assigns.access == :read_only)
+      |> assign(:editor_surface, :visual)
       |> assign(:workflow, workflow)
       |> assign(:drafts, drafts)
       |> assign(:selected_draft_id, draft_id(selected_draft))
@@ -43,6 +44,7 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
       |> assign(:theme, :system)
+      |> assign_spec_view()
 
     {:ok, socket}
   end
@@ -88,6 +90,10 @@ defmodule SquidStudio.Web.EditorLive do
     {:noreply, assign(socket, :theme, normalize_theme(theme))}
   end
 
+  def handle_event("set_editor_surface", %{"surface" => surface}, socket) do
+    {:noreply, assign(socket, :editor_surface, normalize_surface(surface))}
+  end
+
   def handle_event("select_draft", %{"id" => id}, socket) do
     draft = Enum.find(socket.assigns.drafts, &(Map.get(&1, "id") == id))
 
@@ -95,7 +101,8 @@ defmodule SquidStudio.Web.EditorLive do
      socket
      |> assign(:selected_draft_id, id)
      |> assign(:draft_status, draft_status(nil, draft))
-     |> assign(:persistence_message, persistence_message(nil, draft))}
+     |> assign(:persistence_message, persistence_message(nil, draft))
+     |> assign_spec_view()}
   end
 
   def handle_event("add_catalog_node", _params, %{assigns: %{read_only?: true}} = socket) do
@@ -128,6 +135,7 @@ defmodule SquidStudio.Web.EditorLive do
          |> assign(:edges, build_edges(socket.assigns.edges, nodes))
          |> assign(:selected_node_id, node.id)
          |> assign(:drafts, add_node_to_selected_draft(socket, node, connector))
+         |> assign_spec_view()
          |> assign(
            :catalog_message,
            "#{Map.fetch!(connector, "display_name")} added to the draft."
@@ -152,7 +160,8 @@ defmodule SquidStudio.Web.EditorLive do
          socket
          |> refresh_saved_draft(saved_draft)
          |> assign(:draft_status, "Saved")
-         |> assign(:persistence_message, "Host persistence accepted the draft spec.")}
+         |> assign(:persistence_message, "Host persistence accepted the draft spec.")
+         |> assign_spec_view()}
 
       {:error, reason} ->
         {:noreply,
@@ -399,6 +408,47 @@ defmodule SquidStudio.Web.EditorLive do
     Map.put(draft, "spec", Map.put(spec, "nodes", nodes ++ [connector_node]))
   end
 
+  defp assign_spec_view(socket) do
+    draft = selected_draft(socket)
+    spec = current_spec(draft, socket.assigns.workflow)
+    validation_errors = spec_validation_errors(draft)
+
+    socket
+    |> assign(:spec_json, Jason.encode!(spec, pretty: true))
+    |> assign(:spec_validation_errors, validation_errors)
+  end
+
+  defp current_spec(nil, workflow) do
+    %{
+      "workflow" => workflow.id,
+      "definition_version" => "published",
+      "nodes" => workflow.nodes,
+      "edges" => workflow.edges
+    }
+  end
+
+  defp current_spec(draft, _workflow) do
+    Map.get(draft, "spec", %{})
+  end
+
+  defp spec_validation_errors(nil), do: []
+
+  defp spec_validation_errors(draft) do
+    draft
+    |> Map.get("validation_errors", [])
+    |> Enum.map(&normalize_validation_error/1)
+  end
+
+  defp normalize_validation_error(error) do
+    %{
+      path:
+        error
+        |> Map.get("path", [])
+        |> Enum.map_join(".", &to_string/1),
+      message: Map.get(error, "message", "Validation issue")
+    }
+  end
+
   defp deny_draft_mutation(socket) do
     socket
     |> assign(:persistence_message, "Read-only access cannot change drafts.")
@@ -409,6 +459,12 @@ defmodule SquidStudio.Web.EditorLive do
   defp normalize_theme("light"), do: :light
   defp normalize_theme("dark"), do: :dark
   defp normalize_theme(_theme), do: :system
+
+  defp normalize_surface("spec"), do: :spec
+  defp normalize_surface("visual"), do: :visual
+  defp normalize_surface(:spec), do: :spec
+  defp normalize_surface(:visual), do: :visual
+  defp normalize_surface(_surface), do: :visual
 
   defp selected_draft(socket) do
     Enum.find(socket.assigns.drafts, &(Map.get(&1, "id") == socket.assigns.selected_draft_id))

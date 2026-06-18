@@ -155,54 +155,97 @@
 
       <section class="studio-canvas-column">
         <div
-          id="squid-studio-flow"
-          phx-hook="SquidStudioFlow"
-          data-read-only={to_string(@read_only?)}
+          id="studio-surface-switcher"
+          class="studio-surface-switcher"
+          aria-label="Editor views"
         >
-          <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <marker
-                id="studio-arrow"
-                viewBox="0 0 10 10"
-                refX="10"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 0 L 10 5 L 0 10 z" class="studio-arrow" />
-              </marker>
-            </defs>
-            <%= for edge <- @edges do %>
-              <path class="studio-edge" d={edge.path} marker-end="url(#studio-arrow)" />
-            <% end %>
-          </svg>
-
-          <%= for node <- @nodes do %>
-            <button
-              id={"studio-node-#{node.id}"}
-              type="button"
-              class={[
-                "studio-node",
-                node.id == @selected_node_id && "is-selected"
-              ]}
-              style={"left: #{node.x}px; top: #{node.y}px;"}
-              data-node-id={node.id}
-              phx-click="select_node"
-              phx-value-id={node.id}
-            >
-              <span class="studio-node-port left"></span>
-              <span class="studio-node-content">
-                <span class="studio-node-heading">
-                  <span class="studio-node-icon"><.icon name={node.icon} /></span>
-                  <span class="studio-node-title">{node.label}</span>
-                </span>
-                <span class="studio-node-type">{node.type}</span>
-              </span>
-              <span class="studio-node-port right"></span>
-            </button>
-          <% end %>
+          <button
+            type="button"
+            class={["studio-surface-button", @editor_surface == :visual && "is-active"]}
+            phx-click="set_editor_surface"
+            phx-value-surface="visual"
+          >
+            <.icon name="hero-share" />
+            <span>Visual editor</span>
+          </button>
+          <button
+            type="button"
+            class={["studio-surface-button", @editor_surface == :spec && "is-active"]}
+            phx-click="set_editor_surface"
+            phx-value-surface="spec"
+          >
+            <.icon name="hero-code-bracket" />
+            <span>Spec view</span>
+          </button>
         </div>
+
+        <%= if @editor_surface == :visual do %>
+          <div
+            id="squid-studio-flow"
+            phx-hook="SquidStudioFlow"
+            data-read-only={to_string(@read_only?)}
+          >
+            <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker
+                  id="studio-arrow"
+                  viewBox="0 0 10 10"
+                  refX="10"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 0 L 10 5 L 0 10 z" class="studio-arrow" />
+                </marker>
+              </defs>
+              <%= for edge <- @edges do %>
+                <path class="studio-edge" d={edge.path} marker-end="url(#studio-arrow)" />
+              <% end %>
+            </svg>
+
+            <%= for node <- @nodes do %>
+              <button
+                id={"studio-node-#{node.id}"}
+                type="button"
+                class={[
+                  "studio-node",
+                  node.id == @selected_node_id && "is-selected"
+                ]}
+                style={"left: #{node.x}px; top: #{node.y}px;"}
+                data-node-id={node.id}
+                phx-click="select_node"
+                phx-value-id={node.id}
+              >
+                <span class="studio-node-port left"></span>
+                <span class="studio-node-content">
+                  <span class="studio-node-heading">
+                    <span class="studio-node-icon"><.icon name={node.icon} /></span>
+                    <span class="studio-node-title">{node.label}</span>
+                  </span>
+                  <span class="studio-node-type">{node.type}</span>
+                </span>
+                <span class="studio-node-port right"></span>
+              </button>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="studio-spec-panel">
+            <div
+              :if={@spec_validation_errors != []}
+              id="studio-spec-validation"
+              class="studio-spec-validation"
+            >
+              <p class="studio-kicker">Validation issues</p>
+              <div :for={issue <- @spec_validation_errors} class="studio-spec-validation-row">
+                <strong>{issue.path}</strong>
+                <span>{issue.message}</span>
+              </div>
+            </div>
+
+            <pre id="studio-spec-view" class="studio-spec-view"><code>{@spec_json}</code></pre>
+          </div>
+        <% end %>
       </section>
 
       <aside class="studio-properties">

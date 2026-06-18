@@ -145,6 +145,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "studio-theme-system"
     assert html =~ ~s(id="squid-studio-flow")
     assert html =~ ~s(phx-hook="SquidStudioFlow")
+    assert html =~ ~s(id="studio-surface-switcher")
+    assert html =~ "Spec view"
     assert html =~ ~s(data-studio-theme="system")
     assert html =~ ~s(data-studio-theme="light")
     assert html =~ ~s(data-studio-theme="dark")
@@ -159,6 +161,54 @@ defmodule SquidStudio.Web.RouterTest do
     refute html =~ "Squidie host"
     refute html =~ "Workflows Visual Builder"
     refute html =~ "Live</span>"
+  end
+
+  test "switches from the visual editor to a read-only spec view", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    assert html =~ ~s(id="squid-studio-flow")
+    refute html =~ ~s(id="studio-spec-view")
+
+    html =
+      view
+      |> element(~s(button[phx-value-surface="spec"]))
+      |> render_click()
+
+    assert html =~ ~s(id="studio-spec-view")
+    assert html =~ "&quot;workflow&quot;: &quot;invoice_review&quot;"
+    assert html =~ "&quot;definition_version&quot;: &quot;draft&quot;"
+    assert html =~ "&quot;steps&quot;: ["
+    refute html =~ "placeholder-value"
+
+    html =
+      view
+      |> element(~s(button[phx-value-id="carrier_onboarding"]))
+      |> render_click()
+
+    assert html =~ "&quot;workflow&quot;: &quot;carrier_onboarding&quot;"
+    assert html =~ "Validation issues"
+    assert html =~ "Step name collides with a host-managed action key."
+    assert html =~ "steps.0.name"
+  end
+
+  test "keeps the spec view in sync with draft edits", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    html =
+      view
+      |> element(~s(button[phx-value-surface="spec"]))
+      |> render_click()
+
+    assert html =~ "&quot;workflow&quot;: &quot;invoice_review&quot;"
+    refute html =~ "&quot;action_key&quot;: &quot;post_message&quot;"
+
+    html =
+      view
+      |> render_hook("add_catalog_node", %{"provider" => "slack", "action_key" => "post_message"})
+
+    assert html =~ "&quot;action_key&quot;: &quot;post_message&quot;"
+    assert html =~ "&quot;provider&quot;: &quot;slack&quot;"
+    assert html =~ "&quot;credential_requirements&quot;: ["
   end
 
   test "uses a full-width editor topbar above the workspace panels", %{conn: conn} do

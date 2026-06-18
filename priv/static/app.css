@@ -262,6 +262,17 @@
     width: 1.5rem;
     height: 1.5rem;
   }
+  .hero-code-bracket {
+    --hero-code-bracket: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M17.25%206.75%2022.5%2012l-5.25%205.25m-10.5%200L1.5%2012l5.25-5.25m7.5-3-4.5%2016.5%22%2F%3E%3C%2Fsvg%3E');
+    -webkit-mask: var(--hero-code-bracket);
+    mask: var(--hero-code-bracket);
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    vertical-align: middle;
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
   .hero-cube {
     --hero-cube: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m21%207.5-9-5.25L3%207.5m18%200-9%205.25m9-5.25v9l-9%205.25M3%207.5l9%205.25M3%207.5v9l9%205.25m0-9v9%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-cube);
@@ -387,6 +398,17 @@
     --hero-rocket-launch: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M15.59%2014.37a6%206%200%200%201-5.84%207.38v-4.8m5.84-2.58a14.98%2014.98%200%200%200%206.16-12.12A14.98%2014.98%200%200%200%209.631%208.41m5.96%205.96a14.926%2014.926%200%200%201-5.841%202.58m-.119-8.54a6%206%200%200%200-7.381%205.84h4.8m2.581-5.84a14.927%2014.927%200%200%200-2.58%205.84m2.699%202.7c-.103.021-.207.041-.311.06a15.09%2015.09%200%200%201-2.448-2.448%2014.9%2014.9%200%200%201%20.06-.312m-2.24%202.39a4.493%204.493%200%200%200-1.757%204.306%204.493%204.493%200%200%200%204.306-1.758M16.5%209a1.5%201.5%200%201%201-3%200%201.5%201.5%200%200%201%203%200Z%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-rocket-launch);
     mask: var(--hero-rocket-launch);
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    vertical-align: middle;
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .hero-share {
+    --hero-share: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M7.217%2010.907a2.25%202.25%200%201%200%200%202.186m0-2.186c.18.324.283.696.283%201.093s-.103.77-.283%201.093m0-2.186%209.566-5.314m-9.566%207.5%209.566%205.314m0%200a2.25%202.25%200%201%200%203.935%202.186%202.25%202.25%200%200%200-3.935-2.186Zm0-12.814a2.25%202.25%200%201%200%203.933-2.185%202.25%202.25%200%200%200-3.933%202.185Z%22%2F%3E%3C%2Fsvg%3E');
+    -webkit-mask: var(--hero-share);
+    mask: var(--hero-share);
     mask-repeat: no-repeat;
     background-color: currentColor;
     vertical-align: middle;
@@ -846,9 +868,37 @@ html:has(.studio-app), body:has(.studio-app) {
   background: #c84d54;
 }
 .studio-canvas-column {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   background: var(--studio-canvas);
+}
+.studio-surface-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px 0;
+}
+.studio-surface-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--studio-border);
+  border-radius: 999px;
+  background: var(--studio-surface-raised);
+  color: var(--studio-muted);
+  font-size: 12px;
+  font-weight: 700;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+.studio-surface-button:hover, .studio-surface-button.is-active {
+  border-color: var(--studio-accent-border);
+  background: var(--studio-accent-soft);
+  color: var(--studio-accent-strong);
+  box-shadow: var(--studio-focus-shadow);
 }
 .studio-topbar {
   display: grid;
@@ -1016,6 +1066,54 @@ html:has(.studio-app), body:has(.studio-app) {
   background-image: radial-gradient( circle, var(--studio-canvas-dot) 1px, transparent 1.5px );
   background-size: 22px 22px;
   cursor: default;
+}
+.studio-spec-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+  padding: 12px 14px 16px;
+}
+.studio-spec-validation {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(200, 77, 84, 0.22);
+  border-radius: 12px;
+  background: rgba(200, 77, 84, 0.08);
+  padding: 12px 14px;
+}
+.studio-spec-validation-row {
+  display: grid;
+  gap: 2px;
+}
+.studio-spec-validation-row strong {
+  color: var(--studio-ink);
+  font-size: 12px;
+}
+.studio-spec-validation-row span {
+  color: var(--studio-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.studio-spec-view {
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--studio-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--studio-panel-bg-start), var(--studio-panel-bg-end));
+  box-shadow: var(--studio-shadow);
+  color: var(--studio-ink);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.studio-spec-view code {
+  display: block;
+  min-height: 100%;
+  padding: 16px 18px;
+  font-family: "SFMono-Regular", "SF Mono", ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .studio-edge-layer {
   position: absolute;
@@ -1578,6 +1676,10 @@ a.studio-wordmark:hover strong {
   .studio-topbar-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+  .studio-surface-switcher {
+    flex-wrap: wrap;
+    padding: 10px 12px 0;
   }
 }
 @media (max-width: 860px) {

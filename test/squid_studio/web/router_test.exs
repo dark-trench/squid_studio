@@ -340,6 +340,52 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Host published a runnable Squidie workflow version."
   end
 
+  test "enforces read-only mode across editor mutations", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/read-only-studio/workflows/invoice_review")
+
+    assert html =~ "Read-only"
+    assert html =~ ~s(id="squid-studio-flow")
+    assert html =~ ~s(data-read-only="true")
+
+    assert html =~
+             ~s(button type="button" class="studio-button secondary" phx-click="publish_draft" disabled)
+
+    assert html =~
+             ~s(button type="button" class="studio-button primary" phx-click="save_draft" disabled)
+
+    assert html =~ ~s(data-catalog-action-key="post_message")
+    assert html =~ ~s(disabled)
+
+    html =
+      view
+      |> render_hook("move_node", %{"id" => "review_invoice", "x" => 320, "y" => 160})
+
+    assert html =~ ~s(id="studio-node-review_invoice")
+    assert html =~ "left: 240px; top: 80px;"
+    assert html =~ "Read-only access cannot change drafts."
+
+    html =
+      view
+      |> render_hook("add_catalog_node", %{"provider" => "slack", "action_key" => "post_message"})
+
+    refute html =~ ~s(id="studio-node-slack-post_message-2")
+    assert html =~ "Read-only access cannot change drafts."
+
+    html =
+      view
+      |> render_click("save_draft", %{})
+
+    assert html =~ "Read-only access cannot change drafts."
+    assert html =~ "Draft spec"
+
+    html =
+      view
+      |> render_click("publish_draft", %{})
+
+    assert html =~ "Read-only access cannot change drafts."
+    assert html =~ "Draft spec"
+  end
+
   test "renders host connector catalog metadata without credential values", %{conn: conn} do
     {:ok, _view, html} = live(conn, "/host-studio/workflows/invoice_review")
 

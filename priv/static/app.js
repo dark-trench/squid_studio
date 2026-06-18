@@ -146,7 +146,7 @@
     }
   });
 
-  // ../../../dark-trench/squid_studio/deps/phoenix_html/priv/static/phoenix_html.js
+  // ../../../../../Projects/dark-trench/squid_studio/deps/phoenix_html/priv/static/phoenix_html.js
   (function() {
     var PolyfillEvent = eventConstructor();
     function eventConstructor() {
@@ -211,7 +211,7 @@
     }, false);
   })();
 
-  // ../../../dark-trench/squid_studio/deps/phoenix/priv/static/phoenix.mjs
+  // ../../../../../Projects/dark-trench/squid_studio/deps/phoenix/priv/static/phoenix.mjs
   var closure = (value) => {
     if (typeof value === "function") {
       return value;
@@ -1671,7 +1671,7 @@
     }
   };
 
-  // ../../../dark-trench/squid_studio/deps/phoenix_live_view/priv/static/phoenix_live_view.esm.js
+  // ../../../../../Projects/dark-trench/squid_studio/deps/phoenix_live_view/priv/static/phoenix_live_view.esm.js
   var CONSECUTIVE_RELOADS = "consecutive-reloads";
   var MAX_RELOADS = 10;
   var RELOAD_JITTER_MIN = 5e3;
@@ -8628,6 +8628,9 @@ removing illegal node: "${(childNode.outerHTML || childNode.nodeValue).trim()}"
       this.drag = null;
       window.requestAnimationFrame(() => this.centerGraph());
       this.el.addEventListener("pointerdown", (event) => {
+        if (this.isReadOnly()) {
+          return;
+        }
         const node = event.target.closest("[data-node-id]");
         if (!node || !this.el.contains(node)) {
           return;
@@ -8672,6 +8675,9 @@ removing illegal node: "${(childNode.outerHTML || childNode.nodeValue).trim()}"
         width: Math.round(rect.width),
         height: Math.round(rect.height)
       });
+    },
+    isReadOnly() {
+      return this.el.dataset.readOnly === "true";
     }
   };
 

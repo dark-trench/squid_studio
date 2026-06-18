@@ -631,6 +631,12 @@ body:has(.studio-app) {
   font-weight: 700;
 }
 
+.studio-badge.neutral {
+  border-color: var(--studio-border);
+  background: var(--studio-surface-muted);
+  color: var(--studio-muted);
+}
+
 .studio-button {
   display: inline-flex;
   align-items: center;
@@ -649,6 +655,22 @@ body:has(.studio-app) {
 .studio-button.primary:hover {
   background: var(--studio-accent-strong);
   border-color: var(--studio-accent-strong);
+}
+
+.studio-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  box-shadow: none;
+}
+
+.studio-button:disabled:hover {
+  border-color: transparent;
+  background: var(--studio-surface);
+}
+
+.studio-button.primary:disabled:hover {
+  border-color: var(--studio-accent);
+  background: var(--studio-accent);
 }
 
 #squid-studio-flow {
@@ -714,6 +736,14 @@ body:has(.studio-app) {
 .studio-node:active {
   cursor: grabbing;
   transform: scale(1.01);
+}
+
+#squid-studio-flow[data-read-only="true"] .studio-node {
+  cursor: default;
+}
+
+#squid-studio-flow[data-read-only="true"] .studio-node:active {
+  transform: none;
 }
 
 .studio-node-content {

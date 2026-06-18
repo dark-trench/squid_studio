@@ -5,6 +5,10 @@ export const SquidStudioFlow = {
     window.requestAnimationFrame(() => this.centerGraph())
 
     this.el.addEventListener("pointerdown", (event) => {
+      if (this.isReadOnly()) {
+        return
+      }
+
       const node = event.target.closest("[data-node-id]")
 
       if (!node || !this.el.contains(node)) {
@@ -60,5 +64,9 @@ export const SquidStudioFlow = {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
     })
+  },
+
+  isReadOnly() {
+    return this.el.dataset.readOnly === "true"
   },
 }

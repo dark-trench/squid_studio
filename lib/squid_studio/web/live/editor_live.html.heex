@@ -34,12 +34,25 @@
 
       <div class="studio-topbar-actions">
         <.theme_switcher theme={@theme} />
+        <span :if={@read_only?} class="studio-badge neutral">
+          <.icon name="hero-eye" />Read-only
+        </span>
         <span class="studio-badge"><.icon name="hero-pencil-square" />{@draft_status}</span>
-        <button type="button" class="studio-button secondary" phx-click="publish_draft">
+        <button
+          type="button"
+          class="studio-button secondary"
+          phx-click="publish_draft"
+          disabled={@read_only?}
+        >
           <.icon name="hero-rocket-launch" />
           <span>Publish version</span>
         </button>
-        <button type="button" class="studio-button primary" phx-click="save_draft">
+        <button
+          type="button"
+          class="studio-button primary"
+          phx-click="save_draft"
+          disabled={@read_only?}
+        >
           <.icon name="hero-cloud-arrow-up" />
           <span>Save draft</span>
         </button>
@@ -91,12 +104,17 @@
                 type="button"
                 class={[
                   "studio-component",
-                  !catalog_entry_available?(entry) && "is-disabled"
+                  (!catalog_entry_available?(entry) or @read_only?) && "is-disabled"
                 ]}
                 data-catalog-provider={Map.get(entry, "provider")}
                 data-catalog-action-key={Map.get(entry, "action_key")}
-                draggable={if(catalog_entry_available?(entry), do: "true", else: "false")}
-                disabled={!catalog_entry_available?(entry)}
+                draggable={
+                  if(catalog_entry_available?(entry) and not @read_only?,
+                    do: "true",
+                    else: "false"
+                  )
+                }
+                disabled={@read_only? or !catalog_entry_available?(entry)}
                 phx-click="add_catalog_node"
                 phx-value-provider={Map.get(entry, "provider")}
                 phx-value-action_key={Map.get(entry, "action_key")}
@@ -136,7 +154,11 @@
       </aside>
 
       <section class="studio-canvas-column">
-        <div id="squid-studio-flow" phx-hook="SquidStudioFlow">
+        <div
+          id="squid-studio-flow"
+          phx-hook="SquidStudioFlow"
+          data-read-only={to_string(@read_only?)}
+        >
           <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <marker

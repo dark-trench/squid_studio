@@ -17,5 +17,10 @@ defmodule SquidStudio.Test.Router do
 
     squid_studio("/studio")
     squid_studio("/host-studio", as: :host_studio, resolver: SquidStudio.Test.HostResolver)
+
+    squid_studio("/read-only-studio",
+      as: :read_only_studio,
+      resolver: SquidStudio.Test.ReadOnlyHostResolver
+    )
   end
 end

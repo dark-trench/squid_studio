@@ -26,6 +26,7 @@ defmodule SquidStudio.Web.EditorLive do
     socket =
       socket
       |> assign(:page_title, "Editor")
+      |> assign(:read_only?, socket.assigns.access == :read_only)
       |> assign(:workflow, workflow)
       |> assign(:drafts, drafts)
       |> assign(:selected_draft_id, draft_id(selected_draft))
@@ -44,6 +45,11 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:theme, :system)
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_event("move_node", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
   end
 
   @impl true
@@ -92,6 +98,10 @@ defmodule SquidStudio.Web.EditorLive do
      |> assign(:persistence_message, persistence_message(nil, draft))}
   end
 
+  def handle_event("add_catalog_node", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
+  end
+
   def handle_event("add_catalog_node", %{"action_key" => action_key} = params, socket) do
     connector =
       find_catalog_entry(socket.assigns.connector_catalog, params["provider"], action_key)
@@ -125,6 +135,10 @@ defmodule SquidStudio.Web.EditorLive do
     end
   end
 
+  def handle_event("save_draft", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
+  end
+
   def handle_event("save_draft", _params, socket) do
     draft = selected_draft(socket)
 
@@ -152,6 +166,10 @@ defmodule SquidStudio.Web.EditorLive do
          |> assign(:draft_status, "No draft")
          |> assign(:persistence_message, "No draft spec is selected.")}
     end
+  end
+
+  def handle_event("publish_draft", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
   end
 
   def handle_event("publish_draft", _params, socket) do
@@ -379,6 +397,12 @@ defmodule SquidStudio.Web.EditorLive do
     }
 
     Map.put(draft, "spec", Map.put(spec, "nodes", nodes ++ [connector_node]))
+  end
+
+  defp deny_draft_mutation(socket) do
+    socket
+    |> assign(:persistence_message, "Read-only access cannot change drafts.")
+    |> assign(:catalog_message, "Read-only access cannot change drafts.")
   end
 
   defp normalize_theme("system"), do: :system

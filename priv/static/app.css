@@ -1756,6 +1756,15 @@ a.studio-wordmark:hover strong {
   gap: 8px;
   color: var(--studio-muted);
 }
+.studio-empty-state p {
+  margin: 0;
+  color: var(--studio-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.studio-panel-state {
+  margin: 14px 16px 16px;
+}
 .studio-empty-state button {
   color: var(--studio-accent-strong);
   font-weight: 750;

@@ -15,6 +15,7 @@ defmodule SquidStudio.Web.Authentication do
       |> assign(:live_path, session["live_path"])
       |> assign(:live_transport, session["live_transport"])
       |> assign(:workflows, session["workflows"])
+      |> assign(:workflow_error, session["workflow_error"])
       |> assign(:drafts, session["drafts"])
       |> assign(:draft_error, session["draft_error"])
       |> assign(:connector_catalog, session["connector_catalog"])

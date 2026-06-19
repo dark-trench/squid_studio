@@ -74,6 +74,7 @@ defmodule SquidStudio.Web.Router do
   def __session__(conn, prefix, resolver, live_path, live_transport, csp_key) do
     user = Resolver.call_with_fallback(resolver, :resolve_user, [conn])
     csp_keys = expand_csp_nonce_keys(csp_key)
+    {workflows, workflow_error} = resolve_workflows(resolver, user)
     {drafts, draft_error} = resolve_drafts(resolver, user)
     {connector_catalog, connector_catalog_error} = resolve_connector_catalog(resolver, user)
 
@@ -82,7 +83,8 @@ defmodule SquidStudio.Web.Router do
       "resolver" => resolver,
       "user" => user,
       "access" => Resolver.call_with_fallback(resolver, :resolve_access, [user]),
-      "workflows" => Resolver.call_with_fallback(resolver, :resolve_workflows, [user]),
+      "workflows" => workflows,
+      "workflow_error" => workflow_error,
       "drafts" => drafts,
       "draft_error" => draft_error,
       "connector_catalog" => connector_catalog,
@@ -99,10 +101,25 @@ defmodule SquidStudio.Web.Router do
 
   defp resolve_drafts(resolver, user) do
     resolver
-    |> Resolver.call_with_fallback(:resolve_drafts, [user])
-    |> Drafts.normalize_many()
+    |> resolve_callback(:resolve_drafts, [user])
     |> case do
-      {:ok, drafts} -> {drafts, nil}
+      {:ok, drafts} ->
+        case Drafts.normalize_many(drafts) do
+          {:ok, normalized_drafts} -> {normalized_drafts, nil}
+          {:error, _reason} -> {[], :invalid_draft_data}
+        end
+
+      {:error, reason} ->
+        {[], reason}
+    end
+  end
+
+  defp resolve_workflows(resolver, user) do
+    resolver
+    |> resolve_callback(:resolve_workflows, [user])
+    |> case do
+      {:ok, workflows} when is_list(workflows) -> {workflows, nil}
+      {:ok, _workflows} -> {[], :invalid_workflow_data}
       {:error, reason} -> {[], reason}
     end
   end
@@ -110,20 +127,41 @@ defmodule SquidStudio.Web.Router do
   defp resolve_connector_catalog(resolver, user) do
     context = %{environment: Application.get_env(:squid_studio, :environment, :default)}
 
-    connector_catalog =
-      if Code.ensure_loaded?(resolver) and
-           function_exported?(resolver, :resolve_connector_catalog, 2) do
-        Resolver.call_with_fallback(resolver, :resolve_connector_catalog, [user, context])
-      else
-        []
-      end
-
-    connector_catalog
-    |> ConnectorCatalog.normalize_many()
+    resolver
+    |> resolve_callback(:resolve_connector_catalog, [user, context], [])
     |> case do
-      {:ok, entries} -> {entries, nil}
-      {:error, reason} -> {[], reason}
+      {:ok, connector_catalog} ->
+        case ConnectorCatalog.normalize_many(connector_catalog) do
+          {:ok, entries} -> {entries, nil}
+          {:error, _reason} -> {[], :invalid_connector_catalog}
+        end
+
+      {:error, reason} ->
+        {[], reason}
     end
+  end
+
+  defp resolve_callback(resolver, callback, args, fallback \\ :__use_default__) do
+    if fallback != :__use_default__ and
+         (!Code.ensure_loaded?(resolver) or
+            !function_exported?(resolver, callback, length(args))) do
+      {:ok, fallback}
+    else
+      case Resolver.call_with_fallback(resolver, callback, args) do
+        {:ok, result} -> {:ok, result}
+        {:error, reason} -> {:error, reason}
+        result -> {:ok, result}
+      end
+    end
+  rescue
+    _error ->
+      {:error, :resolver_failed}
+  catch
+    :exit, _reason ->
+      {:error, :resolver_failed}
+
+    _kind, _reason ->
+      {:error, :resolver_failed}
   end
 
   defp expand_alias({:__aliases__, _, _} = alias_ast, env) do

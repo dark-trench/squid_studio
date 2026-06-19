@@ -22,5 +22,10 @@ defmodule SquidStudio.Test.Router do
       as: :read_only_studio,
       resolver: SquidStudio.Test.ReadOnlyHostResolver
     )
+
+    squid_studio("/error-state-studio",
+      as: :error_state_studio,
+      resolver: SquidStudio.Test.ErrorStateHostResolver
+    )
   end
 end

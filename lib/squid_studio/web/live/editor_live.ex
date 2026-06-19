@@ -229,7 +229,7 @@ defmodule SquidStudio.Web.EditorLive do
         {:noreply,
          socket
          |> assign(:draft_status, "Unsaved")
-         |> assign(:persistence_message, error_message("Draft was kept in the editor", reason))}
+         |> assign(:persistence_message, save_error_message(reason))}
 
       nil ->
         {:noreply,
@@ -261,7 +261,7 @@ defmodule SquidStudio.Web.EditorLive do
         {:noreply,
          socket
          |> assign(:draft_status, "Draft spec")
-         |> assign(:persistence_message, error_message("Publish handoff failed", reason))}
+         |> assign(:persistence_message, publish_error_message(reason))}
 
       nil ->
         {:noreply,
@@ -415,9 +415,7 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   defp catalog_message(nil), do: "Host-approved connector actions."
-
-  defp catalog_message(error),
-    do: error_message("Host connector catalog returned invalid data", error)
+  defp catalog_message(error), do: resource_error_message(:connector_actions, error)
 
   defp find_catalog_entry(entries, provider, action_key) do
     Enum.find(entries, fn entry ->
@@ -665,7 +663,7 @@ defmodule SquidStudio.Web.EditorLive do
   defp draft_id(nil), do: nil
   defp draft_id(draft), do: Map.get(draft, "id")
 
-  defp draft_status(error, _draft) when not is_nil(error), do: "Persistence error"
+  defp draft_status(error, _draft) when not is_nil(error), do: draft_error_status(error)
   defp draft_status(_error, nil), do: "No draft"
 
   defp draft_status(_error, draft),
@@ -675,7 +673,7 @@ defmodule SquidStudio.Web.EditorLive do
   defp status_label(status), do: String.capitalize(to_string(status))
 
   defp persistence_message(error, _draft) when not is_nil(error) do
-    error_message("Host draft resolver returned invalid data", error)
+    resource_error_message(:draft_access, error)
   end
 
   defp persistence_message(_error, nil) do
@@ -686,7 +684,77 @@ defmodule SquidStudio.Web.EditorLive do
     "Host persistence owns save, delete, and publish callbacks."
   end
 
-  defp error_message(prefix, reason), do: "#{prefix}: #{inspect(reason)}"
+  defp draft_error_status(:unauthorized), do: "Unauthorized"
+  defp draft_error_status(:unsupported_capability), do: "Unavailable"
+  defp draft_error_status(_reason), do: "Unavailable"
+
+  defp save_error_message(:persistence_not_configured),
+    do: "Draft was kept in the editor. Host save support is not available."
+
+  defp save_error_message(reason),
+    do: "Draft was kept in the editor. " <> resource_error_message(:save_support, reason)
+
+  defp publish_error_message(:publish_not_configured),
+    do: "Publish handoff failed. Host publish support is not available."
+
+  defp publish_error_message(reason),
+    do: "Publish handoff failed. " <> resource_error_message(:publish_support, reason)
+
+  defp workflow_state_title(error, _workflow) when not is_nil(error), do: "Workflow unavailable."
+  defp workflow_state_title(_error, %{nodes: []}), do: "Workflow unavailable."
+  defp workflow_state_title(_error, _workflow), do: nil
+
+  defp workflow_state_message(error, _workflow) when not is_nil(error),
+    do: resource_error_message(:workflow_data, error)
+
+  defp workflow_state_message(_error, %{nodes: []}),
+    do: "Host has not exposed this workflow yet."
+
+  defp workflow_state_message(_error, _workflow), do: nil
+
+  defp resource_error_message(:draft_access, :unauthorized),
+    do: "Host did not authorize draft access."
+
+  defp resource_error_message(:connector_actions, :unsupported_capability),
+    do: "Host has not enabled connector actions."
+
+  defp resource_error_message(:save_support, :unsupported_capability),
+    do: "Host save support is not available."
+
+  defp resource_error_message(:publish_support, :unsupported_capability),
+    do: "Host publish support is not available."
+
+  defp resource_error_message(:workflow_data, :invalid_workflow_data),
+    do: "Host workflow data is temporarily unavailable."
+
+  defp resource_error_message(_resource, :resolver_failed),
+    do: "Host workflow data is temporarily unavailable."
+
+  defp resource_error_message(_resource, :invalid_draft_data),
+    do: "Host draft data is temporarily unavailable."
+
+  defp resource_error_message(_resource, :invalid_connector_catalog),
+    do: "Host connector data is temporarily unavailable."
+
+  defp resource_error_message(:workflow_data, :unauthorized),
+    do: "Host did not authorize workflow access."
+
+  defp resource_error_message(:connector_actions, :unauthorized),
+    do: "Host did not authorize connector access."
+
+  defp resource_error_message(:save_support, _reason), do: "Host save support is not available."
+
+  defp resource_error_message(:publish_support, _reason),
+    do: "Host publish support is not available."
+
+  defp resource_error_message(:workflow_data, _reason),
+    do: "Host workflow data is temporarily unavailable."
+
+  defp resource_error_message(:draft_access, _reason),
+    do: "Host draft data is temporarily unavailable."
+
+  defp resource_error_message(:connector_actions, _reason),
+    do: "Host connector data is temporarily unavailable."
 
   defp value(map, key, default \\ nil)
   defp value(map, key, default), do: Map.get(map, key) || Map.get(map, to_string(key)) || default

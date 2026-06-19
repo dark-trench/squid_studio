@@ -231,75 +231,83 @@
           </div>
         </div>
 
-        <%= if @editor_surface == :visual do %>
-          <div
-            id="squid-studio-flow"
-            phx-hook="SquidStudioFlow"
-            data-read-only={to_string(@read_only?)}
-          >
-            <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <marker
-                  id="studio-arrow"
-                  viewBox="0 0 10 10"
-                  refX="10"
-                  refY="5"
-                  markerWidth="6"
-                  markerHeight="6"
-                  orient="auto-start-reverse"
-                >
-                  <path d="M 0 0 L 10 5 L 0 10 z" class="studio-arrow" />
-                </marker>
-              </defs>
-              <%= for edge <- @edges do %>
-                <path
-                  class={[
-                    "studio-edge",
-                    Map.get(@edge_validation_counts, edge.id, 0) > 0 && "studio-edge-invalid",
-                    edge.id == @selected_edge_id && "is-selected"
-                  ]}
-                  d={edge.path}
-                  marker-end="url(#studio-arrow)"
-                />
-              <% end %>
-            </svg>
-
-            <%= for node <- @nodes do %>
-              <button
-                id={"studio-node-#{node.id}"}
-                type="button"
-                class={[
-                  "studio-node",
-                  node.id == @selected_node_id && "is-selected",
-                  Map.get(@node_validation_counts, node.id, 0) > 0 && "is-invalid"
-                ]}
-                style={"left: #{node.x}px; top: #{node.y}px;"}
-                data-node-id={node.id}
-                phx-click="select_node"
-                phx-value-id={node.id}
-              >
-                <span class="studio-node-port left"></span>
-                <span class="studio-node-content">
-                  <span class="studio-node-heading">
-                    <span class="studio-node-icon"><.icon name={node.icon} /></span>
-                    <span class="studio-node-title">{node.label}</span>
-                  </span>
-                  <span class="studio-node-type">{node.type}</span>
-                </span>
-                <span
-                  :if={Map.get(@node_validation_counts, node.id, 0) > 0}
-                  class="studio-node-validation-badge"
-                >
-                  {Map.get(@node_validation_counts, node.id, 0)}
-                </span>
-                <span class="studio-node-port right"></span>
-              </button>
-            <% end %>
+        <%= if title = workflow_state_title(@workflow_error, @workflow) do %>
+          <div class="studio-empty-state studio-panel-state">
+            <.icon name="hero-exclamation-triangle" />
+            <strong>{title}</strong>
+            <p>{workflow_state_message(@workflow_error, @workflow)}</p>
           </div>
         <% else %>
-          <div class="studio-spec-panel">
-            <pre id="studio-spec-view" class="studio-spec-view"><code>{@spec_json}</code></pre>
-          </div>
+          <%= if @editor_surface == :visual do %>
+            <div
+              id="squid-studio-flow"
+              phx-hook="SquidStudioFlow"
+              data-read-only={to_string(@read_only?)}
+            >
+              <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker
+                    id="studio-arrow"
+                    viewBox="0 0 10 10"
+                    refX="10"
+                    refY="5"
+                    markerWidth="6"
+                    markerHeight="6"
+                    orient="auto-start-reverse"
+                  >
+                    <path d="M 0 0 L 10 5 L 0 10 z" class="studio-arrow" />
+                  </marker>
+                </defs>
+                <%= for edge <- @edges do %>
+                  <path
+                    class={[
+                      "studio-edge",
+                      Map.get(@edge_validation_counts, edge.id, 0) > 0 && "studio-edge-invalid",
+                      edge.id == @selected_edge_id && "is-selected"
+                    ]}
+                    d={edge.path}
+                    marker-end="url(#studio-arrow)"
+                  />
+                <% end %>
+              </svg>
+
+              <%= for node <- @nodes do %>
+                <button
+                  id={"studio-node-#{node.id}"}
+                  type="button"
+                  class={[
+                    "studio-node",
+                    node.id == @selected_node_id && "is-selected",
+                    Map.get(@node_validation_counts, node.id, 0) > 0 && "is-invalid"
+                  ]}
+                  style={"left: #{node.x}px; top: #{node.y}px;"}
+                  data-node-id={node.id}
+                  phx-click="select_node"
+                  phx-value-id={node.id}
+                >
+                  <span class="studio-node-port left"></span>
+                  <span class="studio-node-content">
+                    <span class="studio-node-heading">
+                      <span class="studio-node-icon"><.icon name={node.icon} /></span>
+                      <span class="studio-node-title">{node.label}</span>
+                    </span>
+                    <span class="studio-node-type">{node.type}</span>
+                  </span>
+                  <span
+                    :if={Map.get(@node_validation_counts, node.id, 0) > 0}
+                    class="studio-node-validation-badge"
+                  >
+                    {Map.get(@node_validation_counts, node.id, 0)}
+                  </span>
+                  <span class="studio-node-port right"></span>
+                </button>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="studio-spec-panel">
+              <pre id="studio-spec-view" class="studio-spec-view"><code>{@spec_json}</code></pre>
+            </div>
+          <% end %>
         <% end %>
       </section>
 

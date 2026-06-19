@@ -66,46 +66,62 @@
           </div>
 
           <div class="studio-workflow-card-list">
-            <.link
-              :for={workflow <- @visible_workflows}
-              navigate={studio_path(["workflows", workflow.id])}
-              class="studio-workflow-card is-clickable-row"
-            >
-              <div class="studio-workflow-row-icon">
-                <.icon name={workflow.icon} />
+            <%= if @visible_workflows == [] do %>
+              <div class="studio-empty-state">
+                <.icon name={
+                  if is_nil(@workflow_error),
+                    do: "hero-magnifying-glass",
+                    else: "hero-exclamation-triangle"
+                } />
+                <strong>
+                  {workflow_state_title(@workflow_error, @workflows, @query, @status_filter)}
+                </strong>
+                <p>
+                  {workflow_state_message(@workflow_error, @workflows, @query, @status_filter)}
+                </p>
+                <button
+                  :if={is_nil(@workflow_error) and (@query != "" or @status_filter != "all")}
+                  type="button"
+                  phx-click="set_status_filter"
+                  phx-value-status="all"
+                >
+                  Clear filter
+                </button>
               </div>
-
-              <div class="studio-workflow-card-main">
-                <div class="studio-workflow-card-title">
-                  <p class="studio-kicker">{workflow.executor}</p>
-                  <h4>{workflow.name}</h4>
+            <% else %>
+              <.link
+                :for={workflow <- @visible_workflows}
+                navigate={studio_path(["workflows", workflow.id])}
+                class="studio-workflow-card is-clickable-row"
+              >
+                <div class="studio-workflow-row-icon">
+                  <.icon name={workflow.icon} />
                 </div>
 
-                <div class="studio-workflow-run-details">
-                  <span><.icon name="hero-bolt" />{workflow.run_state}</span>
-                  <span>{workflow.run_detail}</span>
-                  <span>{workflow.nodes} nodes / {workflow.edges} transitions</span>
-                </div>
-              </div>
+                <div class="studio-workflow-card-main">
+                  <div class="studio-workflow-card-title">
+                    <p class="studio-kicker">{workflow.executor}</p>
+                    <h4>{workflow.name}</h4>
+                  </div>
 
-              <div class="studio-workflow-card-header">
-                <div class="studio-workflow-row-meta">
-                  <span class={["studio-workflow-status", status_class(workflow.status)]}>
-                    {workflow.status_label}
-                  </span>
-                  <span><.icon name="hero-clock" />{workflow.updated}</span>
-                  <span>{workflow.runs} runs</span>
+                  <div class="studio-workflow-run-details">
+                    <span><.icon name="hero-bolt" />{workflow.run_state}</span>
+                    <span>{workflow.run_detail}</span>
+                    <span>{workflow.nodes} nodes / {workflow.edges} transitions</span>
+                  </div>
                 </div>
-              </div>
-            </.link>
 
-            <div :if={@visible_workflows == []} class="studio-empty-state">
-              <.icon name="hero-magnifying-glass" />
-              <strong>No workflows match this view.</strong>
-              <button type="button" phx-click="set_status_filter" phx-value-status="all">
-                Clear filter
-              </button>
-            </div>
+                <div class="studio-workflow-card-header">
+                  <div class="studio-workflow-row-meta">
+                    <span class={["studio-workflow-status", status_class(workflow.status)]}>
+                      {workflow.status_label}
+                    </span>
+                    <span><.icon name="hero-clock" />{workflow.updated}</span>
+                    <span>{workflow.runs} runs</span>
+                  </div>
+                </div>
+              </.link>
+            <% end %>
           </div>
         </div>
 

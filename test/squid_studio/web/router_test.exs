@@ -442,8 +442,9 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "Unsaved"
     assert html =~ "Draft was kept in the editor"
-    assert html =~ "persistence_not_configured"
+    assert html =~ "Host save support is not available."
     assert html =~ ~s(id="studio-node-fetch_feed")
+    refute html =~ "persistence_not_configured"
 
     html =
       view
@@ -451,8 +452,30 @@ defmodule SquidStudio.Web.RouterTest do
       |> render_click()
 
     assert html =~ "Publish handoff failed"
-    assert html =~ "publish_not_configured"
+    assert html =~ "Host publish support is not available."
     assert html =~ ~s(id="studio-node-fetch_feed")
+    refute html =~ "publish_not_configured"
+  end
+
+  test "renders safe empty and error states for failing host resolvers", %{conn: conn} do
+    workflows_html =
+      conn
+      |> get("/error-state-studio")
+      |> html_response(200)
+
+    assert workflows_html =~ "Workflow inventory unavailable."
+    assert workflows_html =~ "Host workflow data is temporarily unavailable."
+    refute workflows_html =~ "secret=abc123"
+    refute workflows_html =~ "resolver exploded"
+
+    {:ok, _view, editor_html} = live(conn, "/error-state-studio/workflows/missing")
+
+    assert editor_html =~ "Workflow unavailable."
+    assert editor_html =~ "Host workflow data is temporarily unavailable."
+    assert editor_html =~ "Host did not authorize draft access."
+    assert editor_html =~ "Host has not enabled connector actions."
+    refute editor_html =~ "secret=abc123"
+    refute editor_html =~ "resolver exploded"
   end
 
   test "uses host callbacks for draft selection, save, and publish", %{conn: conn} do

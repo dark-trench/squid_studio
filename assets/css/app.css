@@ -759,6 +759,17 @@ body:has(.studio-app) {
   gap: 2px;
 }
 
+.studio-spec-validation-row.is-link {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.studio-spec-validation-row.is-link:hover strong {
+  color: var(--studio-accent-strong);
+}
+
 .studio-spec-validation-row strong {
   color: var(--studio-ink);
   font-size: 12px;
@@ -842,6 +853,11 @@ body:has(.studio-app) {
 .studio-edge-invalid {
   stroke: var(--studio-warn);
   stroke-width: 4;
+}
+
+.studio-edge.is-selected {
+  stroke: var(--studio-accent-strong);
+  stroke-width: 5;
 }
 
 .studio-arrow {

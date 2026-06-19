@@ -266,6 +266,63 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-edge studio-edge-invalid")
   end
 
+  test "focuses invalid graph elements from validation output", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    invalid_html =
+      view
+      |> element(~s(button[phx-value-id="carrier_onboarding"]))
+      |> render_click()
+
+    assert invalid_html =~ ~s(data-validation-anchor-kind="node")
+    assert invalid_html =~ ~s(data-validation-anchor-id="review_invoice")
+    assert invalid_html =~ ~s(data-validation-anchor-kind="edge")
+    assert invalid_html =~ ~s(data-validation-anchor-id="invoice_added-review_invoice")
+
+    edge_html =
+      view
+      |> element(~s(button[data-validation-anchor-id="invoice_added-review_invoice"]))
+      |> render_click()
+
+    assert edge_html =~ ~s(class="studio-edge studio-edge-invalid is-selected")
+    assert edge_html =~ "Selected edge"
+    assert edge_html =~ "invoice_added"
+    assert edge_html =~ "review_invoice"
+
+    node_html =
+      view
+      |> element(~s(button[data-validation-anchor-id="review_invoice"]))
+      |> render_click()
+
+    assert node_html =~ ~s(id="studio-node-review_invoice")
+    assert node_html =~ ~s(class="studio-node is-selected is-invalid")
+    assert node_html =~ "review_invoice"
+  end
+
+  test "clears stale validation markers after draft edits", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    invalid_html =
+      view
+      |> element(~s(button[phx-value-id="carrier_onboarding"]))
+      |> render_click()
+
+    assert invalid_html =~ "Validation issues"
+    assert invalid_html =~ ~s(class="studio-node-validation-badge")
+    assert invalid_html =~ ~s(class="studio-edge studio-edge-invalid")
+
+    updated_html =
+      view
+      |> render_hook("add_catalog_node", %{"provider" => "slack", "action_key" => "post_message"})
+
+    assert updated_html =~ "Not validated"
+    assert updated_html =~ "Run validation before publishing or starting a workflow."
+    refute updated_html =~ ~s(class="studio-node-validation-badge")
+    refute updated_html =~ ~s(class="studio-edge studio-edge-invalid")
+    refute updated_html =~ ~s(data-validation-anchor-id="review_invoice")
+    refute updated_html =~ ~s(data-validation-anchor-id="invoice_added-review_invoice")
+  end
+
   test "serves hashed studio assets", %{conn: conn} do
     css = get(conn, "/studio/css-#{Assets.current_hash(:css)}")
     js = get(conn, "/studio/js-#{Assets.current_hash(:js)}")

@@ -44,6 +44,7 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:catalog_message, catalog_message(socket.assigns[:connector_catalog_error]))
       |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
+      |> assign(:selected_edge_id, nil)
       |> assign(:theme, :system)
       |> assign(:validation_checked?, false)
       |> assign_spec_view()
@@ -86,11 +87,34 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   def handle_event("select_node", %{"id" => id}, socket) do
-    {:noreply, assign(socket, :selected_node_id, id)}
+    {:noreply, socket |> assign(:selected_node_id, id) |> assign(:selected_edge_id, nil)}
   end
 
   def handle_event("set_theme", %{"theme" => theme}, socket) do
     {:noreply, assign(socket, :theme, normalize_theme(theme))}
+  end
+
+  def handle_event(
+        "focus_validation_issue",
+        %{"anchor_kind" => "node", "anchor_id" => id},
+        socket
+      ) do
+    {:noreply,
+     socket
+     |> assign(:editor_surface, :visual)
+     |> assign(:selected_node_id, id)
+     |> assign(:selected_edge_id, nil)}
+  end
+
+  def handle_event(
+        "focus_validation_issue",
+        %{"anchor_kind" => "edge", "anchor_id" => id},
+        socket
+      ) do
+    {:noreply,
+     socket
+     |> assign(:editor_surface, :visual)
+     |> assign(:selected_edge_id, id)}
   end
 
   def handle_event("set_editor_surface", %{"surface" => surface}, socket) do
@@ -170,6 +194,7 @@ defmodule SquidStudio.Web.EditorLive do
          |> assign(:nodes, nodes)
          |> assign(:edges, build_edges(socket.assigns.edges, nodes))
          |> assign(:selected_node_id, node.id)
+         |> assign(:selected_edge_id, nil)
          |> assign(:drafts, add_node_to_selected_draft(socket, node, connector))
          |> assign_spec_view()
          |> initialize_validation_feedback()
@@ -442,7 +467,9 @@ defmodule SquidStudio.Web.EditorLive do
       }
     }
 
-    Map.put(draft, "spec", Map.put(spec, "nodes", nodes ++ [connector_node]))
+    draft
+    |> Map.put("spec", Map.put(spec, "nodes", nodes ++ [connector_node]))
+    |> Map.put("validation_errors", [])
   end
 
   defp assign_spec_view(socket) do
@@ -450,12 +477,12 @@ defmodule SquidStudio.Web.EditorLive do
     spec = current_spec(draft, socket.assigns.workflow)
     validation_errors = spec_validation_errors(draft)
 
-    {node_validation_counts, edge_validation_counts} =
+    {annotated_errors, node_validation_counts, edge_validation_counts} =
       validation_annotations(validation_errors, spec, socket.assigns.edges)
 
     socket
     |> assign(:spec_json, Jason.encode!(spec, pretty: true))
-    |> assign(:spec_validation_errors, validation_errors)
+    |> assign(:spec_validation_errors, annotated_errors)
     |> assign(:node_validation_counts, node_validation_counts)
     |> assign(:edge_validation_counts, edge_validation_counts)
   end
@@ -509,16 +536,24 @@ defmodule SquidStudio.Web.EditorLive do
     transitions = Map.get(spec, "transitions", [])
     edge_lookup = Map.new(edges, &{{&1.source, &1.target}, &1.id})
 
-    Enum.reduce(errors, {%{}, %{}}, fn error, {node_counts, edge_counts} ->
+    Enum.reduce(errors, {[], %{}, %{}}, fn error, {annotated_errors, node_counts, edge_counts} ->
       case validation_anchor(error, steps, transitions, edge_lookup) do
         {:node, node_id} ->
-          {Map.update(node_counts, node_id, 1, &(&1 + 1)), edge_counts}
+          {
+            annotated_errors ++ [Map.put(error, :anchor, %{kind: "node", id: node_id})],
+            Map.update(node_counts, node_id, 1, &(&1 + 1)),
+            edge_counts
+          }
 
         {:edge, edge_id} ->
-          {node_counts, Map.update(edge_counts, edge_id, 1, &(&1 + 1))}
+          {
+            annotated_errors ++ [Map.put(error, :anchor, %{kind: "edge", id: edge_id})],
+            node_counts,
+            Map.update(edge_counts, edge_id, 1, &(&1 + 1))
+          }
 
         :global ->
-          {node_counts, edge_counts}
+          {annotated_errors ++ [error], node_counts, edge_counts}
       end
     end)
   end

@@ -207,10 +207,27 @@
             id="studio-spec-validation"
             class="studio-spec-validation"
           >
-            <div :for={issue <- @spec_validation_errors} class="studio-spec-validation-row">
-              <strong>{issue.path}</strong>
-              <span>{issue.message}</span>
-            </div>
+            <%= for issue <- @spec_validation_errors do %>
+              <%= if anchor = issue[:anchor] do %>
+                <button
+                  type="button"
+                  class="studio-spec-validation-row is-link"
+                  phx-click="focus_validation_issue"
+                  phx-value-anchor_kind={anchor.kind}
+                  phx-value-anchor_id={anchor.id}
+                  data-validation-anchor-kind={anchor.kind}
+                  data-validation-anchor-id={anchor.id}
+                >
+                  <strong>{issue.path}</strong>
+                  <span>{issue.message}</span>
+                </button>
+              <% else %>
+                <div class="studio-spec-validation-row">
+                  <strong>{issue.path}</strong>
+                  <span>{issue.message}</span>
+                </div>
+              <% end %>
+            <% end %>
           </div>
         </div>
 
@@ -238,7 +255,8 @@
                 <path
                   class={[
                     "studio-edge",
-                    Map.get(@edge_validation_counts, edge.id, 0) > 0 && "studio-edge-invalid"
+                    Map.get(@edge_validation_counts, edge.id, 0) > 0 && "studio-edge-invalid",
+                    edge.id == @selected_edge_id && "is-selected"
                   ]}
                   d={edge.path}
                   marker-end="url(#studio-arrow)"
@@ -296,37 +314,62 @@
           </span>
         </div>
 
-        <%= if selected = Enum.find(@nodes, &(&1.id == @selected_node_id)) do %>
+        <%= if selected_edge = Enum.find(@edges, &(&1.id == @selected_edge_id)) do %>
           <div class="studio-inspector-title">
-            <span class="studio-node-icon"><.icon name={selected.icon} /></span>
-            <span>{selected.label}</span>
+            <span class="studio-node-icon"><.icon name="hero-share" /></span>
+            <span>Selected edge</span>
           </div>
           <div class="studio-inspector-row">
-            <span>Type</span>
-            <strong>{selected.type}</strong>
+            <span>From</span>
+            <strong>{selected_edge.source}</strong>
           </div>
           <div class="studio-inspector-row">
-            <span>X</span>
-            <strong>{selected.x}</strong>
+            <span>To</span>
+            <strong>{selected_edge.target}</strong>
           </div>
-          <div class="studio-inspector-row">
-            <span>Y</span>
-            <strong>{selected.y}</strong>
-          </div>
-
           <div class="studio-properties-section">
-            <p class="studio-kicker">Connections</p>
+            <p class="studio-kicker">Validation</p>
             <div class="studio-connection-list">
-              <%= for edge <- @edges, edge.source == selected.id or edge.target == selected.id do %>
-                <div class="studio-connection">
-                  <span>{edge.source}</span>
-                  <strong>{edge.target}</strong>
-                </div>
-              <% end %>
+              <div class="studio-connection">
+                <span>Issues</span>
+                <strong>{Map.get(@edge_validation_counts, selected_edge.id, 0)}</strong>
+              </div>
             </div>
           </div>
         <% else %>
-          <p class="studio-inspector-empty">No selection</p>
+          <% selected = Enum.find(@nodes, &(&1.id == @selected_node_id)) %>
+          <%= if selected do %>
+            <div class="studio-inspector-title">
+              <span class="studio-node-icon"><.icon name={selected.icon} /></span>
+              <span>{selected.label}</span>
+            </div>
+            <div class="studio-inspector-row">
+              <span>Type</span>
+              <strong>{selected.type}</strong>
+            </div>
+            <div class="studio-inspector-row">
+              <span>X</span>
+              <strong>{selected.x}</strong>
+            </div>
+            <div class="studio-inspector-row">
+              <span>Y</span>
+              <strong>{selected.y}</strong>
+            </div>
+
+            <div class="studio-properties-section">
+              <p class="studio-kicker">Connections</p>
+              <div class="studio-connection-list">
+                <%= for edge <- @edges, edge.source == selected.id or edge.target == selected.id do %>
+                  <div class="studio-connection">
+                    <span>{edge.source}</span>
+                    <strong>{edge.target}</strong>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <p class="studio-inspector-empty">No selection</p>
+          <% end %>
         <% end %>
       </aside>
     </div>

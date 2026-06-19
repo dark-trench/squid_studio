@@ -24,6 +24,20 @@ defmodule SquidStudio.Web.RouterOptionsTest do
     end
   end
 
+  defmodule ErrorResolver do
+    @behaviour SquidStudio.Web.Resolver
+
+    def resolve_user(_conn), do: :operator
+    def resolve_access(:operator), do: :all
+
+    def resolve_workflows(:operator) do
+      raise "resolver exploded with secret=abc123"
+    end
+
+    def resolve_drafts(:operator), do: {:error, :unauthorized}
+    def resolve_connector_catalog(:operator, _context), do: {:error, :unsupported_capability}
+  end
+
   test "rejects unsupported live transport values" do
     assert_raise ArgumentError, ~r/invalid :transport/, fn ->
       Router.__options__("/studio", transport: "ftp")
@@ -156,5 +170,28 @@ defmodule SquidStudio.Web.RouterOptionsTest do
              ],
              "connector_catalog" => []
            } = session
+  end
+
+  test "captures resolver failures as session error states" do
+    conn = Phoenix.ConnTest.build_conn()
+
+    session =
+      Router.__session__(
+        conn,
+        "/studio",
+        ErrorResolver,
+        "/live",
+        "websocket",
+        nil
+      )
+
+    assert session["user"] == :operator
+    assert session["access"] == :all
+    assert session["workflows"] == []
+    assert session["workflow_error"] == :resolver_failed
+    assert session["drafts"] == []
+    assert session["draft_error"] == :unauthorized
+    assert session["connector_catalog"] == []
+    assert session["connector_catalog_error"] == :unsupported_capability
   end
 end

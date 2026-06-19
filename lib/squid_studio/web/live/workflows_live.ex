@@ -247,6 +247,24 @@ defmodule SquidStudio.Web.WorkflowsLive do
     Enum.find(templates, &(&1.id == selected_id)) || List.first(templates)
   end
 
+  defp workflow_state_title(error, _workflows, _query, _status_filter) when not is_nil(error),
+    do: "Workflow inventory unavailable."
+
+  defp workflow_state_title(_error, workflows, "", "all") when workflows == [],
+    do: "No workflows available."
+
+  defp workflow_state_title(_error, _workflows, _query, _status_filter),
+    do: "No workflows match this view."
+
+  defp workflow_state_message(error, _workflows, _query, _status_filter) when not is_nil(error),
+    do: "Host workflow data is temporarily unavailable."
+
+  defp workflow_state_message(_error, workflows, "", "all") when workflows == [],
+    do: "Host has not exposed workflows yet."
+
+  defp workflow_state_message(_error, _workflows, _query, _status_filter),
+    do: "Try a broader search or clear the current filter."
+
   defp filter_form(query) do
     to_form(%{"q" => query}, as: :workflow_filter)
   end

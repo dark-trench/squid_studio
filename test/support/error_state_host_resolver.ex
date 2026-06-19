@@ -11,7 +11,11 @@ defmodule SquidStudio.Test.ErrorStateHostResolver do
 
   @impl true
   def resolve_workflows(:operator) do
-    raise "resolver exploded with secret=abc123"
+    if System.get_env("SQUID_STUDIO_ERROR_STATE_ALLOW_WORKFLOWS") == "1" do
+      []
+    else
+      raise "resolver exploded with secret=abc123"
+    end
   end
 
   @impl true

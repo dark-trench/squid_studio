@@ -17,8 +17,8 @@
 }
 
 :root {
-  --studio-sidebar-width: 260px;
-  --studio-properties-width: 300px;
+  --studio-sidebar-width: clamp(220px, 22vw, 260px);
+  --studio-properties-width: clamp(250px, 26vw, 300px);
   --studio-topbar-height: 56px;
   --studio-workflows-content-width: 1280px;
 }
@@ -356,6 +356,7 @@ body:has(.studio-app) {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .studio-component-body small {
@@ -391,6 +392,7 @@ body:has(.studio-app) {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .studio-draft-item strong {
@@ -525,7 +527,7 @@ body:has(.studio-app) {
 
 .studio-topbar {
   display: grid;
-  grid-template-columns: minmax(210px, 0.8fr) minmax(260px, 1.2fr) auto minmax(360px, auto);
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.1fr) auto minmax(280px, 1.3fr);
   align-items: center;
   gap: 14px;
   min-width: 0;
@@ -611,6 +613,8 @@ body:has(.studio-app) {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
+  row-gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -691,7 +695,15 @@ body:has(.studio-app) {
   justify-content: center;
   gap: 7px;
   height: 30px;
+  min-width: 0;
   padding: 0 10px;
+}
+
+.studio-button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .studio-button.primary {
@@ -1527,6 +1539,19 @@ a.studio-wordmark:hover strong {
   color: var(--studio-accent-strong);
   font-weight: 750;
   cursor: pointer;
+}
+
+@media (max-width: 1280px) {
+  .studio-workspace {
+    grid-template-columns: minmax(210px, 22vw) minmax(0, 1fr) minmax(240px, 24vw);
+  }
+
+  .studio-draft-item strong,
+  .studio-draft-item small,
+  .studio-component-body strong,
+  .studio-component-body small {
+    white-space: normal;
+  }
 }
 
 @media (max-width: 1080px) {

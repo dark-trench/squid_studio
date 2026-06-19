@@ -344,9 +344,15 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-theme-light"
     assert css.resp_body =~ ".studio-theme-dark"
     assert css.resp_body =~ ".studio-theme-system"
+    assert css.resp_body =~ "--studio-sidebar-width: clamp(220px, 22vw, 260px);"
+    assert css.resp_body =~ "--studio-properties-width: clamp(250px, 26vw, 300px);"
     assert css.resp_body =~ ".studio-theme-switcher"
     assert css.resp_body =~ "--studio-topbar-height: 56px;"
     assert css.resp_body =~ ".studio-topbar .studio-metric span"
+
+    assert css.resp_body =~
+             "grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.1fr) auto minmax(280px, 1.3fr);"
+
     assert css.resp_body =~ "grid-template-columns: repeat(2, minmax(78px, auto));"
     assert css.resp_body =~ "--studio-workflows-content-width: 1280px;"
     assert css.resp_body =~ "width: min(100%, var(--studio-workflows-content-width));"
@@ -361,6 +367,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-row-meta"
     assert css.resp_body =~ "grid-template-columns: 34px minmax(0, 1fr) auto;"
     assert css.resp_body =~ "padding: 11px 14px;"
+    assert css.resp_body =~ ".studio-button span"
+    assert css.resp_body =~ "row-gap: 8px;"
+    assert css.resp_body =~ "@media (max-width: 1280px)"
     assert css.resp_body =~ "@media (max-width: 1040px)"
     assert css.resp_body =~ "grid-template-columns: repeat(3, minmax(0, 1fr));"
     assert css.resp_body =~ "grid-template-rows: auto minmax(0, 1fr);"
@@ -368,6 +377,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "flex-wrap: nowrap;"
     assert css.resp_body =~ ".studio-workflows-panel-actions form"
     assert css.resp_body =~ "flex: 1 1 220px;"
+    assert css.resp_body =~ "overflow-wrap: anywhere;"
     assert css.resp_body =~ "@media (max-width: 520px)"
     assert css.resp_body =~ "border-radius: 6px;"
     assert css.resp_body =~ ".studio-template-preview .studio-button"

@@ -41,11 +41,17 @@
           <.icon name="hero-shield-check" />{@validation_status}
         </span>
         <span class="studio-badge"><.icon name="hero-pencil-square" />{@draft_status}</span>
-        <button type="button" class="studio-button secondary" phx-click="validate_draft">
+        <button
+          id="studio-validate-draft-button"
+          type="button"
+          class="studio-button secondary"
+          phx-click="validate_draft"
+        >
           <.icon name="hero-shield-check" />
           <span>Validate draft</span>
         </button>
         <button
+          id="studio-publish-draft-button"
           type="button"
           class="studio-button secondary"
           phx-click="publish_draft"
@@ -55,6 +61,7 @@
           <span>Publish version</span>
         </button>
         <button
+          id="studio-save-draft-button"
           type="button"
           class="studio-button primary"
           phx-click="save_draft"
@@ -108,6 +115,9 @@
               <p class="studio-component-group-title">{group.category}</p>
               <button
                 :for={entry <- group.entries}
+                id={
+                  "studio-catalog-entry-#{Map.get(entry, "provider")}-#{Map.get(entry, "action_key")}"
+                }
                 type="button"
                 class={[
                   "studio-component",

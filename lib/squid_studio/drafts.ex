@@ -65,18 +65,58 @@ defmodule SquidStudio.Drafts do
   def from_workflows(_workflows), do: []
 
   defp workflow_to_draft(workflow) do
+    workflow_id = value(workflow, :id, "workflow")
+
     %{
-      id: value(workflow, :id, "draft"),
-      workflow: value(workflow, :id, "workflow"),
+      id: workflow_id,
+      workflow: workflow_id,
       name: value(workflow, :name, "Workflow"),
       definition_version: "draft",
-      spec: %{
-        workflow: value(workflow, :id, "workflow"),
-        definition_version: "draft",
-        nodes: value(workflow, :nodes, []),
-        edges: value(workflow, :edges, [])
-      },
+      spec: workflow_spec(workflow_id, workflow),
       metadata: %{source: "resolver_workflow"}
+    }
+  end
+
+  defp workflow_spec(workflow_id, workflow) do
+    steps =
+      workflow
+      |> value(:nodes, [])
+      |> List.wrap()
+      |> Enum.map(fn node ->
+        %{
+          name: value(node, :id, "step"),
+          opts: []
+        }
+      end)
+
+    transitions =
+      workflow
+      |> value(:edges, [])
+      |> List.wrap()
+      |> Enum.map(fn edge ->
+        %{
+          from: value(edge, :source, "step"),
+          on: "ok",
+          to: value(edge, :target, "step")
+        }
+      end)
+
+    entry_step =
+      steps
+      |> List.first(%{})
+      |> value(:name, nil)
+
+    %{
+      workflow: workflow_id,
+      definition_version: "draft",
+      triggers: [],
+      payload: [],
+      steps: steps,
+      transitions: transitions,
+      retries: [],
+      entry_steps: if(is_nil(entry_step), do: [], else: [entry_step]),
+      initial_step: entry_step,
+      entry_step: entry_step
     }
   end
 

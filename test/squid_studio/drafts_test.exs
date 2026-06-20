@@ -1,6 +1,7 @@
 defmodule SquidStudio.DraftsTest do
   use ExUnit.Case, async: true
 
+  alias Squidie.Workflow.EditorSpec
   alias SquidStudio.Drafts
 
   describe "normalize/1" do
@@ -71,13 +72,13 @@ defmodule SquidStudio.DraftsTest do
   end
 
   describe "from_workflows/1" do
-    test "builds default draft specs from resolver workflow maps" do
+    test "builds valid editor specs from resolver workflow maps" do
       workflows = [
         %{
           id: "daily_digest",
           name: "Daily RSS To Discord",
-          nodes: [%{id: "fetch_feed"}],
-          edges: [%{id: "daily_digest-fetch_feed"}]
+          nodes: [%{id: "daily_digest"}, %{id: "fetch_feed"}],
+          edges: [%{source: "daily_digest", target: "fetch_feed"}]
         }
       ]
 
@@ -87,12 +88,28 @@ defmodule SquidStudio.DraftsTest do
                  "workflow" => "daily_digest",
                  "definition_version" => "draft",
                  "spec" => %{
-                   "nodes" => [%{"id" => "fetch_feed"}],
-                   "edges" => [%{"id" => "daily_digest-fetch_feed"}]
+                   "workflow" => "daily_digest",
+                   "definition_version" => "draft",
+                   "triggers" => [],
+                   "payload" => [],
+                   "steps" => [
+                     %{"name" => "daily_digest", "opts" => []},
+                     %{"name" => "fetch_feed", "opts" => []}
+                   ],
+                   "transitions" => [
+                     %{"from" => "daily_digest", "on" => "ok", "to" => "fetch_feed"}
+                   ],
+                   "retries" => [],
+                   "entry_steps" => ["daily_digest"],
+                   "initial_step" => "daily_digest",
+                   "entry_step" => "daily_digest"
                  },
                  "metadata" => %{"source" => "resolver_workflow"}
                }
              ] = Drafts.from_workflows(workflows)
+
+      [draft] = Drafts.from_workflows(workflows)
+      assert :ok = EditorSpec.validate_map(draft["spec"])
     end
 
     test "returns an empty collection for invalid workflow collections" do

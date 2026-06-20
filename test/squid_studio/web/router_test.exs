@@ -526,11 +526,12 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(id="squid-studio-flow")
     assert html =~ ~s(data-read-only="true")
 
-    assert html =~
-             ~s(button type="button" class="studio-button secondary" phx-click="publish_draft" disabled)
+    assert html =~ ~s(id="studio-publish-draft-button")
+    assert html =~ ~s(id="studio-save-draft-button")
+    assert html =~ ~s(id="studio-validate-draft-button")
 
-    assert html =~
-             ~s(button type="button" class="studio-button primary" phx-click="save_draft" disabled)
+    assert html =~ ~r/id="studio-publish-draft-button"[^>]*disabled/
+    assert html =~ ~r/id="studio-save-draft-button"[^>]*disabled/
 
     assert html =~ ~s(data-catalog-action-key="post_message")
     assert html =~ ~s(disabled)

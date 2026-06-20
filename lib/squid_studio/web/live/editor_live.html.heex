@@ -110,6 +110,18 @@
             <p class="studio-kicker">Node catalog</p>
             <span>{length(@connector_catalog)}</span>
           </div>
+          <.form for={@catalog_form} id="studio-catalog-search-form" phx-change="filter_catalog">
+            <label class="studio-search-field">
+              <.icon name="hero-magnifying-glass" />
+              <input
+                type="search"
+                name={@catalog_form[:q].name}
+                value={@catalog_form[:q].value}
+                placeholder="Search by action, provider, category, or tag"
+                autocomplete="off"
+              />
+            </label>
+          </.form>
           <div class="studio-component-list">
             <div :for={group <- @catalog_groups} class="studio-component-group">
               <p class="studio-component-group-title">{group.category}</p>
@@ -156,6 +168,10 @@
             <p :if={@connector_catalog == []} class="studio-muted">
               No host connector actions exposed.
             </p>
+            <div :if={@connector_catalog != [] and @catalog_groups == []} class="studio-muted">
+              <p>No palette nodes match this search.</p>
+              <p>Try a broader search or clear the current filter.</p>
+            </div>
           </div>
           <p class="studio-catalog-message">{@catalog_message}</p>
         </div>

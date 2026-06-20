@@ -30,6 +30,7 @@ defmodule SquidStudio.ConnectorCatalog do
          "description" => required_string(safe, "description", ""),
          "input_contract" => Map.get(safe, "input_contract", %{}),
          "output_contract" => Map.get(safe, "output_contract", %{}),
+         "tags" => normalize_tags(Map.get(safe, "tags", [])),
          "credential_requirements" => credential_requirements,
          "enabled" => Map.get(safe, "enabled", true),
          "authorized" => Map.get(safe, "authorized", true),
@@ -75,6 +76,32 @@ defmodule SquidStudio.ConnectorCatalog do
 
   def group_by_category(_entries), do: []
 
+  @spec filter_by_query([entry()], String.t()) :: [entry()]
+  def filter_by_query(entries, query) when is_list(entries) do
+    trimmed_query = query |> to_string() |> String.trim() |> String.downcase()
+
+    if trimmed_query == "" do
+      entries
+    else
+      Enum.filter(entries, fn entry ->
+        searchable =
+          [
+            Map.get(entry, "display_name"),
+            Map.get(entry, "category"),
+            Map.get(entry, "provider"),
+            Map.get(entry, "description")
+          ] ++ List.wrap(Map.get(entry, "tags"))
+
+        searchable
+        |> Enum.reject(&is_nil/1)
+        |> Enum.map_join(" ", &String.downcase(to_string(&1)))
+        |> String.contains?(trimmed_query)
+      end)
+    end
+  end
+
+  def filter_by_query(_entries, _query), do: []
+
   defp normalize_credential_requirements(credentials) when is_list(credentials) do
     {:ok, Enum.map(credentials, &normalize_credential_requirement/1)}
   end
@@ -84,6 +111,16 @@ defmodule SquidStudio.ConnectorCatalog do
   end
 
   defp normalize_credential_requirements(_credentials), do: {:ok, []}
+
+  defp normalize_tags(tags) when is_list(tags) do
+    tags
+    |> Enum.map(&to_string/1)
+    |> Enum.reject(&(&1 == ""))
+  end
+
+  defp normalize_tags(tags) when is_binary(tags), do: [tags]
+  defp normalize_tags(tags) when is_atom(tags), do: [to_string(tags)]
+  defp normalize_tags(_tags), do: []
 
   defp normalize_credential_requirement(credential) when is_map(credential) do
     credential

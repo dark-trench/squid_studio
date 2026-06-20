@@ -23,6 +23,7 @@ defmodule SquidStudio.Web.EditorLive do
     drafts = List.wrap(socket.assigns[:drafts])
     selected_draft = List.first(drafts)
     connector_catalog = List.wrap(socket.assigns[:connector_catalog])
+    catalog_query = ""
 
     socket =
       socket
@@ -40,13 +41,15 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:nodes, graph.nodes)
       |> assign(:edges, graph.edges)
       |> assign(:connector_catalog, connector_catalog)
-      |> assign(:catalog_groups, ConnectorCatalog.group_by_category(connector_catalog))
+      |> assign(:catalog_query, catalog_query)
+      |> assign(:catalog_form, catalog_form(catalog_query))
       |> assign(:catalog_message, catalog_message(socket.assigns[:connector_catalog_error]))
       |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
       |> assign(:selected_edge_id, nil)
       |> assign(:theme, :system)
       |> assign(:validation_checked?, false)
+      |> assign_catalog_groups()
       |> assign_spec_view()
       |> initialize_validation_feedback()
 
@@ -119,6 +122,16 @@ defmodule SquidStudio.Web.EditorLive do
 
   def handle_event("set_editor_surface", %{"surface" => surface}, socket) do
     {:noreply, assign(socket, :editor_surface, normalize_surface(surface))}
+  end
+
+  def handle_event("filter_catalog", %{"catalog_filter" => params}, socket) do
+    query = Map.get(params, "q", "")
+
+    {:noreply,
+     socket
+     |> assign(:catalog_query, query)
+     |> assign(:catalog_form, catalog_form(query))
+     |> assign_catalog_groups()}
   end
 
   def handle_event("validate_draft", _params, socket) do
@@ -416,6 +429,16 @@ defmodule SquidStudio.Web.EditorLive do
 
   defp catalog_message(nil), do: "Host-approved connector actions."
   defp catalog_message(error), do: resource_error_message(:connector_actions, error)
+
+  defp assign_catalog_groups(socket) do
+    filtered_entries =
+      socket.assigns.connector_catalog
+      |> ConnectorCatalog.filter_by_query(socket.assigns.catalog_query)
+
+    assign(socket, :catalog_groups, ConnectorCatalog.group_by_category(filtered_entries))
+  end
+
+  defp catalog_form(query), do: to_form(%{"q" => query}, as: :catalog_filter)
 
   defp find_catalog_entry(entries, provider, action_key) do
     Enum.find(entries, fn entry ->

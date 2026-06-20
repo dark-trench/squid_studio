@@ -618,6 +618,41 @@ defmodule SquidStudio.Web.RouterTest do
     assert second_html =~ ~s(id="studio-node-slack-post_message-3")
   end
 
+  test "filters catalog entries by query across provider, description, and tags", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    assert html =~ "Post message"
+    assert html =~ "Create issue"
+    assert html =~ ~s(id="studio-catalog-search-form")
+
+    html =
+      view
+      |> form("#studio-catalog-search-form", catalog_filter: %{q: "chatops"})
+      |> render_change()
+
+    assert html =~ "Post message"
+    refute html =~ "Create issue"
+
+    html =
+      view
+      |> form("#studio-catalog-search-form", catalog_filter: %{q: "github"})
+      |> render_change()
+
+    assert html =~ "Create issue"
+    assert html =~ "production only"
+    refute html =~ "Post message"
+
+    html =
+      view
+      |> form("#studio-catalog-search-form", catalog_filter: %{q: "calendar"})
+      |> render_change()
+
+    assert html =~ "No palette nodes match this search."
+    assert html =~ "Try a broader search or clear the current filter."
+    refute html =~ "Post message"
+    refute html =~ "Create issue"
+  end
+
   test "centers the graph when the canvas reports its dimensions", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/studio/workflows/daily_digest")
 

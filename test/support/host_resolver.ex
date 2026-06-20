@@ -55,6 +55,7 @@ defmodule SquidStudio.Test.HostResolver do
         action_key: "post_message",
         display_name: "Post message",
         description: "Send an approved Slack message",
+        tags: ["chatops", "alerts"],
         input_contract: %{channel: "string", text: "string"},
         output_contract: %{message_id: "string"},
         credential_requirements: [
@@ -68,6 +69,7 @@ defmodule SquidStudio.Test.HostResolver do
         action_key: "create_issue",
         display_name: "Create issue",
         description: "Open a GitHub issue",
+        tags: ["triage", "issue"],
         input_contract: %{title: "string"},
         output_contract: %{issue_url: "string"},
         credential_requirements: [%{key: "github_app", label: "GitHub app"}],

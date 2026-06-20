@@ -12,6 +12,7 @@ defmodule SquidStudio.ConnectorCatalogTest do
                  action_key: :post_message,
                  display_name: "Post message",
                  description: "Send a Slack message",
+                 tags: [:chatops, "alerts"],
                  input_contract: %{channel: :string, text: :string},
                  output_contract: %{message_id: :string},
                  credential_requirements: [
@@ -27,6 +28,7 @@ defmodule SquidStudio.ConnectorCatalogTest do
              "action_key" => "post_message",
              "display_name" => "Post message",
              "description" => "Send a Slack message",
+             "tags" => ["chatops", "alerts"],
              "input_contract" => %{"channel" => "string", "text" => "string"},
              "output_contract" => %{"message_id" => "string"},
              "credential_requirements" => [
@@ -112,5 +114,48 @@ defmodule SquidStudio.ConnectorCatalogTest do
                entries: [%{"action_key" => "post_message", "enabled" => true}]
              }
            ] = ConnectorCatalog.group_by_category(entries)
+  end
+
+  test "filters catalog entries by provider, description, and tags" do
+    {:ok, entries} =
+      ConnectorCatalog.normalize_many([
+        %{
+          provider: "slack",
+          category: "Messaging",
+          action_key: "post_message",
+          display_name: "Post message",
+          description: "Send an approved Slack message",
+          tags: ["chatops", "alerts"],
+          input_contract: %{},
+          output_contract: %{},
+          credential_requirements: [],
+          enabled: true
+        },
+        %{
+          provider: "github",
+          category: "Code",
+          action_key: "create_issue",
+          display_name: "Create issue",
+          description: "Open a GitHub issue",
+          tags: ["triage", "issue"],
+          input_contract: %{},
+          output_contract: %{},
+          credential_requirements: [],
+          enabled: false,
+          authorized: false,
+          disabled_reason: "Production only"
+        }
+      ])
+
+    assert [%{"action_key" => "post_message"}] =
+             ConnectorCatalog.filter_by_query(entries, "chatops")
+
+    assert [%{"action_key" => "create_issue"}] =
+             ConnectorCatalog.filter_by_query(entries, "github")
+
+    assert [%{"action_key" => "post_message"}] =
+             ConnectorCatalog.filter_by_query(entries, "approved slack")
+
+    assert [] = ConnectorCatalog.filter_by_query(entries, "calendar")
   end
 end

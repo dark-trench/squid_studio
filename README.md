@@ -89,7 +89,9 @@ squid_studio "/squid-studio", resolver: MyApp.SquidStudioResolver
 
 For a fuller host checklist covering resolver callbacks, action catalogs, draft
 persistence, run operations, and redaction boundaries, see
-[docs/host_integration.md](docs/host_integration.md).
+[docs/host_integration.md](docs/host_integration.md). For the current V1 trust
+boundary review and deferred security surfaces, see
+[docs/v1_security_review.md](docs/v1_security_review.md).
 
 ## Standalone Development
 
@@ -110,4 +112,5 @@ mix precommit
 
 Release maintainers should also follow
 [docs/release_checklist.md](docs/release_checklist.md) before tagging or
-publishing the first V1 package.
+publishing the first V1 package, alongside the V1 review notes in
+[docs/v1_security_review.md](docs/v1_security_review.md).

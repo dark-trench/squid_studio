@@ -238,3 +238,7 @@ resolver callbacks it exposes.
 - Keep draft persistence host-owned.
 - Validate and publish against a host-controlled action allowlist.
 - Redact sensitive fields before Studio sees them.
+
+For the current V1 review of shipped trust boundaries and the list of deferred
+surfaces that still need host-owned enforcement when implemented, see
+[v1_security_review.md](v1_security_review.md).

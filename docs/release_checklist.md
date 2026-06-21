@@ -53,6 +53,7 @@ includes:
 
 - Host integration and embedding support.
 - Editor capabilities shipped in V1.
+- Current shipped trust-boundary decisions in `docs/v1_security_review.md`.
 - Runtime or security boundary expectations that host applications must know.
 - Any breaking changes, notable limitations, or deferred follow-ups.
 

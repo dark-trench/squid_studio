@@ -760,6 +760,10 @@ html:has(.studio-app), body:has(.studio-app) {
   border-color: var(--studio-accent);
   background: var(--studio-accent-soft);
 }
+.studio-component:focus-visible, .studio-draft-item:focus-visible, .studio-button:focus-visible, .studio-icon-button:focus-visible, .studio-surface-button:focus-visible, .studio-spec-validation-row.is-link:focus-visible, .studio-node:focus-visible, #squid-studio-flow:focus-visible, .studio-search-field input:focus-visible {
+  outline: none;
+  box-shadow: var(--studio-focus-shadow);
+}
 .studio-sidebar-footer .hero-circle-stack, .studio-breadcrumb .hero-square-3-stack-3d, .studio-button .hero-cloud-arrow-up, .studio-button .hero-rocket-launch, .studio-badge .hero-pencil-square {
   flex: none;
 }
@@ -1214,6 +1218,7 @@ html:has(.studio-app), body:has(.studio-app) {
 .studio-edge-invalid {
   stroke: var(--studio-warn);
   stroke-width: 4;
+  stroke-dasharray: 10 6;
 }
 .studio-edge.is-selected {
   stroke: var(--studio-accent-strong);

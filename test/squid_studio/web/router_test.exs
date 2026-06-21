@@ -157,8 +157,15 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "hero-clock"
     assert html =~ "Draft spec"
     assert html =~ "Host persistence"
+    assert html =~ ~s(id="studio-catalog-search-input")
+    assert html =~ ~s(aria-label="Search node catalog")
     assert html =~ "Publish version"
     assert html =~ "Validate draft"
+    assert html =~ ~s(id="squid-studio-flow")
+    assert html =~ ~s(tabindex="0")
+    assert html =~ ~s(aria-label="Workflow canvas")
+    assert html =~ ~s(class="studio-draft-item is-active")
+    assert html =~ ~s(aria-pressed="true")
     refute html =~ "Squidie host"
     refute html =~ "Workflows Visual Builder"
     refute html =~ "Live</span>"
@@ -385,6 +392,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "a.studio-wordmark:hover strong"
     assert css.resp_body =~ ".studio-wordmark"
     assert css.resp_body =~ "width: fit-content;"
+    assert css.resp_body =~ ".studio-edge-invalid"
+    assert css.resp_body =~ "stroke-dasharray: 10 6;"
     refute css.resp_body =~ ".studio-workflows-sidepanels"
 
     assert css.resp_body =~ "radial-gradient("

@@ -55,6 +55,7 @@ defmodule SquidStudio.Web.Components do
       data-studio-theme={@value}
       title={@label}
       aria-label={@label}
+      aria-pressed={to_string(@theme == @value)}
     >
       <svg
         aria-hidden="true"

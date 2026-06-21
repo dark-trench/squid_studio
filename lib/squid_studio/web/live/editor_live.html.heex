@@ -88,6 +88,7 @@
                 "studio-draft-item",
                 Map.get(draft, "id") == @selected_draft_id && "is-active"
               ]}
+              aria-pressed={to_string(Map.get(draft, "id") == @selected_draft_id)}
               phx-click="select_draft"
               phx-value-id={Map.get(draft, "id")}
             >
@@ -114,11 +115,13 @@
             <label class="studio-search-field">
               <.icon name="hero-magnifying-glass" />
               <input
+                id="studio-catalog-search-input"
                 type="search"
                 name={@catalog_form[:q].name}
                 value={@catalog_form[:q].value}
                 placeholder="Search by action, provider, category, or tag"
                 autocomplete="off"
+                aria-label="Search node catalog"
               />
             </label>
           </.form>
@@ -195,6 +198,7 @@
           <button
             type="button"
             class={["studio-surface-button", @editor_surface == :visual && "is-active"]}
+            aria-pressed={to_string(@editor_surface == :visual)}
             phx-click="set_editor_surface"
             phx-value-surface="visual"
           >
@@ -204,6 +208,7 @@
           <button
             type="button"
             class={["studio-surface-button", @editor_surface == :spec && "is-active"]}
+            aria-pressed={to_string(@editor_surface == :spec)}
             phx-click="set_editor_surface"
             phx-value-surface="spec"
           >
@@ -269,6 +274,8 @@
               id="squid-studio-flow"
               phx-hook="SquidStudioFlow"
               data-read-only={to_string(@read_only?)}
+              tabindex="0"
+              aria-label="Workflow canvas"
             >
               <svg class="studio-edge-layer" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -308,6 +315,11 @@
                   ]}
                   style={"left: #{node.x}px; top: #{node.y}px;"}
                   data-node-id={node.id}
+                  aria-label={
+                    node_accessible_label(node, Map.get(@node_validation_counts, node.id, 0))
+                  }
+                  aria-pressed={to_string(node.id == @selected_node_id)}
+                  aria-invalid={to_string(Map.get(@node_validation_counts, node.id, 0) > 0)}
                   phx-click="select_node"
                   phx-value-id={node.id}
                 >

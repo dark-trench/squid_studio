@@ -416,6 +416,19 @@ defmodule SquidStudio.Web.EditorLive do
   defp node_icon("output"), do: "hero-paper-airplane"
   defp node_icon(_type), do: "hero-bolt"
 
+  defp node_accessible_label(node, issue_count) do
+    type = node.type |> to_string() |> String.replace("_", " ")
+
+    suffix =
+      if issue_count > 0 do
+        ", #{issue_count} validation #{if(issue_count == 1, do: "issue", else: "issues")}"
+      else
+        ""
+      end
+
+    "#{node.label}, #{type} node#{suffix}"
+  end
+
   defp catalog_icon("built_in"), do: "built-in"
   defp catalog_icon(_provider), do: "step"
 

@@ -498,7 +498,7 @@ body:has(.studio-app) {
 
 .studio-canvas-column {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   background: var(--studio-canvas);

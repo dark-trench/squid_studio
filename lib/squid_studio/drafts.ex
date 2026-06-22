@@ -64,6 +64,19 @@ defmodule SquidStudio.Drafts do
 
   def from_workflows(_workflows), do: []
 
+  @spec spec_from_workflow(map()) :: map()
+  def spec_from_workflow(workflow) when is_map(workflow) do
+    workflow
+    |> workflow_to_draft()
+    |> normalize()
+    |> case do
+      {:ok, draft} -> Map.get(draft, "spec", %{})
+      {:error, _reason} -> %{}
+    end
+  end
+
+  def spec_from_workflow(_workflow), do: %{}
+
   defp workflow_to_draft(workflow) do
     workflow_id = value(workflow, :id, "workflow")
 
@@ -116,8 +129,44 @@ defmodule SquidStudio.Drafts do
       retries: [],
       entry_steps: if(is_nil(entry_step), do: [], else: [entry_step]),
       initial_step: entry_step,
-      entry_step: entry_step
+      entry_step: entry_step,
+      editor: editor_metadata(workflow)
     }
+  end
+
+  defp editor_metadata(workflow) do
+    nodes =
+      workflow
+      |> value(:nodes, [])
+      |> List.wrap()
+      |> Enum.reduce(%{}, fn node, acc ->
+        id = node |> value(:id, nil) |> to_string()
+        data = value(node, :data, %{})
+        position = value(node, :position, %{})
+
+        if id == "" do
+          acc
+        else
+          Map.put(
+            acc,
+            id,
+            compact(%{
+              label: value(data, :label, nil),
+              type: value(node, :type, nil),
+              x: value(position, :x, nil),
+              y: value(position, :y, nil)
+            })
+          )
+        end
+      end)
+
+    if nodes == %{}, do: %{}, else: %{nodes: nodes}
+  end
+
+  defp compact(map) do
+    map
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+    |> Map.new()
   end
 
   defp json_safe(%_struct{} = value, path), do: {:error, {:invalid_json_value, path, value}}

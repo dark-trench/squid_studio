@@ -5,6 +5,8 @@ defmodule SquidStudio.Web.EditorLive do
 
   alias Squidie.Workflow.EditorSpec
   alias SquidStudio.ConnectorCatalog
+  alias SquidStudio.Drafts
+  alias SquidStudio.EditorGraph
   alias SquidStudio.Web.Resolver
 
   @node_width 160
@@ -19,7 +21,6 @@ defmodule SquidStudio.Web.EditorLive do
       |> select_workflow(params["workflow_id"])
       |> normalize_workflow()
 
-    graph = build_graph(workflow.nodes, workflow.edges)
     drafts = List.wrap(socket.assigns[:drafts])
     selected_draft = List.first(drafts)
     connector_catalog = List.wrap(socket.assigns[:connector_catalog])
@@ -38,18 +39,19 @@ defmodule SquidStudio.Web.EditorLive do
         :persistence_message,
         persistence_message(socket.assigns[:draft_error], selected_draft)
       )
-      |> assign(:nodes, graph.nodes)
-      |> assign(:edges, graph.edges)
+      |> assign(:nodes, [])
+      |> assign(:edges, [])
       |> assign(:connector_catalog, connector_catalog)
       |> assign(:catalog_query, catalog_query)
       |> assign(:catalog_form, catalog_form(catalog_query))
       |> assign(:catalog_message, catalog_message(socket.assigns[:connector_catalog_error]))
       |> assign(:graph_centered?, false)
-      |> assign(:selected_node_id, graph.nodes |> List.first(%{}) |> Map.get(:id))
+      |> assign(:selected_node_id, nil)
       |> assign(:selected_edge_id, nil)
       |> assign(:theme, :system)
       |> assign(:validation_checked?, false)
       |> assign_catalog_groups()
+      |> assign_selected_graph()
       |> assign_spec_view()
       |> initialize_validation_feedback()
 
@@ -63,13 +65,28 @@ defmodule SquidStudio.Web.EditorLive do
 
   @impl true
   def handle_event("move_node", %{"id" => id, "x" => x, "y" => y}, socket) do
-    nodes =
-      Enum.map(socket.assigns.nodes, fn
-        %{id: ^id} = node -> %{node | x: parse_coordinate(x), y: parse_coordinate(y)}
-        node -> node
-      end)
+    x = parse_coordinate(x)
+    y = parse_coordinate(y)
 
-    {:noreply, assign(socket, nodes: nodes, edges: build_edges(socket.assigns.edges, nodes))}
+    socket =
+      case selected_draft(socket) do
+        nil ->
+          nodes =
+            Enum.map(socket.assigns.nodes, fn
+              %{id: ^id} = node -> %{node | x: x, y: y}
+              node -> node
+            end)
+
+          assign(socket, nodes: nodes, edges: build_edges(socket.assigns.edges, nodes))
+
+        _draft ->
+          socket
+          |> update_selected_draft_spec(&EditorGraph.update_node_position(&1, id, x, y))
+          |> assign_selected_graph()
+          |> assign_spec_view()
+      end
+
+    {:noreply, socket}
   end
 
   def handle_event("center_graph", %{"width" => width, "height" => height}, socket) do
@@ -174,6 +191,7 @@ defmodule SquidStudio.Web.EditorLive do
      |> assign(:selected_draft_id, id)
      |> assign(:draft_status, draft_status(nil, draft))
      |> assign(:persistence_message, persistence_message(nil, draft))
+     |> assign_selected_graph()
      |> assign_spec_view()
      |> initialize_validation_feedback()}
   end
@@ -200,15 +218,12 @@ defmodule SquidStudio.Web.EditorLive do
 
       true ->
         node = catalog_entry_to_node(connector, length(socket.assigns.nodes))
-        nodes = socket.assigns.nodes ++ [node]
 
         {:noreply,
          socket
-         |> assign(:nodes, nodes)
-         |> assign(:edges, build_edges(socket.assigns.edges, nodes))
-         |> assign(:selected_node_id, node.id)
+         |> update_selected_draft_spec(&EditorGraph.add_action_step(&1, node, connector))
+         |> assign_selected_graph(node.id)
          |> assign(:selected_edge_id, nil)
-         |> assign(:drafts, add_node_to_selected_draft(socket, node, connector))
          |> assign_spec_view()
          |> initialize_validation_feedback()
          |> assign(
@@ -284,15 +299,6 @@ defmodule SquidStudio.Web.EditorLive do
     end
   end
 
-  defp build_graph(nodes, edges) do
-    nodes = Enum.map(nodes, &normalize_node/1)
-
-    %{
-      nodes: nodes,
-      edges: edges |> Enum.map(&normalize_edge/1) |> build_edges(nodes)
-    }
-  end
-
   defp normalize_workflow(nil) do
     %{id: "empty", name: "Untitled workflow", nodes: [], edges: []}
   end
@@ -314,32 +320,6 @@ defmodule SquidStudio.Web.EditorLive do
 
   defp workflow_id(workflow) when is_map(workflow) do
     workflow |> value(:id, "workflow") |> to_string()
-  end
-
-  defp normalize_node(node) when is_map(node) do
-    data = Map.get(node, :data) || Map.get(node, "data") || %{}
-    position = Map.get(node, :position) || Map.get(node, "position") || %{}
-    id = node |> value(:id) |> to_string()
-
-    %{
-      id: id,
-      label: data |> value(:label, id) |> to_string(),
-      type: node |> value(:type, "step") |> to_string(),
-      icon: node |> value(:type, "step") |> to_string() |> node_icon(),
-      x: position |> value(:x, 0) |> parse_coordinate(),
-      y: position |> value(:y, 0) |> parse_coordinate()
-    }
-  end
-
-  defp normalize_edge(edge) when is_map(edge) do
-    source = edge |> value(:source) |> to_string()
-    target = edge |> value(:target) |> to_string()
-
-    %{
-      id: edge |> value(:id, "#{source}-#{target}") |> to_string(),
-      source: source,
-      target: target
-    }
   end
 
   defp center_nodes([], _width, _height), do: []
@@ -405,17 +385,6 @@ defmodule SquidStudio.Web.EditorLive do
 
   defp parse_coordinate(_value), do: 0
 
-  defp node_icon("trigger"), do: "hero-clock"
-  defp node_icon("retry"), do: "hero-arrow-path"
-  defp node_icon("failure"), do: "hero-exclamation-triangle"
-  defp node_icon("terminal"), do: "hero-check-circle"
-  defp node_icon("approval"), do: "hero-hand-raised"
-  defp node_icon("wait"), do: "hero-pause-circle"
-  defp node_icon("built_in"), do: "hero-cube"
-  defp node_icon("input"), do: "hero-arrow-down-tray"
-  defp node_icon("output"), do: "hero-paper-airplane"
-  defp node_icon(_type), do: "hero-bolt"
-
   defp node_accessible_label(node, issue_count) do
     type = node.type |> to_string() |> String.replace("_", " ")
 
@@ -468,42 +437,10 @@ defmodule SquidStudio.Web.EditorLive do
       id: "#{provider}-#{action_key}-#{index}",
       label: Map.fetch!(entry, "display_name"),
       type: "action",
-      icon: node_icon("action"),
+      icon: "hero-bolt",
       x: 80 + index * 24,
       y: 120 + index * 18
     }
-  end
-
-  defp add_node_to_selected_draft(socket, node, connector) do
-    Enum.map(socket.assigns.drafts, fn draft ->
-      if Map.get(draft, "id") == socket.assigns.selected_draft_id do
-        add_node_to_draft(draft, node, connector)
-      else
-        draft
-      end
-    end)
-  end
-
-  defp add_node_to_draft(draft, node, connector) do
-    spec = Map.get(draft, "spec", %{})
-    nodes = Map.get(spec, "nodes", [])
-
-    connector_node = %{
-      "id" => node.id,
-      "type" => "action",
-      "data" => %{
-        "label" => node.label,
-        "provider" => Map.get(connector, "provider"),
-        "action_key" => Map.get(connector, "action_key"),
-        "input_contract" => Map.get(connector, "input_contract"),
-        "output_contract" => Map.get(connector, "output_contract"),
-        "credential_requirements" => Map.get(connector, "credential_requirements")
-      }
-    }
-
-    draft
-    |> Map.put("spec", Map.put(spec, "nodes", nodes ++ [connector_node]))
-    |> Map.put("validation_errors", [])
   end
 
   defp assign_spec_view(socket) do
@@ -522,12 +459,7 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   defp current_spec(nil, workflow) do
-    %{
-      "workflow" => workflow.id,
-      "definition_version" => "published",
-      "nodes" => workflow.nodes,
-      "edges" => workflow.edges
-    }
+    Drafts.spec_from_workflow(workflow)
   end
 
   defp current_spec(draft, _workflow) do
@@ -684,6 +616,65 @@ defmodule SquidStudio.Web.EditorLive do
   defp selected_draft(socket) do
     Enum.find(socket.assigns.drafts, &(Map.get(&1, "id") == socket.assigns.selected_draft_id))
   end
+
+  defp update_selected_draft_spec(socket, updater) when is_function(updater, 1) do
+    case selected_draft(socket) do
+      nil ->
+        socket
+
+      draft ->
+        updated_draft =
+          draft
+          |> Map.put("spec", updater.(Map.get(draft, "spec", %{})))
+          |> Map.put("validation_errors", [])
+
+        refresh_saved_draft(socket, updated_draft)
+    end
+  end
+
+  defp assign_selected_graph(socket, selected_node_id \\ nil) do
+    graph = selected_graph(socket)
+    nodes = graph.nodes
+    edges = build_edges(graph.edges, nodes)
+
+    socket
+    |> assign(:nodes, nodes)
+    |> assign(:edges, edges)
+    |> assign(:selected_node_id, resolve_selected_node_id(socket, nodes, selected_node_id))
+    |> assign(:selected_edge_id, resolve_selected_edge_id(socket, edges))
+  end
+
+  defp selected_graph(socket) do
+    case selected_draft(socket) do
+      nil ->
+        EditorGraph.build_from_workflow(socket.assigns.workflow)
+
+      draft ->
+        EditorGraph.build_from_spec(Map.get(draft, "spec", %{}), socket.assigns.workflow)
+    end
+  end
+
+  defp resolve_selected_node_id(socket, nodes, selected_node_id) do
+    cond do
+      present_node?(nodes, selected_node_id) -> selected_node_id
+      present_node?(nodes, socket.assigns.selected_node_id) -> socket.assigns.selected_node_id
+      true -> nodes |> List.first(%{}) |> Map.get(:id)
+    end
+  end
+
+  defp resolve_selected_edge_id(socket, edges) do
+    if present_edge?(edges, socket.assigns.selected_edge_id) do
+      socket.assigns.selected_edge_id
+    else
+      nil
+    end
+  end
+
+  defp present_node?(nodes, node_id),
+    do: is_binary(node_id) and Enum.any?(nodes, &(&1.id == node_id))
+
+  defp present_edge?(edges, edge_id),
+    do: is_binary(edge_id) and Enum.any?(edges, &(&1.id == edge_id))
 
   defp refresh_saved_draft(socket, draft) when is_map(draft) do
     id = Map.get(draft, "id") || socket.assigns.selected_draft_id

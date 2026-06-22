@@ -129,7 +129,13 @@ defmodule SquidStudio.Test.HostResolver do
       retries: [],
       entry_steps: ["invoice_added"],
       initial_step: "invoice_added",
-      entry_step: "invoice_added"
+      entry_step: "invoice_added",
+      editor: %{
+        nodes: %{
+          invoice_added: %{label: "Invoice added", type: "trigger", x: 24, y: 96},
+          review_invoice: %{label: "Review invoice draft", type: "step", x: 332, y: 168}
+        }
+      }
     }
   end
 

@@ -77,7 +77,20 @@ defmodule SquidStudio.DraftsTest do
         %{
           id: "daily_digest",
           name: "Daily RSS To Discord",
-          nodes: [%{id: "daily_digest"}, %{id: "fetch_feed"}],
+          nodes: [
+            %{
+              id: "daily_digest",
+              type: "trigger",
+              position: %{x: 16, y: 48},
+              data: %{label: "Daily digest"}
+            },
+            %{
+              id: "fetch_feed",
+              type: "step",
+              position: %{x: 280, y: 128},
+              data: %{label: "Fetch feed"}
+            }
+          ],
           edges: [%{source: "daily_digest", target: "fetch_feed"}]
         }
       ]
@@ -102,7 +115,23 @@ defmodule SquidStudio.DraftsTest do
                    "retries" => [],
                    "entry_steps" => ["daily_digest"],
                    "initial_step" => "daily_digest",
-                   "entry_step" => "daily_digest"
+                   "entry_step" => "daily_digest",
+                   "editor" => %{
+                     "nodes" => %{
+                       "daily_digest" => %{
+                         "label" => "Daily digest",
+                         "type" => "trigger",
+                         "x" => 16,
+                         "y" => 48
+                       },
+                       "fetch_feed" => %{
+                         "label" => "Fetch feed",
+                         "type" => "step",
+                         "x" => 280,
+                         "y" => 128
+                       }
+                     }
+                   }
                  },
                  "metadata" => %{"source" => "resolver_workflow"}
                }

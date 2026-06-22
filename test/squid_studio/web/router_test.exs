@@ -171,6 +171,18 @@ defmodule SquidStudio.Web.RouterTest do
     refute html =~ "Live</span>"
   end
 
+  test "renders host draft graph positions and labels from editor specs", %{conn: conn} do
+    {:ok, _view, html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    assert html =~ ~s(id="studio-node-invoice_added")
+    assert html =~ "Invoice added"
+    assert html =~ "Review invoice draft"
+    assert html =~ "left: 24px; top: 96px;"
+    assert html =~ "left: 332px; top: 168px;"
+    refute html =~ "trigger :invoice_added"
+    refute html =~ "step :review_invoice"
+  end
+
   test "switches from the visual editor to a read-only spec view", %{conn: conn} do
     {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
 
@@ -216,9 +228,10 @@ defmodule SquidStudio.Web.RouterTest do
       view
       |> render_hook("add_catalog_node", %{"provider" => "slack", "action_key" => "post_message"})
 
-    assert html =~ "&quot;action_key&quot;: &quot;post_message&quot;"
+    assert html =~ "&quot;name&quot;: &quot;slack-post_message-2&quot;"
+    assert html =~ "&quot;action&quot;: &quot;post_message&quot;"
     assert html =~ "&quot;provider&quot;: &quot;slack&quot;"
-    assert html =~ "&quot;credential_requirements&quot;: ["
+    refute html =~ "&quot;nodes&quot;: ["
   end
 
   test "uses a full-width editor topbar above the workspace panels", %{conn: conn} do
@@ -284,11 +297,11 @@ defmodule SquidStudio.Web.RouterTest do
     assert invalid_html =~ ~s(data-validation-anchor-kind="node")
     assert invalid_html =~ ~s(data-validation-anchor-id="review_invoice")
     assert invalid_html =~ ~s(data-validation-anchor-kind="edge")
-    assert invalid_html =~ ~s(data-validation-anchor-id="invoice_added-review_invoice")
+    assert invalid_html =~ ~s(data-validation-anchor-id="invoice_added:pending:review_invoice")
 
     edge_html =
       view
-      |> element(~s(button[data-validation-anchor-id="invoice_added-review_invoice"]))
+      |> element(~s(button[data-validation-anchor-id="invoice_added:pending:review_invoice"]))
       |> render_click()
 
     assert edge_html =~ ~s(class="studio-edge studio-edge-invalid is-selected")
@@ -327,7 +340,7 @@ defmodule SquidStudio.Web.RouterTest do
     refute updated_html =~ ~s(class="studio-node-validation-badge")
     refute updated_html =~ ~s(class="studio-edge studio-edge-invalid")
     refute updated_html =~ ~s(data-validation-anchor-id="review_invoice")
-    refute updated_html =~ ~s(data-validation-anchor-id="invoice_added-review_invoice")
+    refute updated_html =~ ~s(data-validation-anchor-id="invoice_added:pending:review_invoice")
   end
 
   test "serves hashed studio assets", %{conn: conn} do
@@ -551,7 +564,7 @@ defmodule SquidStudio.Web.RouterTest do
       |> render_hook("move_node", %{"id" => "review_invoice", "x" => 320, "y" => 160})
 
     assert html =~ ~s(id="studio-node-review_invoice")
-    assert html =~ "left: 240px; top: 80px;"
+    assert html =~ "left: 332px; top: 168px;"
     assert html =~ "Read-only access cannot change drafts."
 
     html =

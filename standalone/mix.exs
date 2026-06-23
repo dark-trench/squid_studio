@@ -24,9 +24,11 @@ defmodule SquidStudioDash.MixProject do
       {:squid_studio, path: ".."},
       {:phoenix, "~> 1.8"},
       {:phoenix_html, "~> 4.0"},
-      {:phoenix_live_view, "~> 1.1"},
+      {:phoenix_live_view, "~> 1.2.3"},
       {:bandit, "~> 1.5"},
-      {:jason, "~> 1.2"}
+      {:jason, "~> 1.2"},
+      {:lazy_html, ">= 0.1.0", only: :test},
+      {:squidie, "~> 0.3.0"}
     ]
   end
 

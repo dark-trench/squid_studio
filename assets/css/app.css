@@ -264,7 +264,8 @@ body:has(.studio-app) {
 }
 
 .studio-component-list,
-.studio-draft-list {
+.studio-draft-list,
+.studio-workflow-list {
   display: grid;
   gap: 6px;
   margin-top: 12px;
@@ -289,6 +290,7 @@ body:has(.studio-app) {
 
 .studio-component,
 .studio-draft-item,
+.studio-workflow-item,
 .studio-button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -304,7 +306,8 @@ body:has(.studio-app) {
 }
 
 .studio-component,
-.studio-draft-item {
+.studio-draft-item,
+.studio-workflow-item {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -316,6 +319,8 @@ body:has(.studio-app) {
 .studio-component:hover,
 .studio-draft-item:hover,
 .studio-draft-item.is-active,
+.studio-workflow-item:hover,
+.studio-workflow-item.is-active,
 .studio-button:hover {
   border-color: var(--studio-accent);
   background: var(--studio-accent-soft);
@@ -323,6 +328,7 @@ body:has(.studio-app) {
 
 .studio-component:focus-visible,
 .studio-draft-item:focus-visible,
+.studio-workflow-item:focus-visible,
 .studio-button:focus-visible,
 .studio-icon-button:focus-visible,
 .studio-surface-button:focus-visible,
@@ -386,21 +392,25 @@ body:has(.studio-app) {
   line-height: 1.35;
 }
 
-.studio-draft-item {
+.studio-draft-item,
+.studio-workflow-item {
   width: 100%;
   border-color: var(--studio-border);
   background: var(--studio-surface);
   cursor: pointer;
 }
 
-.studio-draft-item > span:last-child {
+.studio-draft-item > span:last-child,
+.studio-workflow-item-body {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
 .studio-draft-item strong,
+.studio-workflow-item strong,
 .studio-draft-item small,
+.studio-workflow-item small,
 .studio-sidebar-footer small {
   min-width: 0;
   overflow: hidden;
@@ -413,15 +423,29 @@ body:has(.studio-app) {
   font-size: 13px;
 }
 
+.studio-workflow-item strong {
+  color: var(--studio-ink);
+  font-size: 13px;
+}
+
 .studio-draft-item small,
+.studio-workflow-item small,
 .studio-sidebar-footer small {
   color: var(--studio-muted);
   font-size: 11px;
   line-height: 1.35;
 }
 
-.studio-draft-item.is-active {
+.studio-draft-item.is-active,
+.studio-workflow-item.is-active {
   box-shadow: var(--studio-focus-shadow);
+}
+
+.studio-workflow-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .studio-section-title,

@@ -15,14 +15,12 @@ defmodule SquidStudio.Web.EditorLive do
 
   @impl true
   def mount(params, _session, socket) do
-    workflow =
+    workflows =
       socket.assigns.workflows
       |> List.wrap()
-      |> select_workflow(params["workflow_id"])
-      |> normalize_workflow()
+      |> Enum.map(&normalize_workflow/1)
 
-    drafts = List.wrap(socket.assigns[:drafts])
-    selected_draft = List.first(drafts)
+    draft_inventory = List.wrap(socket.assigns[:drafts])
     connector_catalog = List.wrap(socket.assigns[:connector_catalog])
     catalog_query = ""
 
@@ -31,14 +29,15 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:page_title, "Editor")
       |> assign(:read_only?, socket.assigns.access == :read_only)
       |> assign(:editor_surface, :visual)
-      |> assign(:workflow, workflow)
-      |> assign(:drafts, drafts)
-      |> assign(:selected_draft_id, draft_id(selected_draft))
-      |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
-      |> assign(
-        :persistence_message,
-        persistence_message(socket.assigns[:draft_error], selected_draft)
-      )
+      |> assign(:workflow_inventory, workflows)
+      |> assign(:workflow_items, [])
+      |> assign(:workflow, normalize_workflow(nil))
+      |> assign(:selected_workflow_id, nil)
+      |> assign(:draft_inventory, draft_inventory)
+      |> assign(:drafts, [])
+      |> assign(:selected_draft_id, nil)
+      |> assign(:draft_status, "No draft")
+      |> assign(:persistence_message, persistence_message(socket.assigns[:draft_error], nil))
       |> assign(:nodes, [])
       |> assign(:edges, [])
       |> assign(:connector_catalog, connector_catalog)
@@ -50,12 +49,15 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:selected_edge_id, nil)
       |> assign(:theme, :system)
       |> assign(:validation_checked?, false)
+      |> select_workflow_state(params["workflow_id"])
       |> assign_catalog_groups()
-      |> assign_selected_graph()
-      |> assign_spec_view()
-      |> initialize_validation_feedback()
 
     {:ok, socket}
+  end
+
+  @impl true
+  def handle_params(params, _url, socket) do
+    {:noreply, select_workflow_state(socket, params["workflow_id"])}
   end
 
   @impl true
@@ -321,6 +323,48 @@ defmodule SquidStudio.Web.EditorLive do
   defp workflow_id(workflow) when is_map(workflow) do
     workflow |> value(:id, "workflow") |> to_string()
   end
+
+  defp drafts_for_workflow(drafts, workflow_id) do
+    Enum.filter(drafts, &(Map.get(&1, "workflow") == workflow_id))
+  end
+
+  defp resolve_selected_draft_id(draft_inventory, workflow_id, selected_draft_id) do
+    if Enum.any?(draft_inventory, &(Map.get(&1, "id") == selected_draft_id)) do
+      selected_draft_id
+    else
+      draft_inventory
+      |> Enum.find(&(Map.get(&1, "workflow") == workflow_id))
+      |> draft_id()
+    end
+  end
+
+  defp workflow_sidebar_items(workflows, draft_inventory, read_only?) do
+    Enum.map(workflows, fn workflow ->
+      workflow_id = workflow.id
+      draft_count = drafts_for_workflow(draft_inventory, workflow_id) |> length()
+
+      %{
+        id: workflow_id,
+        name: workflow.name,
+        draft_count: draft_count,
+        badges: workflow_badges(draft_count, read_only?)
+      }
+    end)
+  end
+
+  defp workflow_badges(draft_count, read_only?) do
+    base_badges = if draft_count > 0, do: ["Draft spec"], else: ["Published"]
+
+    if read_only? do
+      base_badges ++ ["Read-only"]
+    else
+      base_badges
+    end
+  end
+
+  defp workflow_badge_class("Published"), do: "success"
+  defp workflow_badge_class("Read-only"), do: "neutral"
+  defp workflow_badge_class(_badge), do: "warn"
 
   defp center_nodes([], _width, _height), do: []
 
@@ -617,6 +661,46 @@ defmodule SquidStudio.Web.EditorLive do
     Enum.find(socket.assigns.drafts, &(Map.get(&1, "id") == socket.assigns.selected_draft_id))
   end
 
+  defp select_workflow_state(socket, workflow_id, selected_draft_id \\ nil) do
+    workflow =
+      socket.assigns.workflow_inventory
+      |> select_workflow(workflow_id)
+      |> normalize_workflow()
+
+    selected_draft_id =
+      resolve_selected_draft_id(
+        socket.assigns.draft_inventory,
+        workflow.id,
+        selected_draft_id
+      )
+
+    selected_draft =
+      Enum.find(socket.assigns.draft_inventory, &(Map.get(&1, "id") == selected_draft_id))
+
+    socket
+    |> assign(:workflow, workflow)
+    |> assign(:selected_workflow_id, workflow.id)
+    |> assign(
+      :workflow_items,
+      workflow_sidebar_items(
+        socket.assigns.workflow_inventory,
+        socket.assigns.draft_inventory,
+        socket.assigns.read_only?
+      )
+    )
+    |> assign(:drafts, socket.assigns.draft_inventory)
+    |> assign(:selected_draft_id, selected_draft_id)
+    |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
+    |> assign(
+      :persistence_message,
+      persistence_message(socket.assigns[:draft_error], selected_draft)
+    )
+    |> assign(:graph_centered?, false)
+    |> assign_selected_graph()
+    |> assign_spec_view()
+    |> initialize_validation_feedback()
+  end
+
   defp update_selected_draft_spec(socket, updater) when is_function(updater, 1) do
     case selected_draft(socket) do
       nil ->
@@ -678,14 +762,26 @@ defmodule SquidStudio.Web.EditorLive do
 
   defp refresh_saved_draft(socket, draft) when is_map(draft) do
     id = Map.get(draft, "id") || socket.assigns.selected_draft_id
-    drafts = Enum.map(socket.assigns.drafts, &if(Map.get(&1, "id") == id, do: draft, else: &1))
+    workflow_id = Map.get(draft, "workflow") || socket.assigns.selected_workflow_id
 
     socket
-    |> assign(:drafts, drafts)
-    |> assign(:selected_draft_id, id)
+    |> assign(:draft_inventory, upsert_draft(socket.assigns.draft_inventory, id, draft))
+    |> select_workflow_state(workflow_id, id)
   end
 
   defp refresh_saved_draft(socket, _draft), do: socket
+
+  defp upsert_draft(draft_inventory, id, draft) do
+    if Enum.any?(draft_inventory, &(Map.get(&1, "id") == id)) do
+      Enum.map(draft_inventory, &replace_draft(&1, id, draft))
+    else
+      draft_inventory ++ [draft]
+    end
+  end
+
+  defp replace_draft(existing, id, draft) do
+    if Map.get(existing, "id") == id, do: draft, else: existing
+  end
 
   defp draft_id(nil), do: nil
   defp draft_id(draft), do: Map.get(draft, "id")

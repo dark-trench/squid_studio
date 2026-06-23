@@ -171,6 +171,39 @@ defmodule SquidStudio.Web.RouterTest do
     refute html =~ "Live</span>"
   end
 
+  test "keeps the selected workflow, draft, and canvas graph aligned", %{conn: conn} do
+    {:ok, _view, html} = live(conn, "/studio/workflows/approval_saga")
+
+    assert html =~ "Approval Saga With Compensation"
+    assert html =~ ~s(id="studio-workflow-approval_saga")
+    assert html =~ ~s(id="studio-node-start_request")
+    assert html =~ ~s(id="studio-node-manager_vote")
+
+    assert html =~
+             ~r/id="studio-workflow-approval_saga"[\s\S]*class="studio-workflow-item is-active"/
+
+    assert html =~
+             ~r/id="studio-draft-item-approval_saga"[\s\S]*class="studio-draft-item is-active"/
+
+    refute html =~ ~s(id="studio-node-daily_digest")
+  end
+
+  test "switches workflows from the editor sidebar", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/studio/workflows/daily_digest")
+
+    assert html =~ "Daily RSS To Discord"
+    assert html =~ ~s(id="studio-node-daily_digest")
+
+    html =
+      view
+      |> element("#studio-workflow-approval_saga")
+      |> render_click()
+
+    assert html =~ "Approval Saga With Compensation"
+    assert html =~ ~s(id="studio-node-start_request")
+    refute html =~ ~s(id="studio-node-daily_digest")
+  end
+
   test "renders host draft graph positions and labels from editor specs", %{conn: conn} do
     {:ok, _view, html} = live(conn, "/host-studio/workflows/invoice_review")
 

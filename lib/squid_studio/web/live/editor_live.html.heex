@@ -77,12 +77,51 @@
       <aside class="studio-sidebar">
         <div class="studio-sidebar-section">
           <div class="studio-section-title">
+            <div>
+              <p class="studio-kicker">Workflow browser</p>
+              <strong>Host workflows</strong>
+            </div>
+            <span>{length(@workflow_items)}</span>
+          </div>
+          <div class="studio-workflow-list">
+            <.link
+              :for={workflow <- @workflow_items}
+              id={"studio-workflow-#{workflow.id}"}
+              patch={studio_path(["workflows", workflow.id])}
+              class={[
+                "studio-workflow-item",
+                workflow.id == @selected_workflow_id && "is-active"
+              ]}
+            >
+              <span class="studio-component-icon built-in">
+                <.icon name="hero-square-3-stack-3d" />
+              </span>
+              <span class="studio-workflow-item-body">
+                <strong>{workflow.name}</strong>
+                <small>{workflow.id}</small>
+                <span class="studio-workflow-item-meta">
+                  <span
+                    :for={badge <- workflow.badges}
+                    class={["studio-badge", workflow_badge_class(badge)]}
+                  >
+                    {badge}
+                  </span>
+                </span>
+              </span>
+            </.link>
+            <p :if={@workflow_items == []} class="studio-muted">No host workflows exposed.</p>
+          </div>
+        </div>
+
+        <div class="studio-sidebar-section">
+          <div class="studio-section-title">
             <p class="studio-kicker">Workflow drafts</p>
             <span>{length(@drafts)}</span>
           </div>
           <div class="studio-draft-list">
             <button
               :for={draft <- @drafts}
+              id={"studio-draft-item-#{Map.get(draft, "id")}"}
               type="button"
               class={[
                 "studio-draft-item",

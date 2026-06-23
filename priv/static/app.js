@@ -8905,6 +8905,7 @@ removing illegal node: "${("outerHTML" in childNode && childNode.outerHTML || ch
   var SquidStudioFlow = {
     mounted() {
       this.drag = null;
+      this.dropMimeType = "application/x-squid-studio-node";
       window.requestAnimationFrame(() => this.centerGraph());
       this.el.addEventListener("pointerdown", (event) => {
         if (this.isReadOnly()) {
@@ -8943,6 +8944,26 @@ removing illegal node: "${("outerHTML" in childNode && childNode.outerHTML || ch
         }
         this.drag = null;
       });
+      this.el.addEventListener("dragover", (event) => {
+        if (!this.canDrop(event)) {
+          return;
+        }
+        event.preventDefault();
+      });
+      this.el.addEventListener("drop", (event) => {
+        const payload = this.catalogPayload(event);
+        if (!payload || this.isReadOnly()) {
+          return;
+        }
+        const rect = this.el.getBoundingClientRect();
+        event.preventDefault();
+        this.pushEvent("drop_catalog_node", {
+          provider: payload.provider,
+          action_key: payload.actionKey,
+          x: Math.round(event.clientX - rect.left),
+          y: Math.round(event.clientY - rect.top)
+        });
+      });
     },
     centerGraph() {
       const rect = this.el.getBoundingClientRect();
@@ -8957,6 +8978,36 @@ removing illegal node: "${("outerHTML" in childNode && childNode.outerHTML || ch
     },
     isReadOnly() {
       return this.el.dataset.readOnly === "true";
+    },
+    canDrop(event) {
+      return this.catalogPayload(event) !== null;
+    },
+    catalogPayload(event) {
+      const raw = event.dataTransfer?.getData(this.dropMimeType);
+      if (!raw) {
+        return null;
+      }
+      try {
+        return JSON.parse(raw);
+      } catch (_error) {
+        return null;
+      }
+    }
+  };
+  var SquidStudioPalette = {
+    mounted() {
+      this.dropMimeType = "application/x-squid-studio-node";
+      this.el.addEventListener("dragstart", (event) => {
+        const entry = event.target.closest("[data-catalog-action-key][draggable='true']");
+        if (!entry || !(entry instanceof HTMLElement) || !event.dataTransfer) {
+          return;
+        }
+        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData(this.dropMimeType, JSON.stringify({
+          provider: entry.dataset.catalogProvider,
+          actionKey: entry.dataset.catalogActionKey
+        }));
+      });
     }
   };
 
@@ -9001,7 +9052,7 @@ removing illegal node: "${("outerHTML" in childNode && childNode.outerHTML || ch
     transport: liveTransport === "longpoll" ? LongPoll : WebSocket,
     longPollFallbackMs: 2500,
     params: { _csrf_token: csrfToken },
-    hooks: { SquidStudioFlow, SquidStudioTheme }
+    hooks: { SquidStudioFlow, SquidStudioPalette, SquidStudioTheme }
   });
   document.addEventListener("click", (event) => {
     if (!(event.target instanceof Element)) return;

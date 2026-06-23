@@ -451,6 +451,8 @@ defmodule SquidStudio.Web.RouterTest do
     assert js.resp_body =~ ~s(themeStorageKey = "squid-studio-theme")
     assert js.resp_body =~ "SquidStudioTheme"
     assert js.resp_body =~ "[data-studio-theme]"
+    assert js.resp_body =~ "drop_catalog_node"
+    assert js.resp_body =~ "dataTransfer"
 
     refute css.resp_body =~ "--studio-accent: #6d28d9;"
 
@@ -674,6 +676,23 @@ defmodule SquidStudio.Web.RouterTest do
     assert second_html =~ ~s(id="studio-node-slack-post_message-3")
   end
 
+  test "drops a catalog node onto the canvas at the reported coordinates", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    html =
+      view
+      |> render_hook("drop_catalog_node", %{
+        "provider" => "slack",
+        "action_key" => "post_message",
+        "x" => 420,
+        "y" => 260
+      })
+
+    assert html =~ ~s(id="studio-node-slack-post_message-2")
+    assert html =~ "left: 420px; top: 260px;"
+    assert html =~ "Post message added to the draft."
+  end
+
   test "filters catalog entries by query across provider, description, and tags", %{conn: conn} do
     {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
 
@@ -719,5 +738,21 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(id="studio-node-fetch_feed")
     assert html =~ "left: 280px; top: 192px;"
     assert html =~ "M 200 230 C 280 230, 200 230, 280 230"
+  end
+
+  test "rejects dropped catalog nodes in read-only mode", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/read-only-studio/workflows/invoice_review")
+
+    html =
+      view
+      |> render_hook("drop_catalog_node", %{
+        "provider" => "slack",
+        "action_key" => "post_message",
+        "x" => 420,
+        "y" => 260
+      })
+
+    refute html =~ ~s(id="studio-node-slack-post_message-2")
+    assert html =~ "Read-only access cannot change drafts."
   end
 end

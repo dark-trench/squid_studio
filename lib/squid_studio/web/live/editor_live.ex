@@ -203,36 +203,15 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   def handle_event("add_catalog_node", %{"action_key" => action_key} = params, socket) do
-    connector =
-      find_catalog_entry(socket.assigns.connector_catalog, params["provider"], action_key)
+    {:noreply, insert_catalog_node(socket, params["provider"], action_key, params)}
+  end
 
-    cond do
-      is_nil(connector) ->
-        {:noreply, assign(socket, :catalog_message, "Connector unavailable.")}
+  def handle_event("drop_catalog_node", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
+  end
 
-      not catalog_entry_available?(connector) ->
-        {:noreply,
-         assign(
-           socket,
-           :catalog_message,
-           "Connector unavailable: #{catalog_disabled_reason(connector)}"
-         )}
-
-      true ->
-        node = catalog_entry_to_node(connector, length(socket.assigns.nodes))
-
-        {:noreply,
-         socket
-         |> update_selected_draft_spec(&EditorGraph.add_action_step(&1, node, connector))
-         |> assign_selected_graph(node.id)
-         |> assign(:selected_edge_id, nil)
-         |> assign_spec_view()
-         |> initialize_validation_feedback()
-         |> assign(
-           :catalog_message,
-           "#{Map.fetch!(connector, "display_name")} added to the draft."
-         )}
-    end
+  def handle_event("drop_catalog_node", %{"action_key" => action_key} = params, socket) do
+    {:noreply, insert_catalog_node(socket, params["provider"], action_key, params)}
   end
 
   def handle_event("save_draft", _params, %{assigns: %{read_only?: true}} = socket) do
@@ -473,18 +452,50 @@ defmodule SquidStudio.Web.EditorLive do
     end)
   end
 
-  defp catalog_entry_to_node(entry, index) do
+  defp catalog_entry_to_node(entry, index, params) do
     provider = Map.fetch!(entry, "provider")
     action_key = Map.fetch!(entry, "action_key")
+    x = Map.get(params, "x", 80 + index * 24) |> parse_coordinate()
+    y = Map.get(params, "y", 120 + index * 18) |> parse_coordinate()
 
     %{
       id: "#{provider}-#{action_key}-#{index}",
       label: Map.fetch!(entry, "display_name"),
       type: "action",
       icon: "hero-bolt",
-      x: 80 + index * 24,
-      y: 120 + index * 18
+      x: x,
+      y: y
     }
+  end
+
+  defp insert_catalog_node(socket, provider, action_key, params) do
+    connector = find_catalog_entry(socket.assigns.connector_catalog, provider, action_key)
+
+    cond do
+      is_nil(connector) ->
+        assign(socket, :catalog_message, "Connector unavailable.")
+
+      not catalog_entry_available?(connector) ->
+        assign(
+          socket,
+          :catalog_message,
+          "Connector unavailable: #{catalog_disabled_reason(connector)}"
+        )
+
+      true ->
+        node = catalog_entry_to_node(connector, length(socket.assigns.nodes), params)
+
+        socket
+        |> update_selected_draft_spec(&EditorGraph.add_action_step(&1, node, connector))
+        |> assign_selected_graph(node.id)
+        |> assign(:selected_edge_id, nil)
+        |> assign_spec_view()
+        |> initialize_validation_feedback()
+        |> assign(
+          :catalog_message,
+          "#{Map.fetch!(connector, "display_name")} added to the draft."
+        )
+    end
   end
 
   defp assign_spec_view(socket) do

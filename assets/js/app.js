@@ -23,7 +23,7 @@ import "phoenix_html"
 import {Socket, LongPoll} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
-import {SquidStudioFlow} from "./hooks/squid_studio_flow"
+import {SquidStudioFlow, SquidStudioPalette} from "./hooks/squid_studio_flow"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveTransport = document.querySelector("meta[name='live-transport']")?.getAttribute("content") || "websocket"
@@ -73,7 +73,7 @@ const liveSocket = new LiveSocket(livePath, Socket, {
   transport: liveTransport === "longpoll" ? LongPoll : WebSocket,
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {SquidStudioFlow, SquidStudioTheme},
+  hooks: {SquidStudioFlow, SquidStudioPalette, SquidStudioTheme},
 })
 
 document.addEventListener("click", event => {

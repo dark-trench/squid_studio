@@ -319,6 +319,40 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-edge studio-edge-invalid")
   end
 
+  test "rejects hidden catalog actions during draft validation and publish", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    assert html =~ "Invoice Review"
+
+    html =
+      view
+      |> element(~s(button[phx-value-id="restricted_issue_flow"]))
+      |> render_click()
+
+    assert html =~ "Restricted Issue Flow"
+    assert html =~ "Open restricted issue"
+
+    html =
+      view
+      |> element(~s(button[phx-click="validate_draft"]))
+      |> render_click()
+
+    assert html =~ "Validation issues"
+    assert html =~ "action create_issue is not available for this user"
+    assert html =~ "steps.1.action"
+    assert html =~ ~s(data-validation-anchor-id="open_issue")
+    assert html =~ ~s(class="studio-node is-selected is-invalid")
+
+    html =
+      view
+      |> element(~s(button[phx-click="publish_draft"]))
+      |> render_click()
+
+    assert html =~ "Publish blocked until validation issues are resolved."
+    refute html =~ "Host published a runnable Squidie workflow version."
+    assert html =~ "action create_issue is not available for this user"
+  end
+
   test "focuses invalid graph elements from validation output", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
 

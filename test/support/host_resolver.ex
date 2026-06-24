@@ -42,7 +42,8 @@ defmodule SquidStudio.Test.HostResolver do
           }
         ],
         spec: invalid_carrier_onboarding_spec()
-      )
+      ),
+      draft("restricted_issue_flow", "Restricted Issue Flow", spec: restricted_issue_flow_spec())
     ]
   end
 
@@ -157,6 +158,32 @@ defmodule SquidStudio.Test.HostResolver do
       entry_steps: ["invoice_added"],
       initial_step: "invoice_added",
       entry_step: "invoice_added"
+    }
+  end
+
+  defp restricted_issue_flow_spec do
+    %{
+      workflow: "restricted_issue_flow",
+      definition_version: "draft",
+      triggers: [],
+      payload: [],
+      steps: [
+        %{name: "invoice_added", opts: []},
+        %{name: "open_issue", action: "create_issue", opts: %{title: "Escalate invoice review"}}
+      ],
+      transitions: [
+        %{from: "invoice_added", on: "ok", to: "open_issue"}
+      ],
+      retries: [],
+      entry_steps: ["invoice_added"],
+      initial_step: "invoice_added",
+      entry_step: "invoice_added",
+      editor: %{
+        nodes: %{
+          invoice_added: %{label: "Invoice added", type: "trigger", x: 24, y: 96},
+          open_issue: %{label: "Open restricted issue", type: "action", x: 332, y: 168}
+        }
+      }
     }
   end
 

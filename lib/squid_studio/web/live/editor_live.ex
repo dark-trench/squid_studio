@@ -4,6 +4,7 @@ defmodule SquidStudio.Web.EditorLive do
   use SquidStudio.Web, :live_view
 
   alias Squidie.Workflow.EditorSpec
+  alias SquidStudio.ActionRegistryValidation
   alias SquidStudio.ConnectorCatalog
   alias SquidStudio.Drafts
   alias SquidStudio.EditorGraph
@@ -164,22 +165,22 @@ defmodule SquidStudio.Web.EditorLive do
 
       draft ->
         spec = current_spec(draft, socket.assigns.workflow)
+        errors = validate_draft_spec(spec, socket.assigns.connector_catalog)
 
-        case EditorSpec.validate_map(spec) do
-          :ok ->
+        case errors do
+          [] ->
             {:noreply,
              socket
              |> refresh_saved_draft(Map.put(draft, "validation_errors", []))
              |> assign_spec_view()
              |> assign_validation_result(:ok)}
 
-          {:error, {:invalid_workflow_editor_spec, errors}} ->
+          _errors ->
             {:noreply,
              socket
-             |> refresh_saved_draft(
-               Map.put(draft, "validation_errors", draft_validation_errors(errors))
-             )
+             |> refresh_saved_draft(Map.put(draft, "validation_errors", errors))
              |> assign_spec_view()
+             |> focus_first_validation_anchor()
              |> assign_validation_result({:error, errors})}
         end
     end
@@ -254,29 +255,46 @@ defmodule SquidStudio.Web.EditorLive do
 
   def handle_event("publish_draft", _params, socket) do
     draft = selected_draft(socket)
+    spec = current_spec(draft, socket.assigns.workflow)
+    registry_errors = ActionRegistryValidation.validate(spec, socket.assigns.connector_catalog)
 
-    case draft &&
-           Resolver.call_with_fallback(socket.assigns.resolver, :publish_draft, [
-             socket.assigns.user,
-             Map.get(draft, "id")
-           ]) do
-      {:ok, _version} ->
-        {:noreply,
-         socket
-         |> assign(:draft_status, "Published")
-         |> assign(:persistence_message, "Host published a runnable Squidie workflow version.")}
-
-      {:error, reason} ->
-        {:noreply,
-         socket
-         |> assign(:draft_status, "Draft spec")
-         |> assign(:persistence_message, publish_error_message(reason))}
-
-      nil ->
+    cond do
+      is_nil(draft) ->
         {:noreply,
          socket
          |> assign(:draft_status, "No draft")
          |> assign(:persistence_message, "No draft spec is selected.")}
+
+      registry_errors != [] ->
+        {:noreply,
+         socket
+         |> refresh_saved_draft(Map.put(draft, "validation_errors", registry_errors))
+         |> assign_spec_view()
+         |> focus_first_validation_anchor()
+         |> assign_validation_result({:error, registry_errors})
+         |> assign(:draft_status, "Draft spec")
+         |> assign(:persistence_message, "Publish blocked until validation issues are resolved.")}
+
+      true ->
+        case Resolver.call_with_fallback(socket.assigns.resolver, :publish_draft, [
+               socket.assigns.user,
+               Map.get(draft, "id")
+             ]) do
+          {:ok, _version} ->
+            {:noreply,
+             socket
+             |> assign(:draft_status, "Published")
+             |> assign(
+               :persistence_message,
+               "Host published a runnable Squidie workflow version."
+             )}
+
+          {:error, reason} ->
+            {:noreply,
+             socket
+             |> assign(:draft_status, "Draft spec")
+             |> assign(:persistence_message, publish_error_message(reason))}
+        end
     end
   end
 
@@ -644,6 +662,32 @@ defmodule SquidStudio.Web.EditorLive do
     count = length(errors)
     noun = if count == 1, do: "issue", else: "issues"
     "#{count} validation #{noun} found."
+  end
+
+  defp validate_draft_spec(spec, connector_catalog) do
+    editor_errors =
+      case EditorSpec.validate_map(spec) do
+        :ok -> []
+        {:error, {:invalid_workflow_editor_spec, errors}} -> draft_validation_errors(errors)
+      end
+
+    editor_errors ++ ActionRegistryValidation.validate(spec, connector_catalog)
+  end
+
+  defp focus_first_validation_anchor(socket) do
+    case Enum.find(socket.assigns.spec_validation_errors, &Map.has_key?(&1, :anchor)) do
+      %{anchor: %{kind: "node", id: id}} ->
+        socket
+        |> assign(:selected_node_id, id)
+        |> assign(:selected_edge_id, nil)
+
+      %{anchor: %{kind: "edge", id: id}} ->
+        socket
+        |> assign(:selected_edge_id, id)
+
+      _other ->
+        socket
+    end
   end
 
   defp validation_badge_class("Valid draft"), do: "success"

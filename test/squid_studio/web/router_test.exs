@@ -710,6 +710,38 @@ defmodule SquidStudio.Web.RouterTest do
     assert second_html =~ ~s(id="studio-node-slack-post_message-3")
   end
 
+  test "renders structured properties for the selected action node", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    html =
+      view
+      |> render_hook("add_catalog_node", %{"action_key" => "post_message"})
+
+    assert html =~ "Post message"
+    assert html =~ "Action key"
+    assert html =~ "post_message"
+    assert html =~ "Provider"
+    assert html =~ "slack"
+    assert html =~ "Credential requirements"
+    assert html =~ "Slack bot token"
+    assert html =~ "Input contract"
+    assert html =~ "channel"
+    assert html =~ "text"
+    assert html =~ "Output contract"
+    assert html =~ "message_id"
+
+    html =
+      view
+      |> element("#studio-node-review_invoice")
+      |> render_click()
+
+    assert html =~ "Review invoice draft"
+    assert html =~ "Step name"
+    assert html =~ "review_invoice"
+    refute html =~ "<p class=\"studio-kicker\">Credential requirements</p>"
+    refute html =~ "<span>Action key</span>"
+  end
+
   test "drops a catalog node onto the canvas at the reported coordinates", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
 

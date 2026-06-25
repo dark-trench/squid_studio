@@ -424,6 +424,8 @@
         <% else %>
           <% selected = Enum.find(@nodes, &(&1.id == @selected_node_id)) %>
           <%= if selected do %>
+            <% step = @selected_step %>
+            <% metadata = value(step || %{}, :metadata, %{}) %>
             <div class="studio-inspector-title">
               <span class="studio-node-icon"><.icon name={selected.icon} /></span>
               <span>{selected.label}</span>
@@ -439,6 +441,85 @@
             <div class="studio-inspector-row">
               <span>Y</span>
               <strong>{selected.y}</strong>
+            </div>
+
+            <div :if={step} class="studio-properties-section">
+              <p class="studio-kicker">Step</p>
+              <div class="studio-inspector-row">
+                <span>Step name</span>
+                <strong>{value(step, :name)}</strong>
+              </div>
+              <div :if={value(step, :action)} class="studio-inspector-row">
+                <span>Action key</span>
+                <strong>{value(step, :action)}</strong>
+              </div>
+              <div :if={value(metadata, :provider)} class="studio-inspector-row">
+                <span>Provider</span>
+                <strong>{value(metadata, :provider)}</strong>
+              </div>
+            </div>
+
+            <div
+              :if={credential_labels(value(metadata, :credential_requirements, [])) != []}
+              class="studio-properties-section"
+            >
+              <p class="studio-kicker">Credential requirements</p>
+              <div class="studio-connection-list">
+                <div
+                  :for={label <- credential_labels(value(metadata, :credential_requirements, []))}
+                  class="studio-connection"
+                >
+                  <span>{label}</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              :if={contract_entries(value(metadata, :input_contract, %{})) != []}
+              class="studio-properties-section"
+            >
+              <p class="studio-kicker">Input contract</p>
+              <div class="studio-connection-list">
+                <div
+                  :for={{field, type} <- contract_entries(value(metadata, :input_contract, %{}))}
+                  class="studio-connection"
+                >
+                  <span>{field}</span>
+                  <strong>{type}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div
+              :if={contract_entries(value(metadata, :output_contract, %{})) != []}
+              class="studio-properties-section"
+            >
+              <p class="studio-kicker">Output contract</p>
+              <div class="studio-connection-list">
+                <div
+                  :for={{field, type} <- contract_entries(value(metadata, :output_contract, %{}))}
+                  class="studio-connection"
+                >
+                  <span>{field}</span>
+                  <strong>{type}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div
+              :if={option_entries(value(step || %{}, :opts, %{})) != []}
+              class="studio-properties-section"
+            >
+              <p class="studio-kicker">Options</p>
+              <div class="studio-connection-list">
+                <div
+                  :for={{key, option_value} <- option_entries(value(step, :opts, %{}))}
+                  class="studio-connection"
+                >
+                  <span>{key}</span>
+                  <strong>{option_value}</strong>
+                </div>
+              </div>
             </div>
 
             <div class="studio-properties-section">

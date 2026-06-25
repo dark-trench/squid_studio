@@ -48,6 +48,7 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:graph_centered?, false)
       |> assign(:selected_node_id, nil)
       |> assign(:selected_edge_id, nil)
+      |> assign(:selected_step, nil)
       |> assign(:theme, :system)
       |> assign(:validation_checked?, false)
       |> select_workflow_state(params["workflow_id"])
@@ -110,7 +111,7 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   def handle_event("select_node", %{"id" => id}, socket) do
-    {:noreply, socket |> assign(:selected_node_id, id) |> assign(:selected_edge_id, nil)}
+    {:noreply, select_node(socket, id)}
   end
 
   def handle_event("set_theme", %{"theme" => theme}, socket) do
@@ -125,8 +126,7 @@ defmodule SquidStudio.Web.EditorLive do
     {:noreply,
      socket
      |> assign(:editor_surface, :visual)
-     |> assign(:selected_node_id, id)
-     |> assign(:selected_edge_id, nil)}
+     |> select_node(id)}
   end
 
   def handle_event(
@@ -137,7 +137,7 @@ defmodule SquidStudio.Web.EditorLive do
     {:noreply,
      socket
      |> assign(:editor_surface, :visual)
-     |> assign(:selected_edge_id, id)}
+     |> select_edge(id)}
   end
 
   def handle_event("set_editor_surface", %{"surface" => surface}, socket) do
@@ -775,12 +775,15 @@ defmodule SquidStudio.Web.EditorLive do
     graph = selected_graph(socket)
     nodes = graph.nodes
     edges = build_edges(graph.edges, nodes)
+    selected_node_id = resolve_selected_node_id(socket, nodes, selected_node_id)
+    selected_edge_id = resolve_selected_edge_id(socket, edges)
 
     socket
     |> assign(:nodes, nodes)
     |> assign(:edges, edges)
-    |> assign(:selected_node_id, resolve_selected_node_id(socket, nodes, selected_node_id))
-    |> assign(:selected_edge_id, resolve_selected_edge_id(socket, edges))
+    |> assign(:selected_node_id, selected_node_id)
+    |> assign(:selected_edge_id, selected_edge_id)
+    |> assign(:selected_step, selected_step(socket, selected_node_id))
   end
 
   defp selected_graph(socket) do
@@ -814,6 +817,57 @@ defmodule SquidStudio.Web.EditorLive do
 
   defp present_edge?(edges, edge_id),
     do: is_binary(edge_id) and Enum.any?(edges, &(&1.id == edge_id))
+
+  defp selected_step(socket, node_id) when is_binary(node_id) do
+    socket
+    |> selected_step_spec()
+    |> Map.get("steps", [])
+    |> List.wrap()
+    |> Enum.find(&(value(&1, :name) == node_id))
+  end
+
+  defp selected_step(_socket, _node_id), do: nil
+
+  defp selected_step_spec(socket) do
+    current_spec(selected_draft(socket), socket.assigns.workflow)
+  end
+
+  defp contract_entries(map) when is_map(map) do
+    map
+    |> Enum.map(fn {key, value} -> {to_string(key), to_string(value)} end)
+    |> Enum.sort_by(&elem(&1, 0))
+  end
+
+  defp contract_entries(_value), do: []
+
+  defp credential_labels(requirements) when is_list(requirements) do
+    requirements
+    |> Enum.map(&value(&1, :label))
+    |> Enum.filter(&is_binary/1)
+  end
+
+  defp credential_labels(_requirements), do: []
+
+  defp option_entries(map) when is_map(map) do
+    map
+    |> Enum.map(fn {key, value} -> {to_string(key), inspect(value)} end)
+    |> Enum.sort_by(&elem(&1, 0))
+  end
+
+  defp option_entries(_value), do: []
+
+  defp select_node(socket, node_id) do
+    socket
+    |> assign(:selected_node_id, node_id)
+    |> assign(:selected_edge_id, nil)
+    |> assign(:selected_step, selected_step(socket, node_id))
+  end
+
+  defp select_edge(socket, edge_id) do
+    socket
+    |> assign(:selected_edge_id, edge_id)
+    |> assign(:selected_step, nil)
+  end
 
   defp refresh_saved_draft(socket, draft) when is_map(draft) do
     id = Map.get(draft, "id") || socket.assigns.selected_draft_id

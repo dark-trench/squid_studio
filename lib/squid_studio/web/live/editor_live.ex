@@ -171,14 +171,20 @@ defmodule SquidStudio.Web.EditorLive do
           [] ->
             {:noreply,
              socket
-             |> refresh_saved_draft(Map.put(draft, "validation_errors", []))
+             |> refresh_saved_draft(
+               Map.put(draft, "validation_errors", []),
+               preserve_graph?: true
+             )
              |> assign_spec_view()
              |> assign_validation_result(:ok)}
 
           _errors ->
             {:noreply,
              socket
-             |> refresh_saved_draft(Map.put(draft, "validation_errors", errors))
+             |> refresh_saved_draft(
+               Map.put(draft, "validation_errors", errors),
+               preserve_graph?: true
+             )
              |> assign_spec_view()
              |> focus_first_validation_anchor()
              |> assign_validation_result({:error, errors})}
@@ -268,7 +274,10 @@ defmodule SquidStudio.Web.EditorLive do
       registry_errors != [] ->
         {:noreply,
          socket
-         |> refresh_saved_draft(Map.put(draft, "validation_errors", registry_errors))
+         |> refresh_saved_draft(
+           Map.put(draft, "validation_errors", registry_errors),
+           preserve_graph?: true
+         )
          |> assign_spec_view()
          |> focus_first_validation_anchor()
          |> assign_validation_result({:error, registry_errors})
@@ -869,16 +878,46 @@ defmodule SquidStudio.Web.EditorLive do
     |> assign(:selected_step, nil)
   end
 
-  defp refresh_saved_draft(socket, draft) when is_map(draft) do
+  defp refresh_saved_draft(socket, draft, opts \\ [])
+
+  defp refresh_saved_draft(socket, draft, opts) when is_map(draft) do
     id = Map.get(draft, "id") || socket.assigns.selected_draft_id
     workflow_id = Map.get(draft, "workflow") || socket.assigns.selected_workflow_id
+    draft_inventory = upsert_draft(socket.assigns.draft_inventory, id, draft)
 
-    socket
-    |> assign(:draft_inventory, upsert_draft(socket.assigns.draft_inventory, id, draft))
-    |> select_workflow_state(workflow_id, id)
+    if Keyword.get(opts, :preserve_graph?, false) do
+      refresh_selected_draft(socket, draft_inventory, workflow_id, id)
+    else
+      socket
+      |> assign(:draft_inventory, draft_inventory)
+      |> select_workflow_state(workflow_id, id)
+    end
   end
 
-  defp refresh_saved_draft(socket, _draft), do: socket
+  defp refresh_saved_draft(socket, _draft, _opts), do: socket
+
+  defp refresh_selected_draft(socket, draft_inventory, workflow_id, selected_draft_id) do
+    selected_draft = Enum.find(draft_inventory, &(Map.get(&1, "id") == selected_draft_id))
+
+    socket
+    |> assign(:draft_inventory, draft_inventory)
+    |> assign(
+      :workflow_items,
+      workflow_sidebar_items(
+        socket.assigns.workflow_inventory,
+        draft_inventory,
+        socket.assigns.read_only?
+      )
+    )
+    |> assign(:drafts, draft_inventory)
+    |> assign(:selected_workflow_id, workflow_id)
+    |> assign(:selected_draft_id, selected_draft_id)
+    |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
+    |> assign(
+      :persistence_message,
+      persistence_message(socket.assigns[:draft_error], selected_draft)
+    )
+  end
 
   defp upsert_draft(draft_inventory, id, draft) do
     if Enum.any?(draft_inventory, &(Map.get(&1, "id") == id)) do

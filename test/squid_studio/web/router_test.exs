@@ -456,6 +456,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "padding: 11px 14px;"
     assert css.resp_body =~ ".studio-button span"
     assert css.resp_body =~ "row-gap: 8px;"
+    assert css.resp_body =~ ".hero-arrow-path"
+    assert css.resp_body =~ ".hero-check-circle"
+    assert css.resp_body =~ ~r/\.studio-canvas-column\s*\{[^}]*row-gap: 12px;/s
     assert css.resp_body =~ "@media (max-width: 1280px)"
     assert css.resp_body =~ "@media (max-width: 1040px)"
     assert css.resp_body =~ "grid-template-columns: repeat(3, minmax(0, 1fr));"

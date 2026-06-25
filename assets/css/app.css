@@ -3,6 +3,7 @@
 @source "../css";
 @source "../js";
 @source "../../lib/squid_studio/web";
+@source inline("hero-clock hero-arrow-path hero-exclamation-triangle hero-check-circle hero-hand-raised hero-pause-circle hero-cube hero-arrow-down-tray hero-paper-airplane hero-bolt");
 
 @plugin "../vendor/heroicons";
 
@@ -523,6 +524,7 @@ body:has(.studio-app) {
 .studio-canvas-column {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
+  row-gap: 12px;
   min-width: 0;
   min-height: 0;
   background: var(--studio-canvas);

@@ -806,6 +806,28 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "M 200 230 C 280 230, 200 230, 280 230"
   end
 
+  test "keeps centered node positions after validating a draft", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    centered_html =
+      view
+      |> render_hook("center_graph", %{"width" => 1200, "height" => 600})
+
+    [_, left, top] =
+      Regex.run(
+        ~r/id="studio-node-review_invoice"[^>]*style="left: (\d+)px; top: (\d+)px;"/,
+        centered_html
+      )
+
+    validated_html =
+      view
+      |> element(~s(button[phx-click="validate_draft"]))
+      |> render_click()
+
+    assert validated_html =~ "Valid draft"
+    assert validated_html =~ "left: #{left}px; top: #{top}px;"
+  end
+
   test "rejects dropped catalog nodes in read-only mode", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/read-only-studio/workflows/invoice_review")
 

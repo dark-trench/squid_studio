@@ -1384,6 +1384,51 @@ html:has(.studio-app), body:has(.studio-app) {
   padding-top: 18px;
   border-top: 1px solid var(--studio-border);
 }
+.studio-step-properties-form {
+  margin-top: 12px;
+}
+.studio-step-properties-fields {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.studio-step-field {
+  display: grid;
+  gap: 6px;
+}
+.studio-step-field-label {
+  color: var(--studio-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.studio-step-input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--studio-border);
+  border-radius: 10px;
+  background: var(--studio-surface-muted);
+  color: var(--studio-ink);
+  font-size: 13px;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+.studio-step-input:focus {
+  outline: none;
+  border-color: var(--studio-accent);
+  box-shadow: 0 0 0 3px rgba(58, 149, 204, 0.16);
+}
+.studio-step-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+.studio-step-field-error {
+  margin: -2px 0 0;
+  color: var(--studio-danger);
+  font-size: 12px;
+  font-weight: 600;
+}
 .studio-connection-list {
   display: grid;
   gap: 8px;

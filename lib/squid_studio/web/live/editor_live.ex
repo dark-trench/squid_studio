@@ -49,6 +49,9 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:selected_node_id, nil)
       |> assign(:selected_edge_id, nil)
       |> assign(:selected_step, nil)
+      |> assign(:step_property_values, %{})
+      |> assign(:step_property_errors, %{})
+      |> assign(:step_properties_form, step_properties_form(%{}))
       |> assign(:theme, :system)
       |> assign(:validation_checked?, false)
       |> select_workflow_state(params["workflow_id"])
@@ -144,6 +147,37 @@ defmodule SquidStudio.Web.EditorLive do
     {:noreply, assign(socket, :editor_surface, normalize_surface(surface))}
   end
 
+  def handle_event("change_step_properties", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
+  end
+
+  def handle_event("change_step_properties", %{"step_properties" => params}, socket) do
+    values =
+      socket.assigns.step_property_values
+      |> Map.merge(normalize_step_property_params(params))
+      |> normalize_step_property_values()
+
+    errors = validate_step_properties(socket, values)
+
+    socket =
+      if errors == %{} do
+        connector = step_property_connector(socket, values)
+        selected_step_name = value(socket.assigns.selected_step || %{}, :name, "")
+
+        socket
+        |> update_selected_draft_spec(fn spec ->
+          EditorGraph.update_step_properties(spec, selected_step_name, values, connector)
+        end)
+        |> assign_selected_graph(Map.get(values, "name"))
+        |> assign_spec_view()
+        |> initialize_validation_feedback()
+      else
+        assign_step_properties_state(socket, values, errors)
+      end
+
+    {:noreply, socket}
+  end
+
   def handle_event("filter_catalog", %{"catalog_filter" => params}, socket) do
     query = Map.get(params, "q", "")
 
@@ -155,40 +189,24 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   def handle_event("validate_draft", _params, socket) do
-    case selected_draft(socket) do
-      nil ->
-        {:noreply,
-         socket
-         |> assign(:validation_checked?, true)
-         |> assign(:validation_status, "No draft")
-         |> assign(:validation_message, "No draft spec is selected.")}
+    if step_property_errors?(socket) do
+      {:noreply,
+       socket
+       |> assign(:validation_checked?, true)
+       |> assign(:validation_status, "Validation issues")
+       |> assign(:validation_message, "Fix step property errors before validating.")}
+    else
+      case selected_draft(socket) do
+        nil ->
+          {:noreply,
+           socket
+           |> assign(:validation_checked?, true)
+           |> assign(:validation_status, "No draft")
+           |> assign(:validation_message, "No draft spec is selected.")}
 
-      draft ->
-        spec = current_spec(draft, socket.assigns.workflow)
-        errors = validate_draft_spec(spec, socket.assigns.connector_catalog)
-
-        case errors do
-          [] ->
-            {:noreply,
-             socket
-             |> refresh_saved_draft(
-               Map.put(draft, "validation_errors", []),
-               preserve_graph?: true
-             )
-             |> assign_spec_view()
-             |> assign_validation_result(:ok)}
-
-          _errors ->
-            {:noreply,
-             socket
-             |> refresh_saved_draft(
-               Map.put(draft, "validation_errors", errors),
-               preserve_graph?: true
-             )
-             |> assign_spec_view()
-             |> focus_first_validation_anchor()
-             |> assign_validation_result({:error, errors})}
-        end
+        draft ->
+          {:noreply, validate_selected_draft(socket, draft)}
+      end
     end
   end
 
@@ -265,6 +283,12 @@ defmodule SquidStudio.Web.EditorLive do
     registry_errors = ActionRegistryValidation.validate(spec, socket.assigns.connector_catalog)
 
     cond do
+      step_property_errors?(socket) ->
+        {:noreply,
+         socket
+         |> assign(:draft_status, "Draft spec")
+         |> assign(:persistence_message, "Fix step property errors before publishing.")}
+
       is_nil(draft) ->
         {:noreply,
          socket
@@ -673,6 +697,27 @@ defmodule SquidStudio.Web.EditorLive do
     "#{count} validation #{noun} found."
   end
 
+  defp validate_selected_draft(socket, draft) do
+    spec = current_spec(draft, socket.assigns.workflow)
+    errors = validate_draft_spec(spec, socket.assigns.connector_catalog)
+
+    socket =
+      socket
+      |> refresh_saved_draft(
+        Map.put(draft, "validation_errors", errors),
+        preserve_graph?: true
+      )
+      |> assign_spec_view()
+
+    if errors == [] do
+      assign_validation_result(socket, :ok)
+    else
+      socket
+      |> focus_first_validation_anchor()
+      |> assign_validation_result({:error, errors})
+    end
+  end
+
   defp validate_draft_spec(spec, connector_catalog) do
     editor_errors =
       case EditorSpec.validate_map(spec) do
@@ -686,13 +731,10 @@ defmodule SquidStudio.Web.EditorLive do
   defp focus_first_validation_anchor(socket) do
     case Enum.find(socket.assigns.spec_validation_errors, &Map.has_key?(&1, :anchor)) do
       %{anchor: %{kind: "node", id: id}} ->
-        socket
-        |> assign(:selected_node_id, id)
-        |> assign(:selected_edge_id, nil)
+        select_node(socket, id)
 
       %{anchor: %{kind: "edge", id: id}} ->
-        socket
-        |> assign(:selected_edge_id, id)
+        select_edge(socket, id)
 
       _other ->
         socket
@@ -793,6 +835,7 @@ defmodule SquidStudio.Web.EditorLive do
     |> assign(:selected_node_id, selected_node_id)
     |> assign(:selected_edge_id, selected_edge_id)
     |> assign(:selected_step, selected_step(socket, selected_node_id))
+    |> assign_step_properties_state()
   end
 
   defp selected_graph(socket) do
@@ -841,6 +884,133 @@ defmodule SquidStudio.Web.EditorLive do
     current_spec(selected_draft(socket), socket.assigns.workflow)
   end
 
+  defp selected_node(socket) do
+    Enum.find(socket.assigns.nodes, &(&1.id == socket.assigns.selected_node_id))
+  end
+
+  defp current_step_property_values(%{assigns: %{selected_step: nil}}), do: %{}
+
+  defp current_step_property_values(socket) do
+    step = socket.assigns.selected_step
+    node = selected_node(socket)
+
+    %{
+      "name" => value(step, :name, ""),
+      "label" => node_label(node, step),
+      "action" => value(step, :action, "")
+    }
+  end
+
+  defp node_label(nil, step), do: value(step, :name, "")
+  defp node_label(node, _step), do: Map.get(node, :label, "")
+
+  defp assign_step_properties_state(socket, values \\ nil, errors \\ %{}) do
+    values = values || current_step_property_values(socket)
+
+    socket
+    |> assign(:step_property_values, values)
+    |> assign(:step_property_errors, errors)
+    |> assign(:step_properties_form, step_properties_form(values))
+  end
+
+  defp step_properties_form(values) do
+    to_form(values, as: :step_properties)
+  end
+
+  defp normalize_step_property_params(params) when is_map(params) do
+    Map.new(params, fn {key, value} ->
+      {to_string(key), value}
+    end)
+  end
+
+  defp normalize_step_property_params(_params), do: %{}
+
+  defp normalize_step_property_values(values) when is_map(values) do
+    Map.new(values, fn {key, value} ->
+      {to_string(key), normalize_step_property_value(value)}
+    end)
+  end
+
+  defp normalize_step_property_value(value) when is_binary(value), do: String.trim(value)
+  defp normalize_step_property_value(nil), do: ""
+  defp normalize_step_property_value(value), do: to_string(value)
+
+  defp validate_step_properties(%{assigns: %{selected_step: nil}}, _values), do: %{}
+
+  defp validate_step_properties(socket, values) do
+    errors = %{}
+    selected_step_name = value(socket.assigns.selected_step || %{}, :name, "")
+    name = Map.get(values, "name", "")
+    label = Map.get(values, "label", "")
+
+    errors =
+      cond do
+        name == "" ->
+          Map.put(errors, "name", "Step name can't be blank.")
+
+        duplicate_step_name?(socket, name, selected_step_name) ->
+          Map.put(errors, "name", "Step name must be unique.")
+
+        true ->
+          errors
+      end
+
+    errors =
+      if label == "" do
+        Map.put(errors, "label", "Label can't be blank.")
+      else
+        errors
+      end
+
+    if action_step_selected?(socket) do
+      action_key = Map.get(values, "action", "")
+
+      if available_connector(socket.assigns.connector_catalog, action_key) do
+        errors
+      else
+        Map.put(errors, "action", "Action key is not available for this user.")
+      end
+    else
+      errors
+    end
+  end
+
+  defp duplicate_step_name?(socket, name, selected_step_name) do
+    socket
+    |> selected_step_spec()
+    |> Map.get("steps", [])
+    |> List.wrap()
+    |> Enum.reject(&(value(&1, :name, "") == selected_step_name))
+    |> Enum.any?(&(value(&1, :name, "") == name))
+  end
+
+  defp action_step_selected?(socket) do
+    case selected_node(socket) do
+      %{type: "action"} -> true
+      _other -> value(socket.assigns.selected_step || %{}, :action) not in [nil, ""]
+    end
+  end
+
+  defp step_property_connector(socket, values) do
+    if action_step_selected?(socket) do
+      available_connector(socket.assigns.connector_catalog, Map.get(values, "action", ""))
+    else
+      nil
+    end
+  end
+
+  defp available_connector(catalog, action_key) when is_binary(action_key) do
+    Enum.find(catalog, fn entry ->
+      Map.get(entry, "action_key") == action_key and catalog_entry_available?(entry)
+    end)
+  end
+
+  defp available_connector(_catalog, _action_key), do: nil
+
+  defp step_property_error(errors, field), do: Map.get(errors, field)
+
+  defp step_property_errors?(socket), do: socket.assigns.step_property_errors != %{}
+
   defp contract_entries(map) when is_map(map) do
     map
     |> Enum.map(fn {key, value} -> {to_string(key), to_string(value)} end)
@@ -870,12 +1040,14 @@ defmodule SquidStudio.Web.EditorLive do
     |> assign(:selected_node_id, node_id)
     |> assign(:selected_edge_id, nil)
     |> assign(:selected_step, selected_step(socket, node_id))
+    |> assign_step_properties_state()
   end
 
   defp select_edge(socket, edge_id) do
     socket
     |> assign(:selected_edge_id, edge_id)
     |> assign(:selected_step, nil)
+    |> assign_step_properties_state()
   end
 
   defp refresh_saved_draft(socket, draft, opts \\ [])

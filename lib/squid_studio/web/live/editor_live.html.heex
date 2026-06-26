@@ -445,14 +445,71 @@
 
             <div :if={step} class="studio-properties-section">
               <p class="studio-kicker">Step</p>
-              <div class="studio-inspector-row">
-                <span>Step name</span>
-                <strong>{value(step, :name)}</strong>
-              </div>
-              <div :if={value(step, :action)} class="studio-inspector-row">
-                <span>Action key</span>
-                <strong>{value(step, :action)}</strong>
-              </div>
+              <.form
+                for={@step_properties_form}
+                id="studio-step-properties-form"
+                class="studio-step-properties-form"
+                phx-change="change_step_properties"
+              >
+                <fieldset class="studio-step-properties-fields" disabled={@read_only?}>
+                  <div class="studio-step-field">
+                    <label class="studio-step-field-label" for="studio-step-name-input">
+                      Step name
+                    </label>
+                    <input
+                      id="studio-step-name-input"
+                      class="studio-step-input"
+                      type="text"
+                      name={@step_properties_form[:name].name}
+                      value={@step_properties_form[:name].value}
+                    />
+                    <p
+                      :if={step_property_error(@step_property_errors, "name")}
+                      class="studio-step-field-error"
+                    >
+                      {step_property_error(@step_property_errors, "name")}
+                    </p>
+                  </div>
+
+                  <div class="studio-step-field">
+                    <label class="studio-step-field-label" for="studio-step-label-input">
+                      Label
+                    </label>
+                    <input
+                      id="studio-step-label-input"
+                      class="studio-step-input"
+                      type="text"
+                      name={@step_properties_form[:label].name}
+                      value={@step_properties_form[:label].value}
+                    />
+                    <p
+                      :if={step_property_error(@step_property_errors, "label")}
+                      class="studio-step-field-error"
+                    >
+                      {step_property_error(@step_property_errors, "label")}
+                    </p>
+                  </div>
+
+                  <div :if={value(step, :action)} class="studio-step-field">
+                    <label class="studio-step-field-label" for="studio-step-action-input">
+                      Action key
+                    </label>
+                    <input
+                      id="studio-step-action-input"
+                      class="studio-step-input"
+                      type="text"
+                      name={@step_properties_form[:action].name}
+                      value={@step_properties_form[:action].value}
+                    />
+                    <p
+                      :if={step_property_error(@step_property_errors, "action")}
+                      class="studio-step-field-error"
+                    >
+                      {step_property_error(@step_property_errors, "action")}
+                    </p>
+                  </div>
+                </fieldset>
+              </.form>
               <div :if={value(metadata, :provider)} class="studio-inspector-row">
                 <span>Provider</span>
                 <strong>{value(metadata, :provider)}</strong>

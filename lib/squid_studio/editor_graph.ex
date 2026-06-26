@@ -108,6 +108,19 @@ defmodule SquidStudio.EditorGraph do
     })
   end
 
+  @spec update_step_properties(map(), String.t(), map(), map() | nil) :: map()
+  def update_step_properties(spec, step_name, attrs, connector \\ nil)
+      when is_map(spec) and is_binary(step_name) and is_map(attrs) do
+    updated_name = Map.get(attrs, "name", step_name)
+    updated_label = Map.get(attrs, "label", humanize(updated_name))
+    updated_action = Map.get(attrs, "action")
+
+    spec
+    |> rename_step_references(step_name, updated_name)
+    |> update_steps(step_name, updated_name, updated_action, connector)
+    |> rename_editor_node(step_name, updated_name, updated_label)
+  end
+
   defp build_nodes(graph, editor_nodes, workflow_nodes) do
     graph
     |> value("nodes", [])
@@ -244,12 +257,136 @@ defmodule SquidStudio.EditorGraph do
     |> Map.get(node_id, %{})
   end
 
+  defp rename_step_references(spec, step_name, step_name), do: spec
+
+  defp rename_step_references(spec, step_name, updated_name) do
+    spec
+    |> maybe_update("transitions", fn transitions ->
+      transitions
+      |> List.wrap()
+      |> Enum.map(&rename_transition_reference(&1, step_name, updated_name))
+    end)
+    |> maybe_update("entry_steps", fn entry_steps ->
+      entry_steps
+      |> List.wrap()
+      |> Enum.map(&rename_value(&1, step_name, updated_name))
+    end)
+    |> maybe_update("initial_step", &rename_value(&1, step_name, updated_name))
+    |> maybe_update("entry_step", &rename_value(&1, step_name, updated_name))
+  end
+
+  defp rename_transition_reference(transition, step_name, updated_name) when is_map(transition) do
+    transition
+    |> Map.update("from", nil, &rename_value(&1, step_name, updated_name))
+    |> Map.update("to", nil, &rename_value(&1, step_name, updated_name))
+  end
+
+  defp rename_transition_reference(transition, _step_name, _updated_name), do: transition
+
+  defp update_steps(spec, step_name, updated_name, updated_action, connector) do
+    Map.update(spec, "steps", [], fn steps ->
+      steps
+      |> List.wrap()
+      |> Enum.map(&update_step(&1, step_name, updated_name, updated_action, connector))
+    end)
+  end
+
+  defp update_step(step, step_name, updated_name, updated_action, connector) when is_map(step) do
+    if value(step, "name") == step_name do
+      step
+      |> Map.put("name", updated_name)
+      |> maybe_put_action(updated_action)
+      |> update_step_metadata(connector)
+      |> update_step_dependencies(step_name, updated_name)
+    else
+      update_step_dependencies(step, step_name, updated_name)
+    end
+  end
+
+  defp update_step(step, _step_name, _updated_name, _updated_action, _connector), do: step
+
+  defp maybe_put_action(step, nil), do: step
+  defp maybe_put_action(step, updated_action), do: Map.put(step, "action", updated_action)
+
+  defp update_step_metadata(step, nil), do: step
+
+  defp update_step_metadata(step, connector) when is_map(connector) do
+    metadata =
+      step
+      |> value("metadata", %{})
+      |> stringify_map()
+      |> Map.merge(connector_metadata(connector))
+
+    Map.put(step, "metadata", metadata)
+  end
+
+  defp connector_metadata(connector) do
+    compact(%{
+      "provider" => Map.get(connector, "provider"),
+      "display_name" => Map.get(connector, "display_name"),
+      "input_contract" => Map.get(connector, "input_contract"),
+      "output_contract" => Map.get(connector, "output_contract"),
+      "credential_requirements" => Map.get(connector, "credential_requirements")
+    })
+  end
+
+  defp update_step_dependencies(step, step_name, updated_name) when is_map(step) do
+    case value(step, "opts") do
+      opts when is_map(opts) ->
+        Map.put(
+          step,
+          "opts",
+          opts
+          |> stringify_map()
+          |> maybe_update("after", fn dependencies ->
+            dependencies
+            |> List.wrap()
+            |> Enum.map(&rename_value(&1, step_name, updated_name))
+          end)
+        )
+
+      _other ->
+        step
+    end
+  end
+
+  defp rename_editor_node(spec, step_name, updated_name, updated_label) do
+    metadata =
+      spec
+      |> editor_node(step_name)
+      |> Map.put("label", updated_label)
+
+    spec
+    |> delete_editor_node(step_name, updated_name)
+    |> put_editor_node(updated_name, metadata)
+  end
+
+  defp delete_editor_node(spec, node_id, node_id), do: spec
+
+  defp delete_editor_node(spec, node_id, _updated_name) do
+    editor = Map.get(spec, "editor", %{})
+    nodes = editor |> Map.get("nodes", %{}) |> Map.delete(node_id)
+
+    Map.put(spec, "editor", Map.put(editor, "nodes", nodes))
+  end
+
+  defp maybe_update(map, key, updater) when is_map(map) and is_function(updater, 1) do
+    if Map.has_key?(map, key) do
+      Map.update!(map, key, updater)
+    else
+      map
+    end
+  end
+
   defp put_editor_node(spec, node_id, metadata) do
     editor = Map.get(spec, "editor", %{})
     nodes = editor |> Map.get("nodes", %{}) |> Map.put(node_id, compact(metadata))
 
     Map.put(spec, "editor", Map.put(editor, "nodes", nodes))
   end
+
+  defp rename_value(value, step_name, updated_name) when value == step_name, do: updated_name
+  defp rename_value(value, _step_name, _updated_name), do: value
 
   defp nested_value(map, [key | rest], default) when is_map(map) do
     map

@@ -745,6 +745,138 @@ defmodule SquidStudio.Web.RouterTest do
     refute html =~ "<span>Action key</span>"
   end
 
+  test "edits step name and label from the properties panel", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    selected_html =
+      view
+      |> element("#studio-node-review_invoice")
+      |> render_click()
+
+    assert selected_html =~ ~s(id="studio-step-properties-form")
+
+    updated_html =
+      view
+      |> form("#studio-step-properties-form",
+        step_properties: %{
+          name: "approve_invoice",
+          label: "Approve invoice draft"
+        }
+      )
+      |> render_change()
+
+    assert updated_html =~ ~s(id="studio-node-approve_invoice")
+    assert updated_html =~ "Approve invoice draft"
+    refute updated_html =~ ~s(id="studio-node-review_invoice")
+
+    spec_html =
+      view
+      |> element(~s(button[phx-value-surface="spec"]))
+      |> render_click()
+
+    assert spec_html =~ "&quot;name&quot;: &quot;approve_invoice&quot;"
+    assert spec_html =~ "&quot;label&quot;: &quot;Approve invoice draft&quot;"
+    assert spec_html =~ "&quot;to&quot;: &quot;approve_invoice&quot;"
+    refute spec_html =~ "&quot;name&quot;: &quot;review_invoice&quot;"
+  end
+
+  test "edits action-backed step properties without dropping untouched opts", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    workflow_html =
+      view
+      |> element(~s(button[phx-value-id="restricted_issue_flow"]))
+      |> render_click()
+
+    assert workflow_html =~ "Restricted Issue Flow"
+
+    selected_html =
+      view
+      |> element("#studio-node-open_issue")
+      |> render_click()
+
+    assert selected_html =~ ~s(id="studio-step-action-input")
+
+    updated_html =
+      view
+      |> form("#studio-step-properties-form",
+        step_properties: %{
+          name: "notify_slack",
+          label: "Notify Slack",
+          action: "post_message"
+        }
+      )
+      |> render_change()
+
+    assert updated_html =~ ~s(id="studio-node-notify_slack")
+    assert updated_html =~ "Notify Slack"
+    assert updated_html =~ "post_message"
+    assert updated_html =~ "Slack bot token"
+
+    spec_html =
+      view
+      |> element(~s(button[phx-value-surface="spec"]))
+      |> render_click()
+
+    assert spec_html =~ "&quot;name&quot;: &quot;notify_slack&quot;"
+    assert spec_html =~ "&quot;action&quot;: &quot;post_message&quot;"
+    assert spec_html =~ "&quot;title&quot;: &quot;Escalate invoice review&quot;"
+  end
+
+  test "shows inline step property errors and blocks validate and publish", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    view
+    |> element(~s(button[phx-value-id="restricted_issue_flow"]))
+    |> render_click()
+
+    view
+    |> element("#studio-node-open_issue")
+    |> render_click()
+
+    view
+    |> form("#studio-step-properties-form",
+      step_properties: %{
+        name: "notify_slack",
+        label: "Notify Slack",
+        action: "post_message"
+      }
+    )
+    |> render_change()
+
+    invalid_html =
+      view
+      |> form("#studio-step-properties-form",
+        step_properties: %{
+          name: "invoice_added",
+          label: "",
+          action: "missing_action"
+        }
+      )
+      |> render_change()
+
+    assert invalid_html =~ "Step name must be unique."
+    assert invalid_html =~ "Label can&#39;t be blank."
+    assert invalid_html =~ "Action key is not available for this user."
+    assert invalid_html =~ ~s(id="studio-node-notify_slack")
+
+    validation_html =
+      view
+      |> element(~s(button[phx-click="validate_draft"]))
+      |> render_click()
+
+    assert validation_html =~ "Fix step property errors before validating."
+    refute validation_html =~ "Draft passes Squidie editor validation."
+
+    publish_html =
+      view
+      |> element(~s(button[phx-click="publish_draft"]))
+      |> render_click()
+
+    assert publish_html =~ "Fix step property errors before publishing."
+    refute publish_html =~ "Published"
+  end
+
   test "drops a catalog node onto the canvas at the reported coordinates", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
 

@@ -1398,6 +1398,11 @@ html:has(.studio-app), body:has(.studio-app) {
   display: grid;
   gap: 6px;
 }
+.studio-step-field-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .studio-step-field-label {
   color: var(--studio-muted);
   font-size: 12px;
@@ -1422,6 +1427,17 @@ html:has(.studio-app), body:has(.studio-app) {
 .studio-step-input:disabled {
   cursor: not-allowed;
   opacity: 0.72;
+}
+.studio-step-textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+.studio-step-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--studio-ink);
+  font-size: 13px;
 }
 .studio-step-field-error {
   margin: -2px 0 0;

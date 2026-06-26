@@ -12,6 +12,7 @@ defmodule SquidStudio.EditorGraph do
   @base_y 120
   @step_spacing_x 240
   @step_spacing_y 96
+  @step_key_pattern ~r/^[a-z][a-z0-9_]*$/
 
   @type graph_node :: %{
           id: String.t(),
@@ -117,7 +118,7 @@ defmodule SquidStudio.EditorGraph do
 
     spec
     |> rename_step_references(step_name, updated_name)
-    |> update_steps(step_name, updated_name, updated_action, connector)
+    |> update_steps(step_name, updated_name, updated_action, connector, attrs)
     |> rename_editor_node(step_name, updated_name, updated_label)
   end
 
@@ -283,27 +284,30 @@ defmodule SquidStudio.EditorGraph do
 
   defp rename_transition_reference(transition, _step_name, _updated_name), do: transition
 
-  defp update_steps(spec, step_name, updated_name, updated_action, connector) do
+  defp update_steps(spec, step_name, updated_name, updated_action, connector, attrs) do
     Map.update(spec, "steps", [], fn steps ->
       steps
       |> List.wrap()
-      |> Enum.map(&update_step(&1, step_name, updated_name, updated_action, connector))
+      |> Enum.map(&update_step(&1, step_name, updated_name, updated_action, connector, attrs))
     end)
   end
 
-  defp update_step(step, step_name, updated_name, updated_action, connector) when is_map(step) do
+  defp update_step(step, step_name, updated_name, updated_action, connector, attrs)
+       when is_map(step) do
     if value(step, "name") == step_name do
       step
       |> Map.put("name", updated_name)
       |> maybe_put_action(updated_action)
       |> update_step_metadata(connector)
+      |> update_step_metadata_fields(attrs)
+      |> update_step_opts(attrs)
       |> update_step_dependencies(step_name, updated_name)
     else
       update_step_dependencies(step, step_name, updated_name)
     end
   end
 
-  defp update_step(step, _step_name, _updated_name, _updated_action, _connector), do: step
+  defp update_step(step, _step_name, _updated_name, _updated_action, _connector, _attrs), do: step
 
   defp maybe_put_action(step, nil), do: step
   defp maybe_put_action(step, updated_action), do: Map.put(step, "action", updated_action)
@@ -328,6 +332,65 @@ defmodule SquidStudio.EditorGraph do
       "output_contract" => Map.get(connector, "output_contract"),
       "credential_requirements" => Map.get(connector, "credential_requirements")
     })
+  end
+
+  defp update_step_metadata_fields(step, attrs) do
+    notes = normalize_notes(Map.get(attrs, "notes"))
+    metadata = step |> value("metadata", %{}) |> stringify_map()
+    existing_notes = value(metadata, "notes")
+
+    metadata =
+      cond do
+        notes in [nil, ""] and is_nil(existing_notes) ->
+          metadata
+
+        notes in [nil, ""] ->
+          Map.delete(metadata, "notes")
+
+        true ->
+          Map.put(metadata, "notes", notes)
+      end
+
+    put_or_delete_map(step, "metadata", metadata)
+  end
+
+  defp update_step_opts(step, attrs) do
+    original_opts = value(step, "opts")
+    opts = stringify_map(original_opts)
+
+    opts =
+      opts
+      |> put_or_delete_opt("input", parse_input_mapping(Map.get(attrs, "input_mapping")))
+      |> put_or_delete_opt("output", normalize_output_key(Map.get(attrs, "output_key")))
+      |> put_or_delete_opt(
+        "retry",
+        parse_retry(
+          Map.get(attrs, "retry_max_attempts"),
+          Map.get(attrs, "retry_backoff_min"),
+          Map.get(attrs, "retry_backoff_max")
+        )
+      )
+      |> put_boolean_opt(
+        "irreversible",
+        Map.get(attrs, "irreversible"),
+        value(opts, "irreversible")
+      )
+      |> put_boolean_opt(
+        "compensatable",
+        Map.get(attrs, "compensatable"),
+        value(opts, "compensatable")
+      )
+
+    cond do
+      opts != %{} ->
+        Map.put(step, "opts", opts)
+
+      is_map(original_opts) ->
+        Map.put(step, "opts", %{})
+
+      true ->
+        Map.delete(step, "opts")
+    end
   end
 
   defp update_step_dependencies(step, step_name, updated_name) when is_map(step) do
@@ -377,6 +440,240 @@ defmodule SquidStudio.EditorGraph do
       map
     end
   end
+
+  defp put_or_delete_map(step, key, map) when is_map(step) and is_binary(key) and is_map(map) do
+    if map == %{} do
+      Map.delete(step, key)
+    else
+      Map.put(step, key, map)
+    end
+  end
+
+  defp put_or_delete_opt(opts, _key, :invalid), do: opts
+
+  defp put_or_delete_opt(opts, key, nil) when is_map(opts) and is_binary(key),
+    do: Map.delete(opts, key)
+
+  defp put_or_delete_opt(opts, key, value) when is_map(opts) and is_binary(key),
+    do: Map.put(opts, key, value)
+
+  defp put_boolean_opt(opts, key, raw_value, existing_value)
+       when is_map(opts) and is_binary(key) do
+    if is_nil(raw_value) do
+      opts
+    else
+      apply_boolean_opt(opts, key, parse_boolean(raw_value), existing_value)
+    end
+  end
+
+  defp parse_input_mapping(value) when value in [nil, ""], do: nil
+
+  defp parse_input_mapping(value) when is_binary(value) do
+    case input_mapping_lines(value) do
+      [] ->
+        nil
+
+      lines ->
+        parse_input_mapping_lines(lines)
+    end
+  end
+
+  defp parse_input_mapping(_value), do: :invalid
+
+  defp input_mapping_lines(value) do
+    value
+    |> String.split("\n")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+  end
+
+  defp parse_input_mapping_lines(lines) do
+    cond do
+      Enum.all?(lines, &String.contains?(&1, "=")) ->
+        parse_targeted_input_mapping(lines)
+
+      Enum.all?(lines, &(not String.contains?(&1, "="))) ->
+        parse_selected_input_mapping(lines)
+
+      true ->
+        :invalid
+    end
+  end
+
+  defp parse_targeted_input_mapping(lines) do
+    Enum.reduce_while(lines, %{}, fn line, acc ->
+      [target, path] = String.split(line, "=", parts: 2)
+
+      with {:ok, target} <- parse_mapping_segment(target),
+           false <- Map.has_key?(acc, target),
+           {:ok, path_segments} <- parse_mapping_path(path) do
+        {:cont, Map.put(acc, target, path_segments)}
+      else
+        :error -> {:halt, :invalid}
+        true -> {:halt, :invalid}
+      end
+    end)
+  end
+
+  defp parse_selected_input_mapping(lines) do
+    Enum.reduce_while(lines, [], fn line, acc ->
+      case parse_mapping_segment(line) do
+        {:ok, segment} ->
+          continue_selected_input_mapping(acc, segment)
+
+        :error ->
+          {:halt, :invalid}
+      end
+    end)
+    |> case do
+      :invalid -> :invalid
+      segments -> Enum.reverse(segments)
+    end
+  end
+
+  defp continue_selected_input_mapping(acc, segment) do
+    if segment in acc do
+      {:halt, :invalid}
+    else
+      {:cont, [segment | acc]}
+    end
+  end
+
+  defp parse_mapping_path(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> String.split(".", trim: true)
+    |> parse_mapping_segments()
+  end
+
+  defp parse_mapping_path(_value), do: :error
+
+  defp parse_mapping_segments(segments) do
+    Enum.reduce_while(segments, [], fn segment, acc ->
+      case parse_mapping_segment(segment) do
+        {:ok, parsed} -> {:cont, [parsed | acc]}
+        :error -> {:halt, :error}
+      end
+    end)
+    |> case do
+      [] -> :error
+      :error -> :error
+      parsed -> {:ok, Enum.reverse(parsed)}
+    end
+  end
+
+  defp parse_mapping_segment(value) when is_binary(value) do
+    value = String.trim(value)
+
+    if value != "" and String.match?(value, @step_key_pattern) do
+      {:ok, value}
+    else
+      :error
+    end
+  end
+
+  defp parse_mapping_segment(_value), do: :error
+
+  defp normalize_output_key(value) when value in [nil, ""], do: nil
+
+  defp normalize_output_key(value) when is_binary(value) do
+    value = String.trim(value)
+    if String.match?(value, @step_key_pattern), do: value, else: :invalid
+  end
+
+  defp normalize_output_key(_value), do: :invalid
+
+  defp normalize_notes(value) when value in [nil, ""], do: nil
+  defp normalize_notes(value) when is_binary(value), do: String.trim(value)
+  defp normalize_notes(value), do: to_string(value)
+
+  defp parse_retry(max_attempts, min_delay, max_delay) do
+    max_attempts = parse_positive_integer(max_attempts)
+    min_delay = parse_optional_positive_integer(min_delay)
+    max_delay = parse_optional_positive_integer(max_delay)
+
+    cond do
+      max_attempts == nil and is_nil(min_delay) and is_nil(max_delay) ->
+        nil
+
+      is_nil(max_attempts) ->
+        :invalid
+
+      true ->
+        case retry_backoff(min_delay, max_delay) do
+          {:ok, nil} ->
+            %{"max_attempts" => max_attempts}
+
+          {:ok, backoff} ->
+            %{"max_attempts" => max_attempts, "backoff" => backoff}
+
+          :error ->
+            :invalid
+        end
+    end
+  end
+
+  defp retry_backoff(nil, nil), do: {:ok, nil}
+
+  defp retry_backoff(min_delay, max_delay)
+       when is_integer(min_delay) and is_integer(max_delay) and max_delay >= min_delay do
+    {:ok, %{"type" => "exponential", "min" => min_delay, "max" => max_delay}}
+  end
+
+  defp retry_backoff(_min_delay, _max_delay), do: :error
+
+  defp apply_boolean_opt(opts, key, {:ok, false}, existing_value) do
+    if key == "compensatable" or truthy?(existing_value) or Map.has_key?(opts, key) do
+      Map.put(opts, key, false)
+    else
+      Map.delete(opts, key)
+    end
+  end
+
+  defp apply_boolean_opt(opts, key, {:ok, true}, _existing_value),
+    do: maybe_put_true_boolean_opt(opts, key)
+
+  defp apply_boolean_opt(opts, _key, :error, _existing_value), do: opts
+
+  defp maybe_put_true_boolean_opt(opts, "compensatable") do
+    if Map.has_key?(opts, "compensatable") do
+      Map.put(opts, "compensatable", true)
+    else
+      Map.delete(opts, "compensatable")
+    end
+  end
+
+  defp maybe_put_true_boolean_opt(opts, key), do: Map.put(opts, key, true)
+
+  defp parse_positive_integer(value) when is_integer(value) and value > 0, do: value
+
+  defp parse_positive_integer(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {integer, ""} when integer > 0 -> integer
+      _other -> nil
+    end
+  end
+
+  defp parse_positive_integer(_value), do: nil
+
+  defp parse_optional_positive_integer(value) when value in [nil, ""], do: nil
+
+  defp parse_optional_positive_integer(value) when is_integer(value) and value > 0, do: value
+
+  defp parse_optional_positive_integer(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {integer, ""} when integer > 0 -> integer
+      _other -> :invalid
+    end
+  end
+
+  defp parse_optional_positive_integer(_value), do: :invalid
+
+  defp parse_boolean(value) when value in [true, "true", "on", 1, "1"], do: {:ok, true}
+  defp parse_boolean(value) when value in [false, "false", nil, "", 0, "0"], do: {:ok, false}
+  defp parse_boolean(_value), do: :error
+
+  defp truthy?(value), do: value in [true, "true", 1, "1"]
 
   defp put_editor_node(spec, node_id, metadata) do
     editor = Map.get(spec, "editor", %{})
@@ -456,5 +753,9 @@ defmodule SquidStudio.EditorGraph do
   end
 
   defp value(map, key, default \\ nil)
-  defp value(map, key, default), do: Map.get(map, key) || Map.get(map, to_string(key)) || default
+
+  defp value(map, key, default) when is_map(map),
+    do: Map.get(map, key) || Map.get(map, to_string(key)) || default
+
+  defp value(_value, _key, default), do: default
 end

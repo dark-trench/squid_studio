@@ -508,6 +508,164 @@
                       {step_property_error(@step_property_errors, "action")}
                     </p>
                   </div>
+
+                  <div class="studio-step-field">
+                    <label class="studio-step-field-label" for="studio-step-input-mapping-input">
+                      Input mapping
+                    </label>
+                    <textarea
+                      id="studio-step-input-mapping-input"
+                      class="studio-step-input studio-step-textarea"
+                      name={@step_properties_form[:input_mapping].name}
+                      rows="3"
+                    >{@step_properties_form[:input_mapping].value}</textarea>
+                    <p
+                      :if={step_property_error(@step_property_errors, "input_mapping")}
+                      class="studio-step-field-error"
+                    >
+                      {step_property_error(@step_property_errors, "input_mapping")}
+                    </p>
+                  </div>
+
+                  <div class="studio-step-field">
+                    <label class="studio-step-field-label" for="studio-step-output-input">
+                      Output key
+                    </label>
+                    <input
+                      id="studio-step-output-input"
+                      class="studio-step-input"
+                      type="text"
+                      name={@step_properties_form[:output_key].name}
+                      value={@step_properties_form[:output_key].value}
+                    />
+                    <p
+                      :if={step_property_error(@step_property_errors, "output_key")}
+                      class="studio-step-field-error"
+                    >
+                      {step_property_error(@step_property_errors, "output_key")}
+                    </p>
+                  </div>
+
+                  <div class="studio-step-field-grid">
+                    <div class="studio-step-field">
+                      <label
+                        class="studio-step-field-label"
+                        for="studio-step-retry-max-attempts-input"
+                      >
+                        Retry max attempts
+                      </label>
+                      <input
+                        id="studio-step-retry-max-attempts-input"
+                        class="studio-step-input"
+                        type="number"
+                        min="1"
+                        name={@step_properties_form[:retry_max_attempts].name}
+                        value={@step_properties_form[:retry_max_attempts].value}
+                      />
+                      <p
+                        :if={step_property_error(@step_property_errors, "retry_max_attempts")}
+                        class="studio-step-field-error"
+                      >
+                        {step_property_error(@step_property_errors, "retry_max_attempts")}
+                      </p>
+                    </div>
+
+                    <div class="studio-step-field">
+                      <label
+                        class="studio-step-field-label"
+                        for="studio-step-retry-backoff-min-input"
+                      >
+                        Backoff min
+                      </label>
+                      <input
+                        id="studio-step-retry-backoff-min-input"
+                        class="studio-step-input"
+                        type="number"
+                        min="1"
+                        name={@step_properties_form[:retry_backoff_min].name}
+                        value={@step_properties_form[:retry_backoff_min].value}
+                      />
+                      <p
+                        :if={step_property_error(@step_property_errors, "retry_backoff_min")}
+                        class="studio-step-field-error"
+                      >
+                        {step_property_error(@step_property_errors, "retry_backoff_min")}
+                      </p>
+                    </div>
+
+                    <div class="studio-step-field">
+                      <label
+                        class="studio-step-field-label"
+                        for="studio-step-retry-backoff-max-input"
+                      >
+                        Backoff max
+                      </label>
+                      <input
+                        id="studio-step-retry-backoff-max-input"
+                        class="studio-step-input"
+                        type="number"
+                        min="1"
+                        name={@step_properties_form[:retry_backoff_max].name}
+                        value={@step_properties_form[:retry_backoff_max].value}
+                      />
+                      <p
+                        :if={step_property_error(@step_property_errors, "retry_backoff_max")}
+                        class="studio-step-field-error"
+                      >
+                        {step_property_error(@step_property_errors, "retry_backoff_max")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="studio-step-field">
+                    <span class="studio-step-field-label">Recovery metadata</span>
+                    <label class="studio-step-checkbox">
+                      <input
+                        type="checkbox"
+                        name={@step_properties_form[:irreversible].name}
+                        value="true"
+                        checked={
+                          step_property_checked?(@step_properties_form[:irreversible].value)
+                        }
+                      />
+                      <span>Irreversible</span>
+                    </label>
+                    <label class="studio-step-checkbox">
+                      <input
+                        type="checkbox"
+                        name={@step_properties_form[:compensatable].name}
+                        value="true"
+                        checked={
+                          step_property_checked?(@step_properties_form[:compensatable].value)
+                        }
+                      />
+                      <span>Compensatable</span>
+                    </label>
+                    <p
+                      :if={step_property_error(@step_property_errors, "recovery")}
+                      class="studio-step-field-error"
+                    >
+                      {step_property_error(@step_property_errors, "recovery")}
+                    </p>
+                  </div>
+
+                  <div class="studio-step-field">
+                    <label class="studio-step-field-label" for="studio-step-notes-input">
+                      Notes
+                    </label>
+                    <textarea
+                      id="studio-step-notes-input"
+                      class="studio-step-input studio-step-textarea"
+                      name={@step_properties_form[:notes].name}
+                      rows="3"
+                    >{@step_properties_form[:notes].value}</textarea>
+                    <p
+                      :if={step_property_error(@step_property_errors, "notes")}
+                      class="studio-step-field-error"
+                    >
+                      {step_property_error(@step_property_errors, "notes")}
+                    </p>
+                  </div>
                 </fieldset>
               </.form>
               <div :if={value(metadata, :provider)} class="studio-inspector-row">

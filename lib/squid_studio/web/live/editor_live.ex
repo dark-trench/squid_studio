@@ -13,6 +13,8 @@ defmodule SquidStudio.Web.EditorLive do
   @node_width 160
   @node_height 76
   @canvas_padding 40
+  @step_key_pattern ~r/^[a-z][a-z0-9_]*$/
+  @step_property_boolean_fields ["irreversible", "compensatable"]
 
   @impl true
   def mount(params, _session, socket) do
@@ -893,11 +895,23 @@ defmodule SquidStudio.Web.EditorLive do
   defp current_step_property_values(socket) do
     step = socket.assigns.selected_step
     node = selected_node(socket)
+    opts = value(step, :opts, %{})
+    retry = value(opts, :retry, %{})
+    backoff = value(retry, :backoff, %{})
+    metadata = value(step, :metadata, %{})
 
     %{
       "name" => value(step, :name, ""),
       "label" => node_label(node, step),
-      "action" => value(step, :action, "")
+      "action" => value(step, :action, ""),
+      "input_mapping" => serialize_input_mapping(value(opts, :input)),
+      "output_key" => string_value(value(opts, :output)),
+      "retry_max_attempts" => string_value(value(retry, :max_attempts)),
+      "retry_backoff_min" => string_value(value(backoff, :min)),
+      "retry_backoff_max" => string_value(value(backoff, :max)),
+      "irreversible" => boolean_form_value(value(opts, :irreversible, false)),
+      "compensatable" => boolean_form_value(compensatable_value(opts)),
+      "notes" => string_value(value(metadata, :notes))
     }
   end
 
@@ -918,12 +932,20 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   defp normalize_step_property_params(params) when is_map(params) do
-    Map.new(params, fn {key, value} ->
+    params
+    |> Map.new(fn {key, value} ->
       {to_string(key), value}
     end)
+    |> normalize_boolean_step_property_params()
   end
 
   defp normalize_step_property_params(_params), do: %{}
+
+  defp normalize_boolean_step_property_params(params) do
+    Enum.reduce(@step_property_boolean_fields, params, fn field, acc ->
+      Map.put_new(acc, field, "false")
+    end)
+  end
 
   defp normalize_step_property_values(values) when is_map(values) do
     Map.new(values, fn {key, value} ->
@@ -965,14 +987,21 @@ defmodule SquidStudio.Web.EditorLive do
     if action_step_selected?(socket) do
       action_key = Map.get(values, "action", "")
 
-      if available_connector(socket.assigns.connector_catalog, action_key) do
-        errors
-      else
-        Map.put(errors, "action", "Action key is not available for this user.")
-      end
+      errors =
+        if available_connector(socket.assigns.connector_catalog, action_key) do
+          errors
+        else
+          Map.put(errors, "action", "Action key is not available for this user.")
+        end
+
+      errors
     else
       errors
     end
+    |> validate_input_mapping(values)
+    |> validate_output_key(values)
+    |> validate_retry(values)
+    |> validate_recovery(values)
   end
 
   defp duplicate_step_name?(socket, name, selected_step_name) do
@@ -1034,6 +1063,244 @@ defmodule SquidStudio.Web.EditorLive do
   end
 
   defp option_entries(_value), do: []
+
+  defp validate_input_mapping(errors, values) do
+    case parse_input_mapping(Map.get(values, "input_mapping", "")) do
+      {:ok, _mapping} ->
+        errors
+
+      {:error, message} ->
+        Map.put(errors, "input_mapping", message)
+    end
+  end
+
+  defp validate_output_key(errors, values) do
+    output_key = Map.get(values, "output_key", "")
+
+    if output_key in [nil, ""] or String.match?(output_key, @step_key_pattern) do
+      errors
+    else
+      Map.put(errors, "output_key", "Output key must use snake_case.")
+    end
+  end
+
+  defp validate_retry(errors, values) do
+    max_attempts = Map.get(values, "retry_max_attempts", "")
+    min_delay = Map.get(values, "retry_backoff_min", "")
+    max_delay = Map.get(values, "retry_backoff_max", "")
+
+    if max_attempts == "" and min_delay == "" and max_delay == "" do
+      errors
+    else
+      errors
+      |> maybe_validate_retry_max_attempts(max_attempts)
+      |> maybe_validate_retry_backoff(min_delay, max_delay)
+    end
+  end
+
+  defp validate_recovery(errors, values) do
+    if step_property_checked?(Map.get(values, "irreversible")) and
+         step_property_checked?(Map.get(values, "compensatable")) do
+      Map.put(errors, "recovery", "A step cannot be both irreversible and compensatable.")
+    else
+      errors
+    end
+  end
+
+  defp parse_input_mapping(value) when value in [nil, ""], do: {:ok, nil}
+
+  defp parse_input_mapping(value) when is_binary(value) do
+    case input_mapping_lines(value) do
+      [] ->
+        {:ok, nil}
+
+      lines ->
+        parse_input_mapping_lines(lines)
+    end
+  end
+
+  defp parse_input_mapping(_value), do: {:error, invalid_input_mapping_message()}
+
+  defp input_mapping_lines(value) do
+    value
+    |> String.split("\n")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+  end
+
+  defp parse_input_mapping_lines(lines) do
+    cond do
+      Enum.all?(lines, &String.contains?(&1, "=")) ->
+        parse_targeted_input_mapping(lines)
+
+      Enum.all?(lines, &(not String.contains?(&1, "="))) ->
+        parse_selected_input_mapping(lines)
+
+      true ->
+        {:error, invalid_input_mapping_message()}
+    end
+  end
+
+  defp parse_targeted_input_mapping(lines) do
+    Enum.reduce_while(lines, {:ok, %{}}, fn line, {:ok, acc} ->
+      [target, path] = String.split(line, "=", parts: 2)
+
+      with {:ok, target} <- parse_input_mapping_segment(target),
+           false <- Map.has_key?(acc, target),
+           {:ok, path_segments} <- parse_input_mapping_path(path) do
+        {:cont, {:ok, Map.put(acc, target, path_segments)}}
+      else
+        :error -> {:halt, {:error, invalid_input_mapping_message()}}
+        true -> {:halt, {:error, duplicate_input_mapping_message()}}
+      end
+    end)
+  end
+
+  defp parse_selected_input_mapping(lines) do
+    Enum.reduce_while(lines, {:ok, []}, fn line, {:ok, acc} ->
+      case parse_input_mapping_segment(line) do
+        {:ok, segment} ->
+          continue_selected_input_mapping(acc, segment)
+
+        :error ->
+          {:halt, {:error, invalid_input_mapping_message()}}
+      end
+    end)
+    |> case do
+      {:ok, segments} -> {:ok, Enum.reverse(segments)}
+      {:error, _message} = error -> error
+    end
+  end
+
+  defp continue_selected_input_mapping(acc, segment) do
+    if segment in acc do
+      {:halt, {:error, duplicate_input_mapping_message()}}
+    else
+      {:cont, {:ok, [segment | acc]}}
+    end
+  end
+
+  defp parse_input_mapping_path(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> String.split(".", trim: true)
+    |> parse_input_mapping_segments()
+  end
+
+  defp parse_input_mapping_path(_value), do: :error
+
+  defp parse_input_mapping_segments(segments) do
+    Enum.reduce_while(segments, {:ok, []}, fn segment, {:ok, acc} ->
+      case parse_input_mapping_segment(segment) do
+        {:ok, parsed} -> {:cont, {:ok, [parsed | acc]}}
+        :error -> {:halt, :error}
+      end
+    end)
+    |> case do
+      {:ok, []} -> :error
+      {:ok, parsed} -> {:ok, Enum.reverse(parsed)}
+      :error -> :error
+    end
+  end
+
+  defp parse_input_mapping_segment(value) when is_binary(value) do
+    value = String.trim(value)
+
+    if value != "" and String.match?(value, @step_key_pattern) do
+      {:ok, value}
+    else
+      :error
+    end
+  end
+
+  defp parse_input_mapping_segment(_value), do: :error
+
+  defp invalid_input_mapping_message do
+    "Input mapping lines must use target=payload.path or a bare field name."
+  end
+
+  defp duplicate_input_mapping_message, do: "Input mapping targets must be unique."
+
+  defp maybe_validate_retry_max_attempts(errors, value) do
+    if positive_integer_string?(value) do
+      errors
+    else
+      Map.put(errors, "retry_max_attempts", "Retry max attempts must be a positive integer.")
+    end
+  end
+
+  defp maybe_validate_retry_backoff(errors, "", ""), do: errors
+
+  defp maybe_validate_retry_backoff(errors, min_delay, max_delay) do
+    errors =
+      if positive_integer_string?(min_delay) do
+        errors
+      else
+        Map.put(errors, "retry_backoff_min", "Retry backoff min must be a positive integer.")
+      end
+
+    errors =
+      cond do
+        not positive_integer_string?(max_delay) ->
+          Map.put(errors, "retry_backoff_max", "Retry backoff max must be a positive integer.")
+
+        positive_integer_string?(min_delay) and
+            String.to_integer(max_delay) < String.to_integer(min_delay) ->
+          Map.put(
+            errors,
+            "retry_backoff_max",
+            "Retry backoff max must be greater than or equal to the minimum."
+          )
+
+        true ->
+          errors
+      end
+
+    errors
+  end
+
+  defp positive_integer_string?(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {integer, ""} when integer > 0 -> true
+      _other -> false
+    end
+  end
+
+  defp positive_integer_string?(_value), do: false
+
+  defp step_property_checked?(value), do: value in [true, "true", "on"]
+
+  defp serialize_input_mapping(nil), do: ""
+
+  defp serialize_input_mapping(mapping) when is_map(mapping) do
+    mapping
+    |> Enum.map(fn {target, path} ->
+      "#{target}=#{path |> List.wrap() |> Enum.map_join(".", &to_string/1)}"
+    end)
+    |> Enum.sort()
+    |> Enum.join("\n")
+  end
+
+  defp serialize_input_mapping(mapping) when is_list(mapping) do
+    mapping
+    |> Enum.map_join("\n", &to_string/1)
+  end
+
+  defp serialize_input_mapping(_mapping), do: ""
+
+  defp string_value(nil), do: ""
+  defp string_value(value) when is_binary(value), do: value
+  defp string_value(value), do: to_string(value)
+
+  defp boolean_form_value(true), do: "true"
+  defp boolean_form_value(_value), do: "false"
+
+  defp compensatable_value(opts) do
+    case value(opts, :compensatable) do
+      nil -> not step_property_checked?(value(opts, :irreversible, false))
+      value -> step_property_checked?(value)
+    end
+  end
 
   defp select_node(socket, node_id) do
     socket
@@ -1200,5 +1467,9 @@ defmodule SquidStudio.Web.EditorLive do
     do: "Host connector data is temporarily unavailable."
 
   defp value(map, key, default \\ nil)
-  defp value(map, key, default), do: Map.get(map, key) || Map.get(map, to_string(key)) || default
+
+  defp value(map, key, default) when is_map(map),
+    do: Map.get(map, key) || Map.get(map, to_string(key)) || default
+
+  defp value(_value, _key, default), do: default
 end

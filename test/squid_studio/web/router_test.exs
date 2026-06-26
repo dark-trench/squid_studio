@@ -823,6 +823,61 @@ defmodule SquidStudio.Web.RouterTest do
     assert spec_html =~ "&quot;title&quot;: &quot;Escalate invoice review&quot;"
   end
 
+  test "edits advanced action-backed step properties without dropping untouched fields", %{
+    conn: conn
+  } do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    view
+    |> element(~s(button[phx-value-id="restricted_issue_flow"]))
+    |> render_click()
+
+    selected_html =
+      view
+      |> element("#studio-node-open_issue")
+      |> render_click()
+
+    assert selected_html =~ ~s(id="studio-step-input-mapping-input")
+    assert selected_html =~ ~s(id="studio-step-output-input")
+    assert selected_html =~ ~s(id="studio-step-retry-max-attempts-input")
+    assert selected_html =~ ~s(id="studio-step-notes-input")
+    assert selected_html =~ "payload.invoice_id"
+    assert selected_html =~ "issue_result"
+    assert selected_html =~ "Escalate unresolved invoice review failures."
+
+    updated_html =
+      view
+      |> form("#studio-step-properties-form",
+        step_properties: %{
+          name: "open_issue",
+          label: "Open restricted issue",
+          action: "create_issue",
+          input_mapping: "issue_title=payload.invoice_id\nissue_body=payload.summary",
+          output_key: "created_issue",
+          retry_max_attempts: "5",
+          retry_backoff_min: "10",
+          retry_backoff_max: "120",
+          compensatable: "true",
+          notes: "Escalate after validation and capture the issue URL."
+        }
+      )
+      |> render_change()
+
+    assert updated_html =~ "created_issue"
+    assert updated_html =~ "Escalate after validation and capture the issue URL."
+    assert updated_html =~ "issue_title"
+    assert updated_html =~ "invoice_id"
+    assert updated_html =~ "issue_body"
+    assert updated_html =~ "summary"
+
+    spec_html =
+      view
+      |> element(~s(button[phx-value-surface="spec"]))
+      |> render_click()
+
+    assert spec_html =~ "Draft spec"
+  end
+
   test "shows inline step property errors and blocks validate and publish", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
 
@@ -839,7 +894,14 @@ defmodule SquidStudio.Web.RouterTest do
       step_properties: %{
         name: "notify_slack",
         label: "Notify Slack",
-        action: "post_message"
+        action: "post_message",
+        input_mapping: "channel=payload.account_id",
+        output_key: "message_result",
+        retry_max_attempts: "2",
+        retry_backoff_min: "5",
+        retry_backoff_max: "10",
+        compensatable: "true",
+        notes: "Notify the ops room."
       }
     )
     |> render_change()
@@ -850,7 +912,14 @@ defmodule SquidStudio.Web.RouterTest do
         step_properties: %{
           name: "invoice_added",
           label: "",
-          action: "missing_action"
+          action: "missing_action",
+          input_mapping: "channel=payload.account_id\nchannel=payload.summary",
+          output_key: "bad key",
+          retry_max_attempts: "0",
+          retry_backoff_min: "20",
+          retry_backoff_max: "10",
+          compensatable: "true",
+          irreversible: "true"
         }
       )
       |> render_change()
@@ -858,6 +927,13 @@ defmodule SquidStudio.Web.RouterTest do
     assert invalid_html =~ "Step name must be unique."
     assert invalid_html =~ "Label can&#39;t be blank."
     assert invalid_html =~ "Action key is not available for this user."
+
+    assert invalid_html =~ "Input mapping targets must be unique."
+
+    assert invalid_html =~ "Output key must use snake_case."
+    assert invalid_html =~ "Retry max attempts must be a positive integer."
+    assert invalid_html =~ "Retry backoff max must be greater than or equal to the minimum."
+    assert invalid_html =~ "A step cannot be both irreversible and compensatable."
     assert invalid_html =~ ~s(id="studio-node-notify_slack")
 
     validation_html =

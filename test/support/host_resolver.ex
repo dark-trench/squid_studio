@@ -169,7 +169,27 @@ defmodule SquidStudio.Test.HostResolver do
       payload: [],
       steps: [
         %{name: "invoice_added", opts: []},
-        %{name: "open_issue", action: "create_issue", opts: %{title: "Escalate invoice review"}}
+        %{
+          name: "open_issue",
+          action: "create_issue",
+          opts: %{
+            title: "Escalate invoice review",
+            input: %{
+              title: ["payload", "invoice_id"],
+              body: ["payload", "summary"]
+            },
+            output: "issue_result",
+            retry: %{
+              max_attempts: 3,
+              backoff: %{type: "exponential", min: 5, max: 60}
+            },
+            compensatable: true
+          },
+          metadata: %{
+            notes: "Escalate unresolved invoice review failures.",
+            owner: "risk_ops"
+          }
+        }
       ],
       transitions: [
         %{from: "invoice_added", on: "ok", to: "open_issue"}

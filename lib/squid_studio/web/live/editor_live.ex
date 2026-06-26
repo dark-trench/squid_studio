@@ -1187,8 +1187,6 @@ defmodule SquidStudio.Web.EditorLive do
     |> parse_input_mapping_segments()
   end
 
-  defp parse_input_mapping_path(_value), do: :error
-
   defp parse_input_mapping_segments(segments) do
     Enum.reduce_while(segments, {:ok, []}, fn segment, {:ok, acc} ->
       case parse_input_mapping_segment(segment) do

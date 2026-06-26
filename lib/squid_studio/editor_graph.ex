@@ -546,8 +546,6 @@ defmodule SquidStudio.EditorGraph do
     |> parse_mapping_segments()
   end
 
-  defp parse_mapping_path(_value), do: :error
-
   defp parse_mapping_segments(segments) do
     Enum.reduce_while(segments, [], fn segment, acc ->
       case parse_mapping_segment(segment) do

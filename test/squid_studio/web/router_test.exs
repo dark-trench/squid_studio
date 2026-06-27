@@ -614,6 +614,58 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Host published a runnable Squidie workflow version."
   end
 
+  test "creates a host-backed draft and marks unsaved changes in the editor", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    assert html =~ ~s(id="studio-create-draft-button")
+
+    created_html =
+      view
+      |> element("#studio-create-draft-button")
+      |> render_click()
+
+    assert created_html =~ "invoice_review_draft_2"
+    assert created_html =~ "Host created a new draft."
+    refute created_html =~ "Unsaved changes"
+
+    dirty_html =
+      view
+      |> render_hook("move_node", %{"id" => "review_invoice", "x" => 360, "y" => 190})
+
+    assert dirty_html =~ "Unsaved changes"
+
+    saved_html =
+      view
+      |> element(~s(button[phx-click="save_draft"]))
+      |> render_click()
+
+    refute saved_html =~ "Unsaved changes"
+    assert saved_html =~ "Saved"
+    assert saved_html =~ "Host persistence accepted the draft spec."
+  end
+
+  test "preserves draft validation issues when host save responses omit them", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    invalid_html =
+      view
+      |> element(~s(button[phx-value-id="carrier_onboarding"]))
+      |> render_click()
+
+    assert invalid_html =~ "Validation issues"
+    assert invalid_html =~ "duplicate step name: review_invoice"
+    assert invalid_html =~ "transition outcome must be ok or error"
+
+    saved_html =
+      view
+      |> element(~s(button[phx-click="save_draft"]))
+      |> render_click()
+
+    assert saved_html =~ "Saved"
+    assert saved_html =~ "duplicate step name: review_invoice"
+    assert saved_html =~ "transition outcome must be ok or error"
+  end
+
   test "enforces read-only mode across editor mutations", %{conn: conn} do
     {:ok, view, html} = live(conn, "/read-only-studio/workflows/invoice_review")
 

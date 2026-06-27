@@ -82,13 +82,32 @@ defmodule SquidStudio.Test.HostResolver do
   end
 
   @impl true
+  def create_draft(:operator, workflow_id, draft) do
+    metadata =
+      draft
+      |> Map.get("metadata", %{})
+      |> Map.put("created_by", "host")
+
+    {:ok,
+     draft
+     |> Map.put("id", "#{workflow_id}_draft_2")
+     |> Map.put("workflow", workflow_id)
+     |> Map.put("metadata", metadata)}
+  end
+
+  @impl true
   def save_draft(:operator, draft) do
     metadata =
       draft
       |> Map.get("metadata", %{})
       |> Map.put("last_saved_by", "host")
 
-    {:ok, Map.put(draft, "metadata", metadata)}
+    draft =
+      draft
+      |> Map.put("metadata", metadata)
+      |> Map.delete("validation_errors")
+
+    {:ok, draft}
   end
 
   @impl true

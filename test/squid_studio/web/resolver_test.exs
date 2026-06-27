@@ -18,6 +18,10 @@ defmodule SquidStudio.Web.ResolverTest do
     assert Enum.all?(drafts, &(&1["definition_version"] == "draft"))
     assert {:ok, %{"id" => "daily_digest"}} = Resolver.load_draft(nil, "daily_digest")
     assert {:error, :not_found} = Resolver.load_draft(nil, "missing")
+
+    assert {:error, :persistence_not_configured} =
+             Resolver.create_draft(nil, "daily_digest", %{})
+
     assert {:error, :persistence_not_configured} = Resolver.save_draft(nil, %{})
     assert {:error, :persistence_not_configured} = Resolver.delete_draft(nil, "daily_digest")
     assert {:error, :publish_not_configured} = Resolver.publish_draft(nil, "daily_digest")
@@ -33,6 +37,13 @@ defmodule SquidStudio.Web.ResolverTest do
              Resolver.call_with_fallback(SquidStudio.Test.HostResolver, :publish_draft, [
                :operator,
                "invoice_review"
+             ])
+
+    assert {:ok, %{"id" => "invoice_review_draft_2"}} =
+             Resolver.call_with_fallback(SquidStudio.Test.HostResolver, :create_draft, [
+               :operator,
+               "invoice_review",
+               %{"workflow" => "invoice_review", "spec" => %{}}
              ])
   end
 end

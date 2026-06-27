@@ -16,6 +16,7 @@ defmodule SquidStudio.Web.Resolver do
   @callback resolve_connector_catalog(term(), map()) ::
               [map()] | {:ok, [map()]} | {:error, term()}
   @callback load_draft(term(), String.t()) :: {:ok, map()} | {:error, term()}
+  @callback create_draft(term(), String.t(), map()) :: {:ok, map()} | {:error, term()}
   @callback save_draft(term(), map()) :: {:ok, map()} | {:error, term()}
   @callback delete_draft(term(), String.t()) :: :ok | {:ok, term()} | {:error, term()}
   @callback publish_draft(term(), String.t()) :: {:ok, map()} | {:error, term()}
@@ -26,6 +27,7 @@ defmodule SquidStudio.Web.Resolver do
                       resolve_drafts: 1,
                       resolve_connector_catalog: 2,
                       load_draft: 2,
+                      create_draft: 3,
                       save_draft: 2,
                       delete_draft: 2,
                       publish_draft: 2
@@ -219,6 +221,9 @@ defmodule SquidStudio.Web.Resolver do
       draft -> {:ok, draft}
     end
   end
+
+  @doc false
+  def create_draft(_user, _workflow_id, _draft), do: {:error, :persistence_not_configured}
 
   @doc false
   def save_draft(_user, _draft), do: {:error, :persistence_not_configured}

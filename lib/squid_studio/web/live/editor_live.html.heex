@@ -41,6 +41,19 @@
           <.icon name="hero-shield-check" />{@validation_status}
         </span>
         <span class="studio-badge"><.icon name="hero-pencil-square" />{@draft_status}</span>
+        <span :if={@draft_dirty?} class="studio-badge warn">
+          <.icon name="hero-exclamation-circle" />Unsaved changes
+        </span>
+        <button
+          id="studio-create-draft-button"
+          type="button"
+          class="studio-button secondary"
+          phx-click="create_draft"
+          disabled={@read_only?}
+        >
+          <.icon name="hero-document-plus" />
+          <span>Create draft</span>
+        </button>
         <button
           id="studio-validate-draft-button"
           type="button"

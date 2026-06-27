@@ -39,6 +39,7 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:draft_inventory, draft_inventory)
       |> assign(:drafts, [])
       |> assign(:selected_draft_id, nil)
+      |> assign(:draft_dirty?, false)
       |> assign(:draft_status, "No draft")
       |> assign(:persistence_message, persistence_message(socket.assigns[:draft_error], nil))
       |> assign(:nodes, [])
@@ -95,7 +96,7 @@ defmodule SquidStudio.Web.EditorLive do
           |> assign_spec_view()
       end
 
-    {:noreply, socket}
+    {:noreply, mark_draft_dirty(socket)}
   end
 
   def handle_event("center_graph", %{"width" => width, "height" => height}, socket) do
@@ -117,6 +118,43 @@ defmodule SquidStudio.Web.EditorLive do
 
   def handle_event("select_node", %{"id" => id}, socket) do
     {:noreply, select_node(socket, id)}
+  end
+
+  def handle_event("create_draft", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
+  end
+
+  def handle_event("create_draft", _params, socket) do
+    workflow = socket.assigns.workflow
+    seed_draft = create_draft_seed(workflow)
+
+    case Resolver.call_with_fallback(socket.assigns.resolver, :create_draft, [
+           socket.assigns.user,
+           workflow.id,
+           seed_draft
+         ]) do
+      {:ok, created_draft} ->
+        case Drafts.normalize(created_draft) do
+          {:ok, normalized_draft} ->
+            {:noreply,
+             socket
+             |> refresh_saved_draft(normalized_draft)
+             |> clear_draft_dirty()
+             |> assign(:persistence_message, "Host created a new draft.")}
+
+          {:error, _reason} ->
+            {:noreply,
+             socket
+             |> clear_draft_dirty()
+             |> assign(:persistence_message, create_draft_error_message(:invalid_draft_data))}
+        end
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> clear_draft_dirty()
+         |> assign(:persistence_message, create_draft_error_message(reason))}
+    end
   end
 
   def handle_event("set_theme", %{"theme" => theme}, socket) do
@@ -173,6 +211,7 @@ defmodule SquidStudio.Web.EditorLive do
         |> assign_selected_graph(Map.get(values, "name"))
         |> assign_spec_view()
         |> initialize_validation_feedback()
+        |> mark_draft_dirty()
       else
         assign_step_properties_state(socket, values, errors)
       end
@@ -220,6 +259,7 @@ defmodule SquidStudio.Web.EditorLive do
      |> assign(:selected_draft_id, id)
      |> assign(:draft_status, draft_status(nil, draft))
      |> assign(:persistence_message, persistence_message(nil, draft))
+     |> clear_draft_dirty()
      |> assign_selected_graph()
      |> assign_spec_view()
      |> initialize_validation_feedback()}
@@ -254,9 +294,12 @@ defmodule SquidStudio.Web.EditorLive do
              draft
            ]) do
       {:ok, saved_draft} ->
+        saved_draft = preserve_validation_errors(saved_draft, draft)
+
         {:noreply,
          socket
          |> refresh_saved_draft(saved_draft)
+         |> clear_draft_dirty()
          |> assign(:draft_status, "Saved")
          |> assign(:persistence_message, "Host persistence accepted the draft spec.")
          |> assign_spec_view()}
@@ -544,6 +587,7 @@ defmodule SquidStudio.Web.EditorLive do
         |> assign(:selected_edge_id, nil)
         |> assign_spec_view()
         |> initialize_validation_feedback()
+        |> mark_draft_dirty()
         |> assign(
           :catalog_message,
           "#{Map.fetch!(connector, "display_name")} added to the draft."
@@ -798,6 +842,7 @@ defmodule SquidStudio.Web.EditorLive do
     )
     |> assign(:drafts, socket.assigns.draft_inventory)
     |> assign(:selected_draft_id, selected_draft_id)
+    |> clear_draft_dirty()
     |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
     |> assign(
       :persistence_message,
@@ -1349,6 +1394,7 @@ defmodule SquidStudio.Web.EditorLive do
     |> assign(:drafts, draft_inventory)
     |> assign(:selected_workflow_id, workflow_id)
     |> assign(:selected_draft_id, selected_draft_id)
+    |> clear_draft_dirty()
     |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
     |> assign(
       :persistence_message,
@@ -1363,6 +1409,42 @@ defmodule SquidStudio.Web.EditorLive do
       draft_inventory ++ [draft]
     end
   end
+
+  defp create_draft_seed(workflow) do
+    %{
+      "workflow" => workflow.id,
+      "name" => workflow.name,
+      "definition_version" => "draft",
+      "spec" => Drafts.spec_from_workflow(workflow)
+    }
+  end
+
+  defp preserve_validation_errors(saved_draft, original_draft)
+       when is_map(saved_draft) and is_map(original_draft) do
+    if Map.has_key?(saved_draft, "validation_errors") do
+      saved_draft
+    else
+      case Map.get(original_draft, "validation_errors") do
+        errors when is_list(errors) and errors != [] ->
+          Map.put(saved_draft, "validation_errors", errors)
+
+        _other ->
+          saved_draft
+      end
+    end
+  end
+
+  defp preserve_validation_errors(saved_draft, _original_draft), do: saved_draft
+
+  defp mark_draft_dirty(socket) do
+    if is_nil(selected_draft(socket)) do
+      socket
+    else
+      assign(socket, :draft_dirty?, true)
+    end
+  end
+
+  defp clear_draft_dirty(socket), do: assign(socket, :draft_dirty?, false)
 
   defp replace_draft(existing, id, draft) do
     if Map.get(existing, "id") == id, do: draft, else: existing
@@ -1401,6 +1483,12 @@ defmodule SquidStudio.Web.EditorLive do
 
   defp save_error_message(reason),
     do: "Draft was kept in the editor. " <> resource_error_message(:save_support, reason)
+
+  defp create_draft_error_message(:persistence_not_configured),
+    do: "New draft was not created. Host save support is not available."
+
+  defp create_draft_error_message(reason),
+    do: "New draft was not created. " <> resource_error_message(:save_support, reason)
 
   defp publish_error_message(:publish_not_configured),
     do: "Publish handoff failed. Host publish support is not available."

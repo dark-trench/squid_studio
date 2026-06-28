@@ -6,9 +6,10 @@ Visual editor for Squidie workflows.
 > This repository was archived on June 28, 2026.
 >
 > The project did not justify continued standalone investment. Its visual-editor
-> direction overlapped too heavily with adjacent workflow tooling, especially
-> `squid_sonar`, and the maintenance cost was not worth carrying as a separate
-> product. The code and docs remain here as reference only.
+> direction overlapped too heavily with adjacent workflow tooling, while
+> `squid_sonar` remained the better fit as the monitoring tool in this space.
+> The maintenance cost was not worth carrying as a separate product. The code
+> and docs remain here as reference only.
 
 ## Squidie Integration
 

@@ -51,7 +51,6 @@ defmodule SquidStudio.Drafts do
 
   def normalize_many(value), do: {:error, {:invalid_json_value, [], value}}
 
-  @spec create_seed(map()) :: map()
   def create_seed(workflow) when is_map(workflow) do
     workflow_id = value(workflow, :id, "workflow")
     workflow_name = value(workflow, :name, "Workflow")

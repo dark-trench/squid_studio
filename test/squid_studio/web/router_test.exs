@@ -54,27 +54,27 @@ defmodule SquidStudio.Web.RouterTest do
   test "filters workflows by operational status", %{conn: conn} do
     {:ok, view, html} = live(conn, "/studio")
 
-    assert html =~ "Daily RSS To Discord"
-    assert html =~ "Approval Saga With Compensation"
-    assert html =~ "Dynamic Subscription Fanout"
+    assert html =~ ~s(id="workflow-card-daily_digest")
+    assert html =~ ~s(id="workflow-card-approval_saga")
+    assert html =~ ~s(id="workflow-card-dynamic_fanout")
 
     html =
       view
       |> element(~s(.studio-workflow-tab[phx-value-status="approval"]))
       |> render_click()
 
-    assert html =~ "Approval Saga With Compensation"
+    assert html =~ ~s(id="workflow-card-approval_saga")
     assert html =~ "Waiting for approval"
-    refute html =~ "Daily RSS To Discord"
-    refute html =~ "Dynamic Subscription Fanout"
+    refute html =~ ~s(id="workflow-card-daily_digest")
+    refute html =~ ~s(id="workflow-card-dynamic_fanout")
 
     html =
       view
       |> element(~s(.studio-workflow-tab[phx-value-status="all"]))
       |> render_click()
 
-    assert html =~ "Daily RSS To Discord"
-    assert html =~ "Dynamic Subscription Fanout"
+    assert html =~ ~s(id="workflow-card-daily_digest")
+    assert html =~ ~s(id="workflow-card-dynamic_fanout")
   end
 
   test "searches workflow inventory and clears empty status views", %{conn: conn} do
@@ -85,8 +85,8 @@ defmodule SquidStudio.Web.RouterTest do
       |> element(~s(.studio-workflow-tab[phx-value-status="draft"]))
       |> render_click()
 
-    assert html =~ "Runtime Authored Spec"
-    refute html =~ "Daily RSS To Discord"
+    assert html =~ ~s(id="workflow-card-runtime_authored_spec")
+    refute html =~ ~s(id="workflow-card-daily_digest")
 
     html =
       view
@@ -94,14 +94,14 @@ defmodule SquidStudio.Web.RouterTest do
       |> render_change()
 
     assert html =~ "No workflows match this view."
-    refute html =~ "Bedrock Lease Drain"
+    refute html =~ ~s(id="workflow-card-bedrock_dispatch")
 
     html =
       view
       |> element(~s(.studio-workflow-tab[phx-value-status="all"]))
       |> render_click()
 
-    assert html =~ "Bedrock Lease Drain"
+    assert html =~ ~s(id="workflow-card-bedrock_dispatch")
     assert html =~ "Bedrock lease runner"
   end
 
@@ -126,6 +126,37 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "studio-theme-dark"
     refute html =~ "studio-theme-system"
+  end
+
+  test "host workflows page owns draft creation and overflow deletion", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio")
+
+    assert html =~ ~s(id="workflow-drafts-panel")
+    assert html =~ ~s(id="workflow-card-new-draft-invoice_review")
+    assert html =~ ~s(id="workflow-draft-menu-invoice_review")
+
+    created_html =
+      view
+      |> element("#workflow-card-new-draft-invoice_review")
+      |> render_click()
+
+    assert created_html =~ "Host created a new draft."
+    assert created_html =~ ~s(id="workflow-draft-item-invoice_review_draft_2")
+
+    menu_html =
+      view
+      |> element("#workflow-draft-menu-invoice_review")
+      |> render_click()
+
+    assert menu_html =~ ~s(id="workflow-draft-menu-items-invoice_review")
+
+    confirmation_html =
+      view
+      |> element("#workflow-draft-delete-invoice_review")
+      |> render_click()
+
+    assert confirmation_html =~ ~s(id="workflow-draft-delete-confirmation-invoice_review")
+    assert confirmation_html =~ "Unsaved changes will be discarded."
   end
 
   test "mounts the embedded studio editor route", %{conn: conn} do

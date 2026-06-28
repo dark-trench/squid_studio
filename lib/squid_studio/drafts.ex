@@ -51,6 +51,18 @@ defmodule SquidStudio.Drafts do
 
   def normalize_many(value), do: {:error, {:invalid_json_value, [], value}}
 
+  def create_seed(workflow) when is_map(workflow) do
+    workflow_id = value(workflow, :id, "workflow")
+    workflow_name = value(workflow, :name, "Workflow")
+
+    %{
+      "workflow" => workflow_id,
+      "name" => workflow_name,
+      "definition_version" => "draft",
+      "spec" => spec_from_workflow(workflow)
+    }
+  end
+
   @spec from_workflows([map()]) :: [draft()]
   def from_workflows(workflows) when is_list(workflows) do
     workflows

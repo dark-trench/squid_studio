@@ -54,27 +54,27 @@ defmodule SquidStudio.Web.RouterTest do
   test "filters workflows by operational status", %{conn: conn} do
     {:ok, view, html} = live(conn, "/studio")
 
-    assert html =~ "Daily RSS To Discord"
-    assert html =~ "Approval Saga With Compensation"
-    assert html =~ "Dynamic Subscription Fanout"
+    assert html =~ ~s(id="workflow-card-daily_digest")
+    assert html =~ ~s(id="workflow-card-approval_saga")
+    assert html =~ ~s(id="workflow-card-dynamic_fanout")
 
     html =
       view
       |> element(~s(.studio-workflow-tab[phx-value-status="approval"]))
       |> render_click()
 
-    assert html =~ "Approval Saga With Compensation"
+    assert html =~ ~s(id="workflow-card-approval_saga")
     assert html =~ "Waiting for approval"
-    refute html =~ "Daily RSS To Discord"
-    refute html =~ "Dynamic Subscription Fanout"
+    refute html =~ ~s(id="workflow-card-daily_digest")
+    refute html =~ ~s(id="workflow-card-dynamic_fanout")
 
     html =
       view
       |> element(~s(.studio-workflow-tab[phx-value-status="all"]))
       |> render_click()
 
-    assert html =~ "Daily RSS To Discord"
-    assert html =~ "Dynamic Subscription Fanout"
+    assert html =~ ~s(id="workflow-card-daily_digest")
+    assert html =~ ~s(id="workflow-card-dynamic_fanout")
   end
 
   test "searches workflow inventory and clears empty status views", %{conn: conn} do
@@ -85,8 +85,8 @@ defmodule SquidStudio.Web.RouterTest do
       |> element(~s(.studio-workflow-tab[phx-value-status="draft"]))
       |> render_click()
 
-    assert html =~ "Runtime Authored Spec"
-    refute html =~ "Daily RSS To Discord"
+    assert html =~ ~s(id="workflow-card-runtime_authored_spec")
+    refute html =~ ~s(id="workflow-card-daily_digest")
 
     html =
       view
@@ -94,14 +94,14 @@ defmodule SquidStudio.Web.RouterTest do
       |> render_change()
 
     assert html =~ "No workflows match this view."
-    refute html =~ "Bedrock Lease Drain"
+    refute html =~ ~s(id="workflow-card-bedrock_dispatch")
 
     html =
       view
       |> element(~s(.studio-workflow-tab[phx-value-status="all"]))
       |> render_click()
 
-    assert html =~ "Bedrock Lease Drain"
+    assert html =~ ~s(id="workflow-card-bedrock_dispatch")
     assert html =~ "Bedrock lease runner"
   end
 
@@ -126,6 +126,37 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "studio-theme-dark"
     refute html =~ "studio-theme-system"
+  end
+
+  test "host workflows page owns draft creation and overflow deletion", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/host-studio")
+
+    assert html =~ ~s(id="workflow-drafts-panel")
+    assert html =~ ~s(id="workflow-card-new-draft-invoice_review")
+    assert html =~ ~s(id="workflow-draft-menu-invoice_review")
+
+    created_html =
+      view
+      |> element("#workflow-card-new-draft-invoice_review")
+      |> render_click()
+
+    assert created_html =~ "Host created a new draft."
+    assert created_html =~ ~s(id="workflow-draft-item-invoice_review_draft_2")
+
+    menu_html =
+      view
+      |> element("#workflow-draft-menu-invoice_review")
+      |> render_click()
+
+    assert menu_html =~ ~s(id="workflow-draft-menu-items-invoice_review")
+
+    confirmation_html =
+      view
+      |> element("#workflow-draft-delete-invoice_review")
+      |> render_click()
+
+    assert confirmation_html =~ ~s(id="workflow-draft-delete-confirmation-invoice_review")
+    assert confirmation_html =~ "Unsaved changes will be discarded."
   end
 
   test "mounts the embedded studio editor route", %{conn: conn} do
@@ -267,18 +298,24 @@ defmodule SquidStudio.Web.RouterTest do
     refute html =~ "&quot;nodes&quot;: ["
   end
 
-  test "uses a full-width editor topbar above the workspace panels", %{conn: conn} do
+  test "uses a calm editor context bar and dedicated draft command bar", %{conn: conn} do
     html =
       conn
       |> get("/studio/workflows/daily_digest")
       |> html_response(200)
 
-    assert html =~ ~s(<header class="studio-topbar">)
+    assert html =~ ~s(id="studio-context-bar")
+    assert html =~ ~s(id="studio-editor-command-bar")
     assert html =~ ~s(<div class="studio-workspace">)
     assert html =~ ~s(<aside class="studio-sidebar">)
     assert html =~ ~s(<section class="studio-canvas-column">)
     assert html =~ ~s(<aside class="studio-properties">)
-    assert html =~ ~s(phx-click="validate_draft")
+    assert html =~ ~s(id="studio-save-draft-button")
+    assert html =~ ~s(id="studio-validate-draft-button")
+    assert html =~ ~s(id="studio-publish-draft-button")
+    refute html =~ ~s(id="studio-create-draft-button")
+    refute html =~ ~s(id="studio-delete-draft-button")
+    refute html =~ ~s(id="studio-delete-draft-confirmation")
     refute html =~ ~s(class="studio-toolbar")
     refute html =~ "Review</span>"
   end
@@ -432,13 +469,14 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-theme-dark"
     assert css.resp_body =~ ".studio-theme-system"
     assert css.resp_body =~ "--studio-sidebar-width: clamp(220px, 22vw, 260px);"
-    assert css.resp_body =~ "--studio-properties-width: clamp(250px, 26vw, 300px);"
+    assert css.resp_body =~ "--studio-properties-width: clamp(220px, 24vw, 272px);"
     assert css.resp_body =~ ".studio-theme-switcher"
-    assert css.resp_body =~ "--studio-topbar-height: 56px;"
-    assert css.resp_body =~ ".studio-topbar .studio-metric span"
+    assert css.resp_body =~ "--studio-topbar-height: 48px;"
+    assert css.resp_body =~ ".studio-context-status"
+    assert css.resp_body =~ ".studio-editor-command-bar"
 
     assert css.resp_body =~
-             "grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.1fr) auto minmax(280px, 1.3fr);"
+             "grid-template-columns: minmax(0, 1.2fr) auto auto;"
 
     assert css.resp_body =~ "grid-template-columns: repeat(2, minmax(78px, auto));"
     assert css.resp_body =~ "--studio-workflows-content-width: 1280px;"
@@ -451,6 +489,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-tab"
     assert css.resp_body =~ ".studio-workflow-row-icon"
     assert css.resp_body =~ ".studio-workflow-run-details"
+    assert css.resp_body =~ ".studio-workflow-card-footer"
+    assert css.resp_body =~ "padding: 8px 10px;"
+    assert css.resp_body =~ "min-height: 72px;"
     assert css.resp_body =~ ".studio-workflow-row-meta"
     assert css.resp_body =~ "grid-template-columns: 34px minmax(0, 1fr) auto;"
     assert css.resp_body =~ "padding: 11px 14px;"
@@ -595,7 +636,7 @@ defmodule SquidStudio.Web.RouterTest do
       |> render_click()
 
     assert html =~ "carrier_onboarding"
-    assert html =~ "Host persistence owns save, delete, and publish callbacks."
+    assert html =~ "Host persistence owns save and publish callbacks."
 
     html =
       view
@@ -612,76 +653,6 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "Published"
     assert html =~ "Host published a runnable Squidie workflow version."
-  end
-
-  test "creates a host-backed draft and marks unsaved changes in the editor", %{conn: conn} do
-    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
-
-    assert html =~ ~s(id="studio-create-draft-button")
-
-    created_html =
-      view
-      |> element("#studio-create-draft-button")
-      |> render_click()
-
-    assert created_html =~ "invoice_review_draft_2"
-    assert created_html =~ "Host created a new draft."
-    refute created_html =~ "Unsaved changes"
-
-    dirty_html =
-      view
-      |> render_hook("move_node", %{"id" => "review_invoice", "x" => 360, "y" => 190})
-
-    assert dirty_html =~ "Unsaved changes"
-
-    saved_html =
-      view
-      |> element(~s(button[phx-click="save_draft"]))
-      |> render_click()
-
-    refute saved_html =~ "Unsaved changes"
-    assert saved_html =~ "Saved"
-    assert saved_html =~ "Host persistence accepted the draft spec."
-  end
-
-  test "confirms before deleting a host-backed draft and falls back to the remaining draft", %{
-    conn: conn
-  } do
-    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
-
-    created_html =
-      view
-      |> element("#studio-create-draft-button")
-      |> render_click()
-
-    assert created_html =~ "invoice_review_draft_2"
-
-    dirty_html =
-      view
-      |> render_hook("move_node", %{"id" => "review_invoice", "x" => 360, "y" => 190})
-
-    assert dirty_html =~ "Unsaved changes"
-
-    confirmation_html =
-      view
-      |> element("#studio-delete-draft-button")
-      |> render_click()
-
-    assert confirmation_html =~ ~s(id="studio-confirm-delete-draft-button")
-    assert confirmation_html =~ "Delete draft?"
-    assert confirmation_html =~ "Unsaved changes will be discarded."
-    assert confirmation_html =~ "invoice_review_draft_2"
-
-    deleted_html =
-      view
-      |> element("#studio-confirm-delete-draft-button")
-      |> render_click()
-
-    assert deleted_html =~ "Host deleted the draft."
-    assert deleted_html =~ ~s(id="studio-draft-item-invoice_review")
-    refute deleted_html =~ "invoice_review_draft_2"
-    refute deleted_html =~ ~s(id="studio-confirm-delete-draft-button")
-    refute deleted_html =~ "Unsaved changes"
   end
 
   test "preserves draft validation issues when host save responses omit them", %{conn: conn} do
@@ -712,11 +683,13 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Read-only"
     assert html =~ ~s(id="squid-studio-flow")
     assert html =~ ~s(data-read-only="true")
-
+    assert html =~ ~s(id="studio-context-bar")
+    assert html =~ ~s(id="studio-editor-command-bar")
     assert html =~ ~s(id="studio-publish-draft-button")
     assert html =~ ~s(id="studio-save-draft-button")
     assert html =~ ~s(id="studio-validate-draft-button")
-
+    refute html =~ ~s(id="studio-create-draft-button")
+    refute html =~ ~s(id="studio-delete-draft-button")
     assert html =~ ~r/id="studio-publish-draft-button"[^>]*disabled/
     assert html =~ ~r/id="studio-save-draft-button"[^>]*disabled/
 

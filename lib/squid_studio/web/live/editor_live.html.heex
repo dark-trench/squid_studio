@@ -55,6 +55,45 @@
           <span>Create draft</span>
         </button>
         <button
+          id="studio-delete-draft-button"
+          type="button"
+          class="studio-button secondary"
+          phx-click="request_delete_draft"
+          disabled={@read_only? or is_nil(@selected_draft_id)}
+        >
+          <.icon name="hero-trash" />
+          <span>Delete draft</span>
+        </button>
+        <div
+          :if={@pending_delete_draft_id == @selected_draft_id and not is_nil(@selected_draft_id)}
+          id="studio-delete-draft-confirmation"
+          class="studio-delete-confirmation"
+        >
+          <span class="studio-badge warn">Delete draft?</span>
+          <span class="studio-delete-confirmation-copy">
+            {if @draft_dirty?,
+              do: "Unsaved changes will be discarded.",
+              else: "This removes the current draft from host persistence."}
+          </span>
+          <button
+            id="studio-cancel-delete-draft-button"
+            type="button"
+            class="studio-button secondary"
+            phx-click="cancel_delete_draft"
+          >
+            <span>Cancel</span>
+          </button>
+          <button
+            id="studio-confirm-delete-draft-button"
+            type="button"
+            class="studio-button danger"
+            phx-click="confirm_delete_draft"
+          >
+            <.icon name="hero-trash" />
+            <span>Confirm delete</span>
+          </button>
+        </div>
+        <button
           id="studio-validate-draft-button"
           type="button"
           class="studio-button secondary"

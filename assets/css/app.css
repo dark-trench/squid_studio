@@ -657,6 +657,25 @@ body:has(.studio-app) {
   min-width: 0;
 }
 
+.studio-delete-confirmation {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  max-width: min(100%, 34rem);
+  padding: 6px 10px;
+  border: 1px solid var(--studio-badge-border);
+  border-radius: 8px;
+  background: var(--studio-badge-bg);
+  color: var(--studio-badge-ink);
+}
+
+.studio-delete-confirmation-copy {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .studio-theme-switcher {
   display: inline-flex;
   align-items: center;
@@ -754,6 +773,17 @@ body:has(.studio-app) {
 .studio-button.primary:hover {
   background: var(--studio-accent-strong);
   border-color: var(--studio-accent-strong);
+}
+
+.studio-button.danger {
+  border-color: var(--studio-badge-border);
+  background: var(--studio-badge-bg);
+  color: var(--studio-badge-ink);
+}
+
+.studio-button.danger:hover {
+  border-color: color-mix(in srgb, var(--studio-badge-border) 88%, var(--studio-border));
+  background: color-mix(in srgb, var(--studio-badge-bg) 82%, white);
 }
 
 .studio-button:disabled {

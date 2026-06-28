@@ -111,6 +111,9 @@ defmodule SquidStudio.Test.HostResolver do
   end
 
   @impl true
+  def delete_draft(:operator, _draft_id), do: :ok
+
+  @impl true
   def publish_draft(:operator, draft_id) do
     {:ok,
      %{

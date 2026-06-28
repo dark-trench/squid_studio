@@ -39,6 +39,7 @@ defmodule SquidStudio.Web.EditorLive do
       |> assign(:draft_inventory, draft_inventory)
       |> assign(:drafts, [])
       |> assign(:selected_draft_id, nil)
+      |> assign(:pending_delete_draft_id, nil)
       |> assign(:draft_dirty?, false)
       |> assign(:draft_status, "No draft")
       |> assign(:persistence_message, persistence_message(socket.assigns[:draft_error], nil))
@@ -315,6 +316,67 @@ defmodule SquidStudio.Web.EditorLive do
          socket
          |> assign(:draft_status, "No draft")
          |> assign(:persistence_message, "No draft spec is selected.")}
+    end
+  end
+
+  def handle_event("request_delete_draft", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
+  end
+
+  def handle_event("request_delete_draft", _params, socket) do
+    case selected_draft(socket) do
+      nil ->
+        {:noreply,
+         socket
+         |> clear_pending_delete_draft()
+         |> assign(:draft_status, "No draft")
+         |> assign(:persistence_message, "No draft spec is selected.")}
+
+      draft ->
+        {:noreply, assign(socket, :pending_delete_draft_id, Map.get(draft, "id"))}
+    end
+  end
+
+  def handle_event("cancel_delete_draft", _params, socket) do
+    {:noreply, clear_pending_delete_draft(socket)}
+  end
+
+  def handle_event("confirm_delete_draft", _params, %{assigns: %{read_only?: true}} = socket) do
+    {:noreply, deny_draft_mutation(socket)}
+  end
+
+  def handle_event("confirm_delete_draft", _params, socket) do
+    case selected_draft(socket) do
+      nil ->
+        {:noreply,
+         socket
+         |> clear_pending_delete_draft()
+         |> assign(:draft_status, "No draft")
+         |> assign(:persistence_message, "No draft spec is selected.")}
+
+      draft ->
+        case Resolver.call_with_fallback(socket.assigns.resolver, :delete_draft, [
+               socket.assigns.user,
+               Map.get(draft, "id")
+             ]) do
+          result when result in [:ok, {:ok, :deleted}] ->
+            {:noreply,
+             socket
+             |> remove_draft(draft)
+             |> assign(:persistence_message, "Host deleted the draft.")}
+
+          {:ok, _value} ->
+            {:noreply,
+             socket
+             |> remove_draft(draft)
+             |> assign(:persistence_message, "Host deleted the draft.")}
+
+          {:error, reason} ->
+            {:noreply,
+             socket
+             |> clear_pending_delete_draft()
+             |> assign(:persistence_message, delete_error_message(reason))}
+        end
     end
   end
 
@@ -842,6 +904,7 @@ defmodule SquidStudio.Web.EditorLive do
     )
     |> assign(:drafts, socket.assigns.draft_inventory)
     |> assign(:selected_draft_id, selected_draft_id)
+    |> clear_pending_delete_draft()
     |> clear_draft_dirty()
     |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
     |> assign(
@@ -1394,6 +1457,7 @@ defmodule SquidStudio.Web.EditorLive do
     |> assign(:drafts, draft_inventory)
     |> assign(:selected_workflow_id, workflow_id)
     |> assign(:selected_draft_id, selected_draft_id)
+    |> clear_pending_delete_draft()
     |> clear_draft_dirty()
     |> assign(:draft_status, draft_status(socket.assigns[:draft_error], selected_draft))
     |> assign(
@@ -1444,7 +1508,20 @@ defmodule SquidStudio.Web.EditorLive do
     end
   end
 
+  defp clear_pending_delete_draft(socket), do: assign(socket, :pending_delete_draft_id, nil)
   defp clear_draft_dirty(socket), do: assign(socket, :draft_dirty?, false)
+
+  defp remove_draft(socket, draft) do
+    draft_id = Map.get(draft, "id")
+    workflow_id = Map.get(draft, "workflow") || socket.assigns.selected_workflow_id
+
+    draft_inventory =
+      Enum.reject(socket.assigns.draft_inventory, &(Map.get(&1, "id") == draft_id))
+
+    socket
+    |> assign(:draft_inventory, draft_inventory)
+    |> select_workflow_state(workflow_id)
+  end
 
   defp replace_draft(existing, id, draft) do
     if Map.get(existing, "id") == id, do: draft, else: existing
@@ -1490,6 +1567,12 @@ defmodule SquidStudio.Web.EditorLive do
   defp create_draft_error_message(reason),
     do: "New draft was not created. " <> resource_error_message(:save_support, reason)
 
+  defp delete_error_message(:persistence_not_configured),
+    do: "Draft was not deleted. Host delete support is not available."
+
+  defp delete_error_message(reason),
+    do: "Draft was not deleted. " <> resource_error_message(:delete_support, reason)
+
   defp publish_error_message(:publish_not_configured),
     do: "Publish handoff failed. Host publish support is not available."
 
@@ -1517,6 +1600,9 @@ defmodule SquidStudio.Web.EditorLive do
   defp resource_error_message(:save_support, :unsupported_capability),
     do: "Host save support is not available."
 
+  defp resource_error_message(:delete_support, :unsupported_capability),
+    do: "Host delete support is not available."
+
   defp resource_error_message(:publish_support, :unsupported_capability),
     do: "Host publish support is not available."
 
@@ -1539,6 +1625,9 @@ defmodule SquidStudio.Web.EditorLive do
     do: "Host did not authorize connector access."
 
   defp resource_error_message(:save_support, _reason), do: "Host save support is not available."
+
+  defp resource_error_message(:delete_support, _reason),
+    do: "Host delete support is not available."
 
   defp resource_error_message(:publish_support, _reason),
     do: "Host publish support is not available."

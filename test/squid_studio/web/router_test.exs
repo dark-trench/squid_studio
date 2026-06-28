@@ -644,6 +644,46 @@ defmodule SquidStudio.Web.RouterTest do
     assert saved_html =~ "Host persistence accepted the draft spec."
   end
 
+  test "confirms before deleting a host-backed draft and falls back to the remaining draft", %{
+    conn: conn
+  } do
+    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
+
+    created_html =
+      view
+      |> element("#studio-create-draft-button")
+      |> render_click()
+
+    assert created_html =~ "invoice_review_draft_2"
+
+    dirty_html =
+      view
+      |> render_hook("move_node", %{"id" => "review_invoice", "x" => 360, "y" => 190})
+
+    assert dirty_html =~ "Unsaved changes"
+
+    confirmation_html =
+      view
+      |> element("#studio-delete-draft-button")
+      |> render_click()
+
+    assert confirmation_html =~ ~s(id="studio-confirm-delete-draft-button")
+    assert confirmation_html =~ "Delete draft?"
+    assert confirmation_html =~ "Unsaved changes will be discarded."
+    assert confirmation_html =~ "invoice_review_draft_2"
+
+    deleted_html =
+      view
+      |> element("#studio-confirm-delete-draft-button")
+      |> render_click()
+
+    assert deleted_html =~ "Host deleted the draft."
+    assert deleted_html =~ ~s(id="studio-draft-item-invoice_review")
+    refute deleted_html =~ "invoice_review_draft_2"
+    refute deleted_html =~ ~s(id="studio-confirm-delete-draft-button")
+    refute deleted_html =~ "Unsaved changes"
+  end
+
   test "preserves draft validation issues when host save responses omit them", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
 

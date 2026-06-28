@@ -523,7 +523,7 @@ body:has(.studio-app) {
 
 .studio-canvas-column {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   row-gap: 12px;
   min-width: 0;
   min-height: 0;
@@ -566,7 +566,7 @@ body:has(.studio-app) {
 
 .studio-topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) auto auto;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   min-width: 0;
@@ -581,6 +581,12 @@ body:has(.studio-app) {
 .studio-context-leading {
   display: grid;
   gap: 4px;
+  min-width: 0;
+}
+
+.studio-context-title {
+  display: grid;
+  justify-items: center;
   min-width: 0;
 }
 
@@ -1469,11 +1475,11 @@ a.studio-wordmark:hover strong {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   border: 1px solid transparent;
   border-bottom-color: var(--studio-border);
   border-radius: 0;
-  padding: 11px 14px;
+  padding: 9px 14px;
   background: transparent;
   color: var(--studio-ink);
   text-decoration: none;
@@ -1488,15 +1494,6 @@ a.studio-wordmark:hover strong {
   border-radius: 7px;
   background: var(--studio-accent-soft);
   box-shadow: none;
-}
-
-.studio-workflow-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  grid-column: 2 / 4;
-  padding-top: 8px;
 }
 
 .studio-workflow-row-icon {
@@ -1520,7 +1517,7 @@ a.studio-wordmark:hover strong {
 
 .studio-workflow-card-main {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -1533,57 +1530,6 @@ a.studio-wordmark:hover strong {
 
 .studio-workflow-card-title {
   min-width: 0;
-}
-
-.studio-workflows-panel-section + .studio-workflows-panel-header {
-  margin-top: 18px;
-}
-
-.studio-draft-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 8px;
-}
-
-.studio-draft-row-actions {
-  position: relative;
-}
-
-.studio-overflow-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  display: grid;
-  gap: 6px;
-  min-width: 180px;
-  padding: 8px;
-  border: 1px solid var(--studio-border);
-  border-radius: 12px;
-  background: var(--studio-surface);
-  box-shadow: var(--studio-shadow);
-  z-index: 4;
-}
-
-.studio-overflow-menu-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  color: var(--studio-ink);
-  text-align: left;
-}
-
-.studio-overflow-menu-item:hover {
-  background: var(--studio-surface-muted);
-}
-
-.studio-overflow-menu-item.danger {
-  color: var(--studio-badge-ink);
 }
 
 .studio-workflow-card h4 {
@@ -1791,6 +1737,10 @@ a.studio-wordmark:hover strong {
 @media (max-width: 1180px) {
   .studio-topbar {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .studio-context-title {
+    justify-items: start;
   }
 
   .studio-context-meta {

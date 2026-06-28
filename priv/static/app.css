@@ -308,17 +308,6 @@
     width: 1.5rem;
     height: 1.5rem;
   }
-  .hero-ellipsis-horizontal {
-    --hero-ellipsis-horizontal: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M6.75%2012a.75.75%200%201%201-1.5%200%20.75.75%200%200%201%201.5%200ZM12.75%2012a.75.75%200%201%201-1.5%200%20.75.75%200%200%201%201.5%200ZM18.75%2012a.75.75%200%201%201-1.5%200%20.75.75%200%200%201%201.5%200Z%22%2F%3E%3C%2Fsvg%3E');
-    -webkit-mask: var(--hero-ellipsis-horizontal);
-    mask: var(--hero-ellipsis-horizontal);
-    mask-repeat: no-repeat;
-    background-color: currentColor;
-    vertical-align: middle;
-    display: inline-block;
-    width: 1.5rem;
-    height: 1.5rem;
-  }
   .hero-exclamation-circle {
     --hero-exclamation-circle: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%209v3.75m9-.75a9%209%200%201%201-18%200%209%209%200%200%201%2018%200Zm-9%203.75h.008v.008H12v-.008Z%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-exclamation-circle);
@@ -455,17 +444,6 @@
     --hero-square-3-stack-3d: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M6.429%209.75%202.25%2012l4.179%202.25m0-4.5%205.571%203%205.571-3m-11.142%200L2.25%207.5%2012%202.25l9.75%205.25-4.179%202.25m0%200L21.75%2012l-4.179%202.25m0%200%204.179%202.25L12%2021.75%202.25%2016.5l4.179-2.25m11.142%200-5.571%203-5.571-3%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-square-3-stack-3d);
     mask: var(--hero-square-3-stack-3d);
-    mask-repeat: no-repeat;
-    background-color: currentColor;
-    vertical-align: middle;
-    display: inline-block;
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  .hero-trash {
-    --hero-trash: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m14.74%209-.346%209m-4.788%200L9.26%209m9.968-3.21c.342.052.682.107%201.022.166m-1.022-.165L18.16%2019.673a2.25%202.25%200%200%201-2.244%202.077H8.084a2.25%202.25%200%200%201-2.244-2.077L4.772%205.79m14.456%200a48.108%2048.108%200%200%200-3.478-.397m-12%20.562c.34-.059.68-.114%201.022-.165m0%200a48.11%2048.11%200%200%201%203.478-.397m7.5%200v-.916c0-1.18-.91-2.164-2.09-2.201a51.964%2051.964%200%200%200-3.32%200c-1.18.037-2.09%201.022-2.09%202.201v.916m7.5%200a48.667%2048.667%200%200%200-7.5%200%22%2F%3E%3C%2Fsvg%3E');
-    -webkit-mask: var(--hero-trash);
-    mask: var(--hero-trash);
     mask-repeat: no-repeat;
     background-color: currentColor;
     vertical-align: middle;
@@ -936,7 +914,7 @@ html:has(.studio-app), body:has(.studio-app) {
 }
 .studio-canvas-column {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   row-gap: 12px;
   min-width: 0;
   min-height: 0;
@@ -970,7 +948,7 @@ html:has(.studio-app), body:has(.studio-app) {
 }
 .studio-topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) auto auto;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   min-width: 0;
@@ -984,6 +962,11 @@ html:has(.studio-app), body:has(.studio-app) {
 .studio-context-leading {
   display: grid;
   gap: 4px;
+  min-width: 0;
+}
+.studio-context-title {
+  display: grid;
+  justify-items: center;
   min-width: 0;
 }
 .studio-context-status {
@@ -1750,11 +1733,11 @@ a.studio-wordmark:hover strong {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   border: 1px solid transparent;
   border-bottom-color: var(--studio-border);
   border-radius: 0;
-  padding: 11px 14px;
+  padding: 9px 14px;
   background: transparent;
   color: var(--studio-ink);
   text-decoration: none;
@@ -1765,14 +1748,6 @@ a.studio-wordmark:hover strong {
   border-radius: 7px;
   background: var(--studio-accent-soft);
   box-shadow: none;
-}
-.studio-workflow-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  grid-column: 2 / 4;
-  padding-top: 8px;
 }
 .studio-workflow-row-icon {
   display: inline-grid;
@@ -1790,7 +1765,7 @@ a.studio-wordmark:hover strong {
 }
 .studio-workflow-card-main {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 .studio-workflow-card-header {
@@ -1801,50 +1776,6 @@ a.studio-wordmark:hover strong {
 }
 .studio-workflow-card-title {
   min-width: 0;
-}
-.studio-workflows-panel-section + .studio-workflows-panel-header {
-  margin-top: 18px;
-}
-.studio-draft-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 8px;
-}
-.studio-draft-row-actions {
-  position: relative;
-}
-.studio-overflow-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  display: grid;
-  gap: 6px;
-  min-width: 180px;
-  padding: 8px;
-  border: 1px solid var(--studio-border);
-  border-radius: 12px;
-  background: var(--studio-surface);
-  box-shadow: var(--studio-shadow);
-  z-index: 4;
-}
-.studio-overflow-menu-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  color: var(--studio-ink);
-  text-align: left;
-}
-.studio-overflow-menu-item:hover {
-  background: var(--studio-surface-muted);
-}
-.studio-overflow-menu-item.danger {
-  color: var(--studio-badge-ink);
 }
 .studio-workflow-card h4 {
   margin-top: 2px;
@@ -2011,6 +1942,9 @@ a.studio-wordmark:hover strong {
 @media (max-width: 1180px) {
   .studio-topbar {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .studio-context-title {
+    justify-items: start;
   }
   .studio-context-meta {
     justify-content: flex-start;

@@ -89,9 +89,10 @@
                 </button>
               </div>
             <% else %>
-              <div
+              <.link
                 :for={workflow <- @visible_workflows}
                 id={"workflow-card-#{workflow.id}"}
+                navigate={studio_path(["workflows", workflow.id])}
                 class="studio-workflow-card is-clickable-row"
               >
                 <div class="studio-workflow-row-icon">
@@ -120,128 +121,20 @@
                     <span>{workflow.runs} runs</span>
                   </div>
                 </div>
-
-                <div class="studio-workflow-card-footer">
-                  <.link
-                    id={"workflow-open-#{workflow.id}"}
-                    navigate={studio_path(["workflows", workflow.id])}
-                    class="studio-button secondary"
-                  >
-                    <span>Open editor</span>
-                  </.link>
-                  <button
-                    id={"workflow-card-new-draft-#{workflow.id}"}
-                    type="button"
-                    class="studio-button primary"
-                    phx-click="create_draft"
-                    phx-value-workflow_id={workflow.id}
-                  >
-                    <.icon name="hero-plus" />
-                    <span>New draft</span>
-                  </button>
-                </div>
-              </div>
+              </.link>
             <% end %>
           </div>
         </div>
 
         <aside class="studio-workflows-panel">
-          <div id="workflow-drafts-panel" class="studio-workflows-panel-section">
-            <div class="studio-workflows-panel-header">
-              <div>
-                <p class="studio-kicker">Drafts</p>
-                <h3>Active drafts</h3>
-              </div>
-            </div>
-
-            <p :if={@persistence_message} class="studio-muted">{@persistence_message}</p>
-
-            <div class="studio-draft-list">
-              <div
-                :for={draft <- @drafts}
-                id={"workflow-draft-item-#{Map.get(draft, "id")}"}
-                class="studio-draft-row"
-              >
-                <.link
-                  id={"workflow-draft-open-#{Map.get(draft, "id")}"}
-                  navigate={studio_path(["workflows", Map.get(draft, "workflow")])}
-                  class={[
-                    "studio-draft-item",
-                    Map.get(draft, "id") == @selected_draft_id && "is-active"
-                  ]}
-                >
-                  <strong>{Map.get(draft, "name")}</strong>
-                  <small>
-                    {Map.get(draft, "workflow")} · {Map.get(draft, "definition_version")}
-                  </small>
-                </.link>
-
-                <div class="studio-draft-row-actions">
-                  <button
-                    id={"workflow-draft-menu-#{Map.get(draft, "id")}"}
-                    type="button"
-                    class="studio-icon-button"
-                    phx-click="toggle_draft_menu"
-                    phx-value-id={Map.get(draft, "id")}
-                  >
-                    <.icon name="hero-ellipsis-horizontal" />
-                  </button>
-
-                  <div
-                    :if={@open_draft_menu_id == Map.get(draft, "id")}
-                    id={"workflow-draft-menu-items-#{Map.get(draft, "id")}"}
-                    class="studio-overflow-menu"
-                  >
-                    <button
-                      id={"workflow-draft-delete-#{Map.get(draft, "id")}"}
-                      type="button"
-                      class="studio-overflow-menu-item danger"
-                      phx-click="request_delete_draft"
-                      phx-value-id={Map.get(draft, "id")}
-                    >
-                      <.icon name="hero-trash" />
-                      <span>Delete</span>
-                    </button>
-
-                    <div
-                      :if={@pending_delete_draft_id == Map.get(draft, "id")}
-                      id={"workflow-draft-delete-confirmation-#{Map.get(draft, "id")}"}
-                      class="studio-delete-confirmation"
-                    >
-                      <span class="studio-badge warn">Delete draft?</span>
-                      <span class="studio-delete-confirmation-copy">
-                        Unsaved changes will be discarded.
-                      </span>
-                      <button
-                        type="button"
-                        class="studio-button secondary"
-                        phx-click="cancel_delete_draft"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        class="studio-button danger"
-                        phx-click="confirm_delete_draft"
-                        phx-value-id={Map.get(draft, "id")}
-                      >
-                        Confirm delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <p :if={@drafts == []} class="studio-muted">No host drafts exposed.</p>
-            </div>
-          </div>
-
           <div class="studio-workflows-panel-header">
             <div>
               <p class="studio-kicker">Templates</p>
               <h3>Get Started</h3>
             </div>
           </div>
+
+          <p :if={@persistence_message} class="studio-muted">{@persistence_message}</p>
 
           <div class="studio-template-list">
             <button

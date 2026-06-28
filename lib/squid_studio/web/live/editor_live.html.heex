@@ -5,12 +5,12 @@
     class={["studio-editor", "studio-theme-#{@theme}"]}
   >
     <header id="studio-context-bar" class="studio-topbar">
-      <div class="studio-context-leading">
-        <.link navigate={studio_path("")} class="studio-wordmark">
-          <strong>Squid Studio</strong>
-          <span>Squidie Visual Editor</span>
-        </.link>
+      <.link navigate={studio_path("")} class="studio-wordmark">
+        <strong>Squid Studio</strong>
+        <span>Squidie Visual Editor</span>
+      </.link>
 
+      <div class="studio-context-title">
         <div class="studio-breadcrumb">
           <.icon name="hero-square-3-stack-3d" />
           <.link navigate={studio_path("")}>Workflows</.link>

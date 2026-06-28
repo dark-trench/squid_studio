@@ -35,6 +35,12 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ ~s(class="studio-workflow-row-meta")
     assert html =~ ~s(class="studio-workflow-run-details")
     assert html =~ ~s(class="studio-workflows-panel-actions")
+    assert html =~ ~s(id="workflow-card-daily_digest")
+    assert html =~ ~s(href="/studio/workflows/daily_digest")
+    refute html =~ ~s(id="workflow-drafts-panel")
+    refute html =~ ~s(id="workflow-open-daily_digest")
+    refute html =~ ~s(id="workflow-card-new-draft-daily_digest")
+    refute html =~ ~s(class="studio-workflow-card-footer")
     refute html =~ ~s(class="studio-count-pill")
     assert html =~ "Run inspection"
     assert html =~ "Get Started"
@@ -128,35 +134,24 @@ defmodule SquidStudio.Web.RouterTest do
     refute html =~ "studio-theme-system"
   end
 
-  test "host workflows page owns draft creation and overflow deletion", %{conn: conn} do
+  test "host workflows page keeps clickable rows and a single global draft entrypoint", %{
+    conn: conn
+  } do
     {:ok, view, html} = live(conn, "/host-studio")
 
-    assert html =~ ~s(id="workflow-drafts-panel")
-    assert html =~ ~s(id="workflow-card-new-draft-invoice_review")
-    assert html =~ ~s(id="workflow-draft-menu-invoice_review")
+    assert html =~ ~s(id="workflow-new-draft-link")
+    assert html =~ ~s(id="workflow-card-invoice_review")
+    assert html =~ ~s(href="/host-studio/workflows/invoice_review")
+    refute html =~ ~s(id="workflow-drafts-panel")
+    refute html =~ ~s(id="workflow-card-new-draft-invoice_review")
+    refute html =~ ~s(id="workflow-draft-menu-invoice_review")
 
-    created_html =
+    row_html =
       view
-      |> element("#workflow-card-new-draft-invoice_review")
-      |> render_click()
+      |> element("#workflow-card-invoice_review")
+      |> render()
 
-    assert created_html =~ "Host created a new draft."
-    assert created_html =~ ~s(id="workflow-draft-item-invoice_review_draft_2")
-
-    menu_html =
-      view
-      |> element("#workflow-draft-menu-invoice_review")
-      |> render_click()
-
-    assert menu_html =~ ~s(id="workflow-draft-menu-items-invoice_review")
-
-    confirmation_html =
-      view
-      |> element("#workflow-draft-delete-invoice_review")
-      |> render_click()
-
-    assert confirmation_html =~ ~s(id="workflow-draft-delete-confirmation-invoice_review")
-    assert confirmation_html =~ "Unsaved changes will be discarded."
+    assert row_html =~ ~s(href="/host-studio/workflows/invoice_review")
   end
 
   test "mounts the embedded studio editor route", %{conn: conn} do
@@ -171,6 +166,7 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~
              ~s(<a href="/studio" data-phx-link="redirect" data-phx-link-state="push" class="studio-wordmark">)
 
+    assert html =~ ~s(class="studio-context-title")
     assert html =~ ~r|class="studio-breadcrumb"[\s\S]*href="/studio"[\s\S]*>Workflows</a>|
     assert html =~ ~s(phx-hook="SquidStudioTheme")
     assert html =~ "studio-theme-system"
@@ -472,11 +468,12 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ "--studio-properties-width: clamp(220px, 24vw, 272px);"
     assert css.resp_body =~ ".studio-theme-switcher"
     assert css.resp_body =~ "--studio-topbar-height: 48px;"
+    assert css.resp_body =~ ".studio-context-title"
     assert css.resp_body =~ ".studio-context-status"
     assert css.resp_body =~ ".studio-editor-command-bar"
 
     assert css.resp_body =~
-             "grid-template-columns: minmax(0, 1.2fr) auto auto;"
+             "grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1fr) auto auto;"
 
     assert css.resp_body =~ "grid-template-columns: repeat(2, minmax(78px, auto));"
     assert css.resp_body =~ "--studio-workflows-content-width: 1280px;"
@@ -489,22 +486,23 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-tab"
     assert css.resp_body =~ ".studio-workflow-row-icon"
     assert css.resp_body =~ ".studio-workflow-run-details"
-    assert css.resp_body =~ ".studio-workflow-card-footer"
+    assert css.resp_body =~ "padding: 9px 14px;"
+    assert css.resp_body =~ "gap: 10px;"
     assert css.resp_body =~ "padding: 8px 10px;"
     assert css.resp_body =~ "min-height: 72px;"
     assert css.resp_body =~ ".studio-workflow-row-meta"
     assert css.resp_body =~ "grid-template-columns: 34px minmax(0, 1fr) auto;"
-    assert css.resp_body =~ "padding: 11px 14px;"
     assert css.resp_body =~ ".studio-button span"
     assert css.resp_body =~ "row-gap: 8px;"
     assert css.resp_body =~ ".hero-arrow-path"
     assert css.resp_body =~ ".hero-check-circle"
     assert css.resp_body =~ ~r/\.studio-canvas-column\s*\{[^}]*row-gap: 12px;/s
+    assert css.resp_body =~ ".studio-context-title"
     assert css.resp_body =~ "@media (max-width: 1280px)"
     assert css.resp_body =~ "@media (max-width: 1040px)"
     assert css.resp_body =~ "grid-template-columns: repeat(3, minmax(0, 1fr));"
     assert css.resp_body =~ "grid-template-rows: auto minmax(0, 1fr);"
-    assert css.resp_body =~ "grid-template-rows: auto auto minmax(0, 1fr);"
+    assert css.resp_body =~ "grid-template-rows: auto auto auto minmax(0, 1fr);"
     assert css.resp_body =~ "grid-template-columns: minmax(0, 1fr) auto;"
     assert css.resp_body =~ "flex-wrap: nowrap;"
     assert css.resp_body =~ ".studio-workflows-panel-actions form"

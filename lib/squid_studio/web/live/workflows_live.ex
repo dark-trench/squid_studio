@@ -3,9 +3,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
 
   use SquidStudio.Web, :live_view
 
-  alias SquidStudio.Drafts
-  alias SquidStudio.Web.Resolver
-
   @status_filters ~w(all running approval draft dynamic)
 
   @impl true
@@ -17,10 +14,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
     workflows =
       workflow_inventory
       |> Enum.map(&workflow_card/1)
-
-    drafts =
-      socket.assigns[:drafts]
-      |> List.wrap()
 
     query = ""
     status_filter = "all"
@@ -34,11 +27,7 @@ defmodule SquidStudio.Web.WorkflowsLive do
       |> assign(:filter_form, filter_form(query))
       |> assign(:workflow_inventory, workflow_inventory)
       |> assign(:workflows, workflows)
-      |> assign(:drafts, drafts)
-      |> assign(:open_draft_menu_id, nil)
-      |> assign(:pending_delete_draft_id, nil)
       |> assign(:persistence_message, nil)
-      |> assign(:selected_draft_id, List.first(drafts) |> then(&(&1 && Map.get(&1, "id"))))
       |> assign(:templates, templates())
       |> assign(:selected_template_id, "approval_gate")
       |> assign(:resource_views, resource_views())
@@ -50,83 +39,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
   @impl true
   def handle_event("set_theme", %{"theme" => theme}, socket) do
     {:noreply, assign(socket, :theme, normalize_theme(theme))}
-  end
-
-  def handle_event("create_draft", %{"workflow_id" => workflow_id}, socket) do
-    workflow = Enum.find(socket.assigns.workflow_inventory, &(value(&1, :id, nil) == workflow_id))
-    seed_draft = Drafts.create_seed(workflow || %{"id" => workflow_id, "name" => workflow_id})
-
-    case Resolver.call_with_fallback(socket.assigns.resolver, :create_draft, [
-           socket.assigns.user,
-           workflow_id,
-           seed_draft
-         ]) do
-      {:ok, created_draft} ->
-        case Drafts.normalize(created_draft) do
-          {:ok, normalized_draft} ->
-            {:noreply,
-             socket
-             |> assign(:drafts, upsert_draft(socket.assigns.drafts, normalized_draft))
-             |> assign(:selected_draft_id, Map.get(normalized_draft, "id"))
-             |> assign(:persistence_message, "Host created a new draft.")}
-
-          {:error, _reason} ->
-            {:noreply,
-             assign(socket, :persistence_message, create_draft_error_message(:invalid_draft_data))}
-        end
-
-      {:error, reason} ->
-        {:noreply, assign(socket, :persistence_message, create_draft_error_message(reason))}
-    end
-  end
-
-  def handle_event("toggle_draft_menu", %{"id" => id}, socket) do
-    open_draft_menu_id = if socket.assigns.open_draft_menu_id == id, do: nil, else: id
-
-    {:noreply,
-     socket
-     |> assign(:open_draft_menu_id, open_draft_menu_id)
-     |> assign(:pending_delete_draft_id, nil)}
-  end
-
-  def handle_event("request_delete_draft", %{"id" => id}, socket) do
-    {:noreply,
-     socket
-     |> assign(:open_draft_menu_id, id)
-     |> assign(:pending_delete_draft_id, id)}
-  end
-
-  def handle_event("cancel_delete_draft", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:open_draft_menu_id, nil)
-     |> assign(:pending_delete_draft_id, nil)}
-  end
-
-  def handle_event("confirm_delete_draft", %{"id" => id}, socket) do
-    case Resolver.call_with_fallback(socket.assigns.resolver, :delete_draft, [
-           socket.assigns.user,
-           id
-         ]) do
-      :ok ->
-        {:noreply,
-         socket
-         |> remove_draft(id)
-         |> assign(:open_draft_menu_id, nil)
-         |> assign(:pending_delete_draft_id, nil)
-         |> assign(:persistence_message, "Host deleted the draft.")}
-
-      {:ok, _result} ->
-        {:noreply,
-         socket
-         |> remove_draft(id)
-         |> assign(:open_draft_menu_id, nil)
-         |> assign(:pending_delete_draft_id, nil)
-         |> assign(:persistence_message, "Host deleted the draft.")}
-
-      {:error, reason} ->
-        {:noreply, assign(socket, :persistence_message, delete_draft_error_message(reason))}
-    end
   end
 
   def handle_event("filter_workflows", %{"workflow_filter" => params}, socket) do
@@ -337,45 +249,6 @@ defmodule SquidStudio.Web.WorkflowsLive do
   defp selected_template(templates, selected_id) do
     Enum.find(templates, &(&1.id == selected_id)) || List.first(templates)
   end
-
-  defp upsert_draft(drafts, draft) do
-    draft_id = Map.get(draft, "id")
-
-    case Enum.any?(drafts, &(Map.get(&1, "id") == draft_id)) do
-      true -> Enum.map(drafts, &replace_draft(&1, draft_id, draft))
-      false -> drafts ++ [draft]
-    end
-  end
-
-  defp remove_draft(socket, id) do
-    drafts = Enum.reject(socket.assigns.drafts, &(Map.get(&1, "id") == id))
-
-    selected_draft_id =
-      if socket.assigns.selected_draft_id == id, do: nil, else: socket.assigns.selected_draft_id
-
-    socket
-    |> assign(:drafts, drafts)
-    |> assign(:selected_draft_id, selected_draft_id)
-  end
-
-  defp replace_draft(existing, draft_id, draft) do
-    if Map.get(existing, "id") == draft_id, do: draft, else: existing
-  end
-
-  defp create_draft_error_message(:persistence_not_configured),
-    do: "Host draft creation is not available."
-
-  defp create_draft_error_message(:invalid_draft_data),
-    do: "Host returned invalid draft data."
-
-  defp create_draft_error_message(_reason),
-    do: "Host draft creation failed."
-
-  defp delete_draft_error_message(:persistence_not_configured),
-    do: "Host draft deletion is not available."
-
-  defp delete_draft_error_message(_reason),
-    do: "Host draft deletion failed."
 
   defp workflow_state_title(error, _workflows, _query, _status_filter) when not is_nil(error),
     do: "Workflow inventory unavailable."

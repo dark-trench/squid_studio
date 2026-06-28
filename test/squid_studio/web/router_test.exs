@@ -469,13 +469,14 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-theme-dark"
     assert css.resp_body =~ ".studio-theme-system"
     assert css.resp_body =~ "--studio-sidebar-width: clamp(220px, 22vw, 260px);"
-    assert css.resp_body =~ "--studio-properties-width: clamp(250px, 26vw, 300px);"
+    assert css.resp_body =~ "--studio-properties-width: clamp(220px, 24vw, 272px);"
     assert css.resp_body =~ ".studio-theme-switcher"
-    assert css.resp_body =~ "--studio-topbar-height: 56px;"
-    assert css.resp_body =~ ".studio-topbar .studio-metric span"
+    assert css.resp_body =~ "--studio-topbar-height: 48px;"
+    assert css.resp_body =~ ".studio-context-status"
+    assert css.resp_body =~ ".studio-editor-command-bar"
 
     assert css.resp_body =~
-             "grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.1fr) auto minmax(280px, 1.3fr);"
+             "grid-template-columns: minmax(0, 1.2fr) auto auto;"
 
     assert css.resp_body =~ "grid-template-columns: repeat(2, minmax(78px, auto));"
     assert css.resp_body =~ "--studio-workflows-content-width: 1280px;"
@@ -488,6 +489,9 @@ defmodule SquidStudio.Web.RouterTest do
     assert css.resp_body =~ ".studio-workflow-tab"
     assert css.resp_body =~ ".studio-workflow-row-icon"
     assert css.resp_body =~ ".studio-workflow-run-details"
+    assert css.resp_body =~ ".studio-workflow-card-footer"
+    assert css.resp_body =~ "padding: 8px 10px;"
+    assert css.resp_body =~ "min-height: 72px;"
     assert css.resp_body =~ ".studio-workflow-row-meta"
     assert css.resp_body =~ "grid-template-columns: 34px minmax(0, 1fr) auto;"
     assert css.resp_body =~ "padding: 11px 14px;"
@@ -632,7 +636,7 @@ defmodule SquidStudio.Web.RouterTest do
       |> render_click()
 
     assert html =~ "carrier_onboarding"
-    assert html =~ "Host persistence owns save, delete, and publish callbacks."
+    assert html =~ "Host persistence owns save and publish callbacks."
 
     html =
       view
@@ -679,11 +683,13 @@ defmodule SquidStudio.Web.RouterTest do
     assert html =~ "Read-only"
     assert html =~ ~s(id="squid-studio-flow")
     assert html =~ ~s(data-read-only="true")
-
+    assert html =~ ~s(id="studio-context-bar")
+    assert html =~ ~s(id="studio-editor-command-bar")
     assert html =~ ~s(id="studio-publish-draft-button")
     assert html =~ ~s(id="studio-save-draft-button")
     assert html =~ ~s(id="studio-validate-draft-button")
-
+    refute html =~ ~s(id="studio-create-draft-button")
+    refute html =~ ~s(id="studio-delete-draft-button")
     assert html =~ ~r/id="studio-publish-draft-button"[^>]*disabled/
     assert html =~ ~r/id="studio-save-draft-button"[^>]*disabled/
 

@@ -1,14 +1,19 @@
 defmodule SquidStudio.Web.StandaloneSmokeTest do
   use SquidStudio.ConnCase, async: true
 
-  test "standalone studio smoke flow covers load, edit, validate, and host handoff errors", %{
-    conn: conn
-  } do
+  test "standalone studio smoke flow covers the command bar, edit, validate, and host handoff errors",
+       %{
+         conn: conn
+       } do
     {:ok, view, _html} = live(conn, "/studio/workflows/daily_digest")
 
+    assert_smoke_element(view, "#studio-context-bar", "load context bar")
+    assert_smoke_element(view, "#studio-editor-command-bar", "load command bar")
     assert_smoke_element(view, "#studio-validate-draft-button", "load validate control")
     assert_smoke_element(view, "#studio-save-draft-button", "load save control")
     assert_smoke_element(view, "#studio-publish-draft-button", "load publish control")
+    refute has_element?(view, "#studio-create-draft-button")
+    refute has_element?(view, "#studio-delete-draft-button")
 
     assert_smoke_element(
       view,

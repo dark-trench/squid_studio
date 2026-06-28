@@ -341,12 +341,9 @@ defmodule SquidStudio.Web.WorkflowsLive do
   defp upsert_draft(drafts, draft) do
     draft_id = Map.get(draft, "id")
 
-    if Enum.any?(drafts, &(Map.get(&1, "id") == draft_id)) do
-      Enum.map(drafts, fn existing ->
-        if Map.get(existing, "id") == draft_id, do: draft, else: existing
-      end)
-    else
-      drafts ++ [draft]
+    case Enum.any?(drafts, &(Map.get(&1, "id") == draft_id)) do
+      true -> Enum.map(drafts, &replace_draft(&1, draft_id, draft))
+      false -> drafts ++ [draft]
     end
   end
 
@@ -359,6 +356,10 @@ defmodule SquidStudio.Web.WorkflowsLive do
     socket
     |> assign(:drafts, drafts)
     |> assign(:selected_draft_id, selected_draft_id)
+  end
+
+  defp replace_draft(existing, draft_id, draft) do
+    if Map.get(existing, "id") == draft_id, do: draft, else: existing
   end
 
   defp create_draft_error_message(:persistence_not_configured),

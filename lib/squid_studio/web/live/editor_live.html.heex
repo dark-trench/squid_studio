@@ -4,13 +4,13 @@
     phx-hook="SquidStudioTheme"
     class={["studio-editor", "studio-theme-#{@theme}"]}
   >
-    <header class="studio-topbar">
-      <.link navigate={studio_path("")} class="studio-wordmark">
-        <strong>Squid Studio</strong>
-        <span>Squidie Visual Editor</span>
-      </.link>
+    <header id="studio-context-bar" class="studio-topbar">
+      <div class="studio-context-leading">
+        <.link navigate={studio_path("")} class="studio-wordmark">
+          <strong>Squid Studio</strong>
+          <span>Squidie Visual Editor</span>
+        </.link>
 
-      <div class="studio-topbar-title">
         <div class="studio-breadcrumb">
           <.icon name="hero-square-3-stack-3d" />
           <.link navigate={studio_path("")}>Workflows</.link>
@@ -19,21 +19,7 @@
         </div>
       </div>
 
-      <div class="studio-topbar-meta">
-        <div class="studio-metrics">
-          <div class="studio-metric">
-            <span>Steps</span>
-            <strong>{length(@nodes)}</strong>
-          </div>
-          <div class="studio-metric">
-            <span>Transitions</span>
-            <strong>{length(@edges)}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="studio-topbar-actions">
-        <.theme_switcher theme={@theme} />
+      <div class="studio-context-status">
         <span :if={@read_only?} class="studio-badge neutral">
           <.icon name="hero-eye" />Read-only
         </span>
@@ -44,84 +30,20 @@
         <span :if={@draft_dirty?} class="studio-badge warn">
           <.icon name="hero-exclamation-circle" />Unsaved changes
         </span>
-        <button
-          id="studio-create-draft-button"
-          type="button"
-          class="studio-button secondary"
-          phx-click="create_draft"
-          disabled={@read_only?}
-        >
-          <.icon name="hero-document-plus" />
-          <span>Create draft</span>
-        </button>
-        <button
-          id="studio-delete-draft-button"
-          type="button"
-          class="studio-button secondary"
-          phx-click="request_delete_draft"
-          disabled={@read_only? or is_nil(@selected_draft_id)}
-        >
-          <.icon name="hero-trash" />
-          <span>Delete draft</span>
-        </button>
-        <div
-          :if={@pending_delete_draft_id == @selected_draft_id and not is_nil(@selected_draft_id)}
-          id="studio-delete-draft-confirmation"
-          class="studio-delete-confirmation"
-        >
-          <span class="studio-badge warn">Delete draft?</span>
-          <span class="studio-delete-confirmation-copy">
-            {if @draft_dirty?,
-              do: "Unsaved changes will be discarded.",
-              else: "This removes the current draft from host persistence."}
-          </span>
-          <button
-            id="studio-cancel-delete-draft-button"
-            type="button"
-            class="studio-button secondary"
-            phx-click="cancel_delete_draft"
-          >
-            <span>Cancel</span>
-          </button>
-          <button
-            id="studio-confirm-delete-draft-button"
-            type="button"
-            class="studio-button danger"
-            phx-click="confirm_delete_draft"
-          >
-            <.icon name="hero-trash" />
-            <span>Confirm delete</span>
-          </button>
+      </div>
+
+      <div class="studio-context-meta">
+        <div class="studio-metrics">
+          <div class="studio-metric">
+            <span>Steps</span>
+            <strong>{length(@nodes)}</strong>
+          </div>
+          <div class="studio-metric">
+            <span>Transitions</span>
+            <strong>{length(@edges)}</strong>
+          </div>
         </div>
-        <button
-          id="studio-validate-draft-button"
-          type="button"
-          class="studio-button secondary"
-          phx-click="validate_draft"
-        >
-          <.icon name="hero-shield-check" />
-          <span>Validate draft</span>
-        </button>
-        <button
-          id="studio-publish-draft-button"
-          type="button"
-          class="studio-button secondary"
-          phx-click="publish_draft"
-          disabled={@read_only?}
-        >
-          <.icon name="hero-rocket-launch" />
-          <span>Publish version</span>
-        </button>
-        <button
-          id="studio-save-draft-button"
-          type="button"
-          class="studio-button primary"
-          phx-click="save_draft"
-          disabled={@read_only?}
-        >
-          <.icon name="hero-cloud-arrow-up" />
-          <span>Save draft</span>
-        </button>
+        <.theme_switcher theme={@theme} />
       </div>
     </header>
 
@@ -281,6 +203,37 @@
       </aside>
 
       <section class="studio-canvas-column">
+        <div id="studio-editor-command-bar" class="studio-editor-command-bar">
+          <button
+            id="studio-validate-draft-button"
+            type="button"
+            class="studio-button secondary"
+            phx-click="validate_draft"
+          >
+            <.icon name="hero-shield-check" />
+            <span>Validate draft</span>
+          </button>
+          <button
+            id="studio-publish-draft-button"
+            type="button"
+            class="studio-button secondary"
+            phx-click="publish_draft"
+            disabled={@read_only?}
+          >
+            <.icon name="hero-rocket-launch" />
+            <span>Publish version</span>
+          </button>
+          <button
+            id="studio-save-draft-button"
+            type="button"
+            class="studio-button primary"
+            phx-click="save_draft"
+            disabled={@read_only?}
+          >
+            <.icon name="hero-cloud-arrow-up" />
+            <span>Save draft</span>
+          </button>
+        </div>
         <div
           id="studio-surface-switcher"
           class="studio-surface-switcher"

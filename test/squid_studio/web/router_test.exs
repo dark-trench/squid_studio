@@ -298,18 +298,24 @@ defmodule SquidStudio.Web.RouterTest do
     refute html =~ "&quot;nodes&quot;: ["
   end
 
-  test "uses a full-width editor topbar above the workspace panels", %{conn: conn} do
+  test "uses a calm editor context bar and dedicated draft command bar", %{conn: conn} do
     html =
       conn
       |> get("/studio/workflows/daily_digest")
       |> html_response(200)
 
-    assert html =~ ~s(<header class="studio-topbar">)
+    assert html =~ ~s(id="studio-context-bar")
+    assert html =~ ~s(id="studio-editor-command-bar")
     assert html =~ ~s(<div class="studio-workspace">)
     assert html =~ ~s(<aside class="studio-sidebar">)
     assert html =~ ~s(<section class="studio-canvas-column">)
     assert html =~ ~s(<aside class="studio-properties">)
-    assert html =~ ~s(phx-click="validate_draft")
+    assert html =~ ~s(id="studio-save-draft-button")
+    assert html =~ ~s(id="studio-validate-draft-button")
+    assert html =~ ~s(id="studio-publish-draft-button")
+    refute html =~ ~s(id="studio-create-draft-button")
+    refute html =~ ~s(id="studio-delete-draft-button")
+    refute html =~ ~s(id="studio-delete-draft-confirmation")
     refute html =~ ~s(class="studio-toolbar")
     refute html =~ "Review</span>"
   end
@@ -643,76 +649,6 @@ defmodule SquidStudio.Web.RouterTest do
 
     assert html =~ "Published"
     assert html =~ "Host published a runnable Squidie workflow version."
-  end
-
-  test "creates a host-backed draft and marks unsaved changes in the editor", %{conn: conn} do
-    {:ok, view, html} = live(conn, "/host-studio/workflows/invoice_review")
-
-    assert html =~ ~s(id="studio-create-draft-button")
-
-    created_html =
-      view
-      |> element("#studio-create-draft-button")
-      |> render_click()
-
-    assert created_html =~ "invoice_review_draft_2"
-    assert created_html =~ "Host created a new draft."
-    refute created_html =~ "Unsaved changes"
-
-    dirty_html =
-      view
-      |> render_hook("move_node", %{"id" => "review_invoice", "x" => 360, "y" => 190})
-
-    assert dirty_html =~ "Unsaved changes"
-
-    saved_html =
-      view
-      |> element(~s(button[phx-click="save_draft"]))
-      |> render_click()
-
-    refute saved_html =~ "Unsaved changes"
-    assert saved_html =~ "Saved"
-    assert saved_html =~ "Host persistence accepted the draft spec."
-  end
-
-  test "confirms before deleting a host-backed draft and falls back to the remaining draft", %{
-    conn: conn
-  } do
-    {:ok, view, _html} = live(conn, "/host-studio/workflows/invoice_review")
-
-    created_html =
-      view
-      |> element("#studio-create-draft-button")
-      |> render_click()
-
-    assert created_html =~ "invoice_review_draft_2"
-
-    dirty_html =
-      view
-      |> render_hook("move_node", %{"id" => "review_invoice", "x" => 360, "y" => 190})
-
-    assert dirty_html =~ "Unsaved changes"
-
-    confirmation_html =
-      view
-      |> element("#studio-delete-draft-button")
-      |> render_click()
-
-    assert confirmation_html =~ ~s(id="studio-confirm-delete-draft-button")
-    assert confirmation_html =~ "Delete draft?"
-    assert confirmation_html =~ "Unsaved changes will be discarded."
-    assert confirmation_html =~ "invoice_review_draft_2"
-
-    deleted_html =
-      view
-      |> element("#studio-confirm-delete-draft-button")
-      |> render_click()
-
-    assert deleted_html =~ "Host deleted the draft."
-    assert deleted_html =~ ~s(id="studio-draft-item-invoice_review")
-    refute deleted_html =~ "invoice_review_draft_2"
-    refute deleted_html =~ ~s(id="studio-confirm-delete-draft-button")
-    refute deleted_html =~ "Unsaved changes"
   end
 
   test "preserves draft validation issues when host save responses omit them", %{conn: conn} do

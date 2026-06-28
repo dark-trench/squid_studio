@@ -2,10 +2,13 @@
 
 Visual editor for Squidie workflows.
 
-> [!WARNING]
-> Squid Studio is under active development and is not usable yet. APIs,
-> installation steps, embedded UI behavior, and workflow-authoring surfaces may
-> change before an initial usable release.
+> [!IMPORTANT]
+> This repository was archived on June 28, 2026.
+>
+> The project did not justify continued standalone investment. Its visual-editor
+> direction overlapped too heavily with adjacent workflow tooling, especially
+> `squid_sonar`, and the maintenance cost was not worth carrying as a separate
+> product. The code and docs remain here as reference only.
 
 ## Squidie Integration
 
